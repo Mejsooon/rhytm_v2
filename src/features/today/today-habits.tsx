@@ -1,7 +1,11 @@
 // „Nawyki na dziś” wg S2Today: siatka kafelków (zawsze 4 kolumny, jak w makiecie). Kafelek to przycisk
 // aria-pressed z nazwą, polem odhaczenia i passą. Bez nawyków na dziś jeden przerywany kafelek
 // „Utwórz nowy nawyk” (S2EmptyToday). Lista przychodzi gotowa z `todayHabits` (model.ts).
+import { Fragment } from "react";
 import { Check, Flame, Plus } from "lucide-react";
+
+import type { IsoDate } from "@/components/controls/calendar-math";
+import { HabitQtyPopover } from "@/features/habits/habit-qty-popover";
 
 import type { TodayHabit } from "./model";
 
@@ -9,10 +13,14 @@ export function TodayHabits({
   habits,
   onToggle,
   onCreate,
+  today,
+  progress = [],
 }: {
   habits: TodayHabit[];
   onToggle: (habitId: string) => void;
   onCreate: () => void;
+  today?: IsoDate;
+  progress?: Array<{ habitId: string; qty: number }>;
 }) {
   const odhaczone = habits.filter((h) => h.done).length;
 
@@ -52,12 +60,12 @@ export function TodayHabits({
             Utwórz nowy nawyk
           </button>
         ) : (
-          habits.map((h) => (
+          habits.map((h) => {
+            const przycisk = (
             <button
-              key={h.id}
               type="button"
               aria-pressed={h.done}
-              onClick={() => onToggle(h.id)}
+              onClick={h.goal ? undefined : () => onToggle(h.id)}
               // Odhaczony: ramka rgba(0,0,0,.24), tło rgba(0,0,0,.02)
               className={`${kafelek} ${h.done ? "border-black/[.24] bg-black/[.02]" : "hover:bg-[#fafafa]"}`}
             >
@@ -79,7 +87,20 @@ export function TodayHabits({
                 {h.streakLabel}
               </span>
             </button>
-          ))
+            );
+            return h.goal && today ? (
+              <HabitQtyPopover
+                key={h.id}
+                habit={{ id: h.id, name: h.name, goalQty: h.goal.qty, goalUnit: h.goal.unit }}
+                date={today}
+                qty={progress.find((p) => p.habitId === h.id)?.qty ?? 0}
+                done={h.done}
+                trigger={przycisk}
+              />
+            ) : (
+              <Fragment key={h.id}>{przycisk}</Fragment>
+            );
+          })
         )}
       </div>
     </section>

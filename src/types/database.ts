@@ -351,6 +351,27 @@ export type Database = {
           },
         ];
       };
+      habit_progress: {
+        Row: {
+          date: string;
+          habit_id: string;
+          qty: number;
+          user_id: string;
+        };
+        Insert: {
+          date: string;
+          habit_id: string;
+          qty: number;
+          user_id: string;
+        };
+        Update: {
+          date?: string;
+          habit_id?: string;
+          qty?: number;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       habit_schedules: {
         Row: {
           habit_id: string;
@@ -389,6 +410,8 @@ export type Database = {
       habits: {
         Row: {
           created_at: string | null;
+          goal_qty: number | null;
+          goal_unit: string | null;
           id: string;
           name: string;
           remind_at: string | null;
@@ -397,6 +420,8 @@ export type Database = {
         };
         Insert: {
           created_at?: string | null;
+          goal_qty?: number | null;
+          goal_unit?: string | null;
           id?: string;
           name: string;
           remind_at?: string | null;
@@ -405,6 +430,8 @@ export type Database = {
         };
         Update: {
           created_at?: string | null;
+          goal_qty?: number | null;
+          goal_unit?: string | null;
           id?: string;
           name?: string;
           remind_at?: string | null;
@@ -671,6 +698,7 @@ export type Database = {
           roles: string[] | null;
           sleep_goal_min: number | null;
           study_field: string | null;
+          sleep_bedtime: string;
           timezone: string | null;
           user_id: string;
           week_start: string | null;
@@ -706,6 +734,7 @@ export type Database = {
           roles?: string[] | null;
           sleep_goal_min?: number | null;
           study_field?: string | null;
+          sleep_bedtime?: string;
           timezone?: string | null;
           user_id: string;
           week_start?: string | null;
@@ -741,6 +770,7 @@ export type Database = {
           roles?: string[] | null;
           sleep_goal_min?: number | null;
           study_field?: string | null;
+          sleep_bedtime?: string;
           timezone?: string | null;
           user_id?: string;
           week_start?: string | null;

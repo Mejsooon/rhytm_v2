@@ -123,6 +123,7 @@ describe("GET /api/eksport", () => {
       "habits",
       "habit_schedules",
       "habit_checks",
+      "habit_progress",
       "habit_notes",
       "sleep_logs",
       "workout_templates",

@@ -604,6 +604,8 @@ export type TodayHabit = {
   streak: { value: number; unit: "days" | "weeks" };
   streakLabel: string;
   hot: boolean; // passa ≥ 3: płomień w kolorze #c2410c
+  // Cel ilościowy (okienko z ilością zamiast samego odhaczenia)
+  goal?: { qty: number; unit: string };
 };
 
 // Nawyki na dziś (z włączonym „pokaż na Dziś”): zaplanowane na dziś (codziennie / dni tygodnia) i X/tydz.,
@@ -640,6 +642,7 @@ export function todayHabits(input: {
       streak: { value: v, unit: passa.unit },
       streakLabel: etykieta,
       hot: v >= 3,
+      ...(h.goalQty && h.goalUnit ? { goal: { qty: h.goalQty, unit: h.goalUnit } } : {}),
     });
   }
   return wynik;

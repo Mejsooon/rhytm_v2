@@ -3,6 +3,7 @@
 import * as React from "react";
 
 import {
+  TimePicker,
   Card,
   CardContent,
   CardDescription,
@@ -22,6 +23,7 @@ import { useCardForm } from "./use-card-form";
 
 export type GoalsValues = {
   sleep: number;
+  bed?: string;
   // Dwa cele treningowe: przełączniki i obie liczby (tekst z pól)
   trOn: boolean;
   kmOn: boolean;
@@ -106,6 +108,7 @@ export function GoalsCard({ saved }: { saved: GoalsValues }) {
         weekly_km_goal: parseDecimal(value.km),
         currency: value.cur,
         week_start: value.week,
+        sleep_bedtime: value.bed,
       });
       if (odpowiedz.ok) {
         setServerErrors({});
@@ -147,6 +150,12 @@ export function GoalsCard({ saved }: { saved: GoalsValues }) {
                 zmien({ sleep: Math.min(MAX_SNU, value.sleep + 15) })
               }
             />
+            {value.bed !== undefined && (
+              <div className="mt-1.5 flex items-center justify-between gap-2">
+                <span className="text-[13px] font-medium">Pora snu</span>
+                <TimePicker clock="24" ariaLabel="Pora snu" value={value.bed} onChange={(bed) => zmien({ bed })} />
+              </div>
+            )}
           </div>
           <div className="flex flex-col gap-1.5">
             <span className="text-[13px] font-medium">Cele treningowe</span>

@@ -6,6 +6,7 @@ import {
   sleepStats,
   type SleepLog,
 } from "./sleep";
+import { inSleepWindow, sleepRegularity } from "./sleep";
 
 describe("sleepMinutes", () => {
   it("liczy przez północ i zwraca null dla równych godzin", () => {
@@ -94,5 +95,14 @@ describe("sleepStats", () => {
     expect(s.avg).toBeNull();
     expect(s.metGoal).toBe(0);
     expect(s.bars).toHaveLength(30);
+  });
+});
+
+describe("regularność i okno snu", () => {
+  it("godziny po obu stronach północy leżą obok siebie", () => {
+    expect(sleepRegularity(["23:30", "00:30"])).toBe(30);
+    expect(sleepRegularity([])).toBeNull();
+    expect(inSleepWindow("00:10", "23:45")).toBe(true);
+    expect(inSleepWindow("23:00", "23:45")).toBe(false);
   });
 });

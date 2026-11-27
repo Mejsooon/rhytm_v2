@@ -59,6 +59,7 @@ function tabele() {
     habit_checks: fakeTable({
       data: [{ habit_id: NAWYK, date: "2026-11-17" }],
     }),
+    habit_progress: fakeTable({ data: [] }),
     habit_notes: fakeTable({
       data: [{ id: "n1", date: "2026-11-17", text: "Dobrze poszło" }],
     }),

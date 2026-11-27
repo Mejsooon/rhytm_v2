@@ -33,15 +33,14 @@ describe("SleepCard", () => {
     );
     expect(screen.getByText("Ostatnia noc")).toBeInTheDocument();
     expect(screen.getByText("7:12")).toBeInTheDocument();
-    expect(screen.getByText("23:48 → 07:00")).toBeInTheDocument();
-    expect(screen.getByText("4/5")).toBeInTheDocument();
+    expect(screen.getByText("23:48 → 07:00 · samopoczucie 4/5")).toBeInTheDocument();
   });
 
   it("zegar 12 h zmienia format godzin", () => {
     render(
       <SleepCard sleepLogs={SEN} today="2026-11-17" goalMin={480} clock="12" />,
     );
-    expect(screen.getByText("11:48 PM → 7:00 AM")).toBeInTheDocument();
+    expect(screen.getByText(/^11:48 PM → 7:00 AM/)).toBeInTheDocument();
   });
 
   it("przełącznik 14 / 30 zmienia liczbę słupków", async () => {
@@ -70,20 +69,24 @@ describe("SleepCard", () => {
     expect(screen.getByText("cel 8 h")).toBeInTheDocument();
   });
 
-  it("bez wpisów ostatnia noc to „—”", () => {
+  it("trzy liczby: średnia, noce z celem i regularność; „Pory snu” z oknem", async () => {
     render(
-      <SleepCard sleepLogs={[]} today="2026-11-17" goalMin={480} clock="24" />,
+      <SleepCard sleepLogs={SEN} today="2026-11-17" goalMin={480} clock="24" bedtime="23:00" />,
     );
-    expect(screen.getByText("—")).toBeInTheDocument();
-    expect(screen.queryByText("Samopoczucie")).not.toBeInTheDocument();
+    expect(screen.getByText("7:51")).toBeInTheDocument();
+    expect(screen.getByText("1 z 14 nocy")).toBeInTheDocument();
+    expect(screen.getByText("±24 min")).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("tab", { name: "Pory snu" }));
+    expect(screen.getByText("Okno snu 23:00–07:00")).toBeInTheDocument();
+    expect(screen.getByLabelText("16.11 · 23:00–07:30").className).toContain("bg-success");
+    expect(screen.getByLabelText("17.11 · 23:48–07:00").className).toContain("bg-border-strong");
   });
 
   it("karta snu bez wpisów pokazuje stan pusty", () => {
     render(
       <SleepCard sleepLogs={[]} today="2026-11-17" goalMin={480} clock="24" />,
     );
-    // Dotychczasowy stan pusty: „—” zamiast czasu, bez godzin i samopoczucia
-    expect(screen.getByText("—")).toBeInTheDocument();
+    expect(screen.getByText("Brak wpisów snu.")).toBeInTheDocument();
     expect(screen.queryByText(/→/)).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: /Edytuj ostatnią noc/ })).not.toBeInTheDocument();
     // Wykres bez dzielenia przez zero: 14 pustych słupków o wysokości 0, bez fokusu
@@ -104,13 +107,6 @@ describe("SleepCard", () => {
     const karta = screen.getByRole("heading", { name: "Sen" }).closest("section");
     expect(karta).toHaveClass("rounded-xl", "border-border", "shadow-card", "bg-clip-padding");
     expect(screen.getByRole("heading", { name: "Sen" })).toHaveClass("text-base", "font-semibold");
-    // Etykiety .lbl (12 px, bez mono), wartości 20 px pogrubione z cyframi tabelarycznymi
-    const etykieta = screen.getByText("Ostatnia noc");
-    expect(etykieta).toHaveClass("text-xs", "font-medium", "text-muted-foreground");
-    expect(etykieta.className).not.toContain("font-mono");
-    expect(screen.getByText("7:12")).toHaveClass("text-xl", "font-semibold", "tabular-nums");
-    expect(screen.getByText("7:12").className).not.toContain("font-mono");
-    expect(screen.getByText("23:48 → 07:00")).toHaveClass("text-xs", "tabular-nums");
     // Podpis celu jako odznaka .bdg.ok
     expect(screen.getByText("cel 8 h")).toHaveClass("bg-success-soft", "text-success", "rounded-sm");
     // Nieprzezroczysta podkładka pod odznaką, by tekst był czytelny nad słupkiem

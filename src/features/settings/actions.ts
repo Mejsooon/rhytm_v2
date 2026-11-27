@@ -64,6 +64,7 @@ export async function saveGoals(input: {
   weekly_km_goal: number | string | null;
   currency: string;
   week_start: string;
+  sleep_bedtime?: string;
 }): Promise<SaveResult> {
   const supabase = await createClient();
   const {
@@ -79,9 +80,13 @@ export async function saveGoals(input: {
   if (!parsed.success)
     return { ok: false, errors: bledyPol(parsed.error.issues) };
 
+  const pora = input.sleep_bedtime;
+  if (pora !== undefined && !/^([01]\d|2[0-3]):[0-5]\d$/.test(pora))
+    return { ok: false, errors: { form: "Podaj porę snu w formacie GG:MM." } };
+
   const { error } = await supabase
     .from("profiles")
-    .update(parsed.data)
+    .update(pora === undefined ? parsed.data : { ...parsed.data, sleep_bedtime: pora })
     .eq("user_id", user.id);
   if (error) return { ok: false, errors: { form: BLAD_ZAPISU } };
 

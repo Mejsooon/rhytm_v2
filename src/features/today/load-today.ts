@@ -14,6 +14,7 @@ import {
 import { addDays } from "@/features/calendar/view-range";
 import {
   loadChecks,
+  loadProgress,
   mapHabits,
   mapSleepLogs,
 } from "@/features/habits/load-habits";
@@ -70,6 +71,8 @@ export type TodayData = {
   tasks: TaskRow[];
   habits: Habit[];
   checks: Checks;
+  // Dzisiejszy częściowy postęp nawyków ilościowych
+  progress?: Array<{ habitId: string; qty: number }>;
   // Ostatnie 60 dni
   sleepLogs: SleepLog[];
   // Treningi tygodnia — wszystkie, także ukryte w kalendarzu
@@ -124,6 +127,7 @@ export async function loadToday(
     senRes,
     szablonyRes,
     rodzajeRes,
+    progress,
   ] = await Promise.all([
     // Bloki, wyjątki, zadania tygodnia, kategorie i treningi tygodnia (wszystkie)
     loadCalendar(
@@ -169,6 +173,7 @@ export async function loadToday(
       .select("name, color, has_distance")
       .eq("user_id", userId)
       .order("name"),
+    loadProgress(supabase, userId, today),
   ]);
 
   // Błąd zapytania ma trafić do granicy błędu trasy, a nie pokazać pusty ekran
@@ -220,6 +225,7 @@ export async function loadToday(
     },
     hasStats: treningi || noce || odhaczenia.length > 0,
     profile,
+    progress,
     templates: szablonyRes.data ?? [],
     activityKinds: rodzajeRes.data ?? [],
     today,

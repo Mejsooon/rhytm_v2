@@ -82,7 +82,9 @@ describe("HabitsView", () => {
     expect(
       screen.getByRole("heading", { level: 1, name: "Nawyki i sen" }),
     ).toBeInTheDocument();
-    expect(screen.getByText("wtorek · 17.11.2026")).toBeInTheDocument();
+    expect(
+      screen.getByText("Wtorek, 17 listopada · 1 z 2 nawyków zrobione dziś"),
+    ).toBeInTheDocument();
     expect(
       screen.getByRole("button", { name: "+ Wpis snu" }),
     ).toBeInTheDocument();
@@ -116,15 +118,15 @@ describe("HabitsView", () => {
     let zakoncz!: (v: { ok: true }) => void;
     setHabitCheck.mockReturnValue(new Promise((r) => (zakoncz = r)));
     render(<HabitsView data={dane()} initialTab={null} openOnLoad={null} />);
-    expect(screen.getByText("1/2")).toBeInTheDocument();
+    expect(screen.getByText("1/2 dziś")).toBeInTheDocument();
 
     await userEvent.click(
       screen.getByRole("button", { name: /^Czytanie 20 min · 17\.11/ }),
     );
-    expect(screen.getByText("2/2")).toBeInTheDocument();
+    expect(screen.getByText("2/2 dziś")).toBeInTheDocument();
     expect(setHabitCheck).toHaveBeenCalledWith("h2", "2026-11-17", true);
     await act(async () => zakoncz({ ok: true }));
-    expect(screen.getByText("2/2")).toBeInTheDocument();
+    expect(screen.getByText("2/2 dziś")).toBeInTheDocument();
   });
 
   it("błąd akcji cofa odhaczenie i woła toast", async () => {
@@ -133,7 +135,7 @@ describe("HabitsView", () => {
     await userEvent.click(
       screen.getByRole("button", { name: "Odhacz dziś: Czytanie 20 min" }),
     );
-    expect(screen.getByText("1/2")).toBeInTheDocument();
+    expect(screen.getByText("1/2 dziś")).toBeInTheDocument();
     expect(toastError).toHaveBeenCalledWith(
       "Nie udało się zapisać. Spróbuj ponownie.",
     );

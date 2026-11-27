@@ -4,7 +4,8 @@
 import type { IsoDate } from "@/components/controls/calendar-math";
 import { addDays, weekdayOf } from "@/features/calendar/view-range";
 
-export type ScheduleType = "daily" | "weekdays" | "times_per_week";
+// „paused” = archiwum albo przerwa po przywróceniu: dni bez planu, które nie psują serii
+export type ScheduleType = "daily" | "weekdays" | "times_per_week" | "paused";
 
 export type ScheduleVersion = {
   validFrom: IsoDate;
@@ -20,6 +21,9 @@ export type Habit = {
   showOnToday: boolean;
   createdAt: string;
   schedules: ScheduleVersion[]; // rosnąco po validFrom
+  // Cel ilościowy („2 l”); oba puste = „Zrobione / nie”
+  goalQty?: number | null;
+  goalUnit?: string | null;
 };
 
 export type Checks = Map<string /* habitId */, Set<IsoDate>>;
@@ -56,6 +60,33 @@ export function scheduleOn(
     }
   }
   return wynik;
+}
+
+// Dzień archiwizacji, gdy nawyk jest dziś w archiwum; inaczej null
+export function archivedSince(habit: Habit, today: IsoDate): IsoDate | null {
+  const v = scheduleOn(habit, today);
+  return v?.type === "paused" ? v.validFrom : null;
+}
+
+// Ostatni harmonogram sprzed przerwy (do przywrócenia i do serii nawyku z archiwum)
+export function activeVersion(
+  habit: Habit,
+  date: IsoDate,
+): ScheduleVersion | null {
+  let wynik: ScheduleVersion | null = null;
+  for (const v of habit.schedules) {
+    if (v.type === "paused" || v.validFrom > date) continue;
+    if (wynik === null || v.validFrom >= wynik.validFrom) wynik = v;
+  }
+  return wynik;
+}
+
+// Czy w dniach [od, do] jest choć jeden dzień przerwy
+function pausedBetween(habit: Habit, od: IsoDate, koniec: IsoDate): boolean {
+  for (let d = od; d <= koniec; d = addDays(d, 1)) {
+    if (scheduleOn(habit, d)?.type === "paused") return true;
+  }
+  return false;
 }
 
 // Czy nawyk jest zaplanowany na konkretny dzień (X/tydz. nigdy nie jest)
@@ -112,7 +143,7 @@ export function currentStreak(
   today: IsoDate,
   weekStart: WeekStart,
 ): Streak {
-  const dzisiejsza = scheduleOn(habit, today);
+  const dzisiejsza = activeVersion(habit, today);
   if (dzisiejsza === null) return { value: 0, unit: "days" };
   const odhaczone = checks.get(habit.id) ?? new Set<IsoDate>();
 
@@ -147,6 +178,7 @@ export function currentStreak(
     // tydzień oceniamy wersją z jego końca (w bieżącym — dzisiejszą, tą samą co weekProgress);
     // wersja z początku tygodnia tylko wtedy, gdy na końcu żadnej nie ma
     const v = scheduleOn(habit, koniec) ?? scheduleOn(habit, start);
+    if (v?.type === "paused") continue; // przerwa nie liczy się i nie przerywa
     if (v === null || v.type !== "times_per_week") break; // inny typ przerywa serię
     let ile = 0;
     for (let d = start; d <= koniec; d = addDays(d, 1)) {
@@ -156,8 +188,8 @@ export function currentStreak(
     const biezacy = start === startOfWeek(today, weekStart);
     if (spelniony) {
       value++;
-    } else if (!biezacy) {
-      break; // niespełniony bieżący tydzień nie przerywa, wcześniejszy tak
+    } else if (!biezacy && !pausedBetween(habit, start, koniec)) {
+      break; // niespełniony bieżący tydzień i tydzień z przerwą nie przerywają, wcześniejszy tak
     }
   }
   return { value, unit: "weeks" };
@@ -170,7 +202,7 @@ export function longestStreak(
   today: IsoDate,
   weekStart: WeekStart,
 ): Streak {
-  const dzisiejsza = scheduleOn(habit, today);
+  const dzisiejsza = activeVersion(habit, today);
   if (dzisiejsza === null || habit.schedules.length === 0)
     return { value: 0, unit: "days" };
   const odhaczone = checks.get(habit.id) ?? new Set<IsoDate>();
@@ -206,6 +238,7 @@ export function longestStreak(
     const koniec = addDays(start, 6) > today ? today : addDays(start, 6);
     // ta sama zasada co w currentStreak: wersja z końca tygodnia
     const v = scheduleOn(habit, koniec) ?? scheduleOn(habit, start);
+    if (v?.type === "paused") continue;
     if (v === null || v.type !== "times_per_week") {
       seria = 0;
       continue;
@@ -217,7 +250,7 @@ export function longestStreak(
     if (ile >= (v.timesPerWeek ?? 0)) {
       seria++;
       if (seria > max) max = seria;
-    } else if (start !== biezacyStart) {
+    } else if (start !== biezacyStart && !pausedBetween(habit, start, koniec)) {
       seria = 0;
     }
   }

@@ -141,3 +141,24 @@ export function sleepStats(
     bars,
   };
 }
+
+// Minuty od południa: 23:00 i 00:30 leżą obok siebie, a nie na dwóch końcach doby
+export function bedtimeOffset(time: string): number {
+  const [h, m] = time.split(":").map(Number);
+  return (h * 60 + m + 720) % 1440;
+}
+
+// Regularność = odchylenie standardowe godzin zaśnięcia w minutach; null bez wpisów
+export function sleepRegularity(times: string[]): number | null {
+  if (times.length === 0) return null;
+  const x = times.map(bedtimeOffset);
+  const srednia = x.reduce((a, b) => a + b, 0) / x.length;
+  return Math.round(
+    Math.sqrt(x.reduce((a, b) => a + (b - srednia) ** 2, 0) / x.length),
+  );
+}
+
+// Zaśnięcie „w oknie”: najwyżej 30 min od pory snu
+export function inSleepWindow(sleptAt: string, bedtime: string): boolean {
+  return Math.abs(bedtimeOffset(sleptAt) - bedtimeOffset(bedtime)) <= 30;
+}

@@ -13,11 +13,21 @@ export function DeleteHabitDialog({
   name,
   open,
   onOpenChange,
+  history,
+  onArchive,
+  after = "/nawyki",
+  onDeleted,
 }: {
   habitId: string;
   name: string;
   open: boolean;
   onOpenChange: (open: boolean) => void;
+  // Ile historii zniknie (web); bez tego krótszy opis (telefon)
+  history?: { checks: number; notes: number };
+  onArchive?: () => void | Promise<void>;
+  // Dokąd przejść po usunięciu; onDeleted zamyka okno, gdy zostajemy na tej samej stronie
+  after?: string;
+  onDeleted?: () => void;
 }) {
   const { push } = useRouter();
   const [pending, setPending] = useState(false);
@@ -43,7 +53,8 @@ export function DeleteHabitDialog({
       return;
     }
     // Po sukcesie okno zostaje zablokowane aż do przejścia na listę
-    push("/nawyki");
+    push(after);
+    onDeleted?.();
   }
 
   return (
@@ -52,9 +63,14 @@ export function DeleteHabitDialog({
       // Esc, tło i „Anuluj” są zablokowane na czas usuwania (pending w ConfirmDialog)
       onOpenChange={onOpenChange}
       title={`Usunąć nawyk „${name}”?`}
-      description="Historia odhaczeń i notatki zostaną usunięte."
+      description={
+        history
+          ? `Zniknie też historia: ${history.checks} odhaczeń i ${history.notes} notatek. Jeśli chcesz tylko przestać go śledzić, wybierz Archiwizuj.`
+          : "Historia odhaczeń i notatki zostaną usunięte."
+      }
+      extra={onArchive ? { label: "Archiwizuj", onClick: onArchive } : undefined}
       error={blad}
-      confirmLabel="Usuń"
+      confirmLabel={history ? "Usuń na zawsze" : "Usuń"}
       pending={pending}
       onConfirm={usun}
     />

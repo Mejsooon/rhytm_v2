@@ -25,6 +25,7 @@ export function ConfirmDialog({
   pending = false,
   cancelLabel = "Anuluj",
   destructive = true,
+  extra,
 }: {
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -39,6 +40,8 @@ export function ConfirmDialog({
   pending?: boolean;
   cancelLabel?: string;
   destructive?: boolean;
+  // Dodatkowy przycisk przed potwierdzeniem (np. „Archiwizuj” zamiast usuwania)
+  extra?: { label: string; onClick: () => void | Promise<void> };
 }) {
   return (
     <Dialog.Root
@@ -96,6 +99,11 @@ export function ConfirmDialog({
             >
               {cancelLabel}
             </Button>
+            {extra && (
+              <Button disabled={pending} onClick={() => void extra.onClick()}>
+                {extra.label}
+              </Button>
+            )}
             <Button
               variant={destructive ? "destructive" : "primary"}
               disabled={pending}

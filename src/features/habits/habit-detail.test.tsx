@@ -115,11 +115,11 @@ describe("HabitDetail", () => {
     const kafelek = (nazwa: string) =>
       screen.getByText(nazwa).parentElement as HTMLElement;
     // 16.11 zrobione, 14.11 (sb, poza planem) pomijane, 13.11 (pt) nieodhaczone → seria 1 dzień
-    expect(kafelek("Seria")).toHaveTextContent("1dzień");
+    expect(kafelek("Obecna seria")).toHaveTextContent("1dzień");
     expect(kafelek("Najdłuższa seria")).toHaveTextContent(
       "Najdłuższa seria2dni",
     );
-    expect(kafelek("30 dni")).toHaveTextContent(/\d+%/);
+    expect(kafelek("Skuteczność · 30 dni")).toHaveTextContent(/\d+%/);
     expect(kafelek("Łącznie")).toHaveTextContent("5razy");
   });
 
@@ -182,13 +182,14 @@ describe("HabitDetail", () => {
   it("Usuń → potwierdzenie → deleteHabit → /nawyki", async () => {
     deleteHabit.mockResolvedValue({ ok: true });
     render(<HabitDetail data={dane()} />);
-    await userEvent.click(screen.getByRole("button", { name: "Usuń" }));
+    await userEvent.click(screen.getByRole("button", { name: "Więcej akcji" }));
+    await userEvent.click(screen.getByRole("button", { name: "Usuń nawyk…" }));
     expect(screen.getByText("Usunąć nawyk „Rozciąganie”?")).toBeInTheDocument();
     expect(
-      screen.getByText("Historia odhaczeń i notatki zostaną usunięte."),
+      screen.getByText(/^Zniknie też historia: 5 odhaczeń/),
     ).toBeInTheDocument();
     const okno = screen.getByRole("alertdialog");
-    await userEvent.click(within(okno).getByRole("button", { name: "Usuń" }));
+    await userEvent.click(within(okno).getByRole("button", { name: "Usuń na zawsze" }));
     expect(deleteHabit).toHaveBeenCalledWith("h1");
     await waitFor(() => expect(push).toHaveBeenCalledWith("/nawyki"));
   });
@@ -199,9 +200,10 @@ describe("HabitDetail", () => {
       message: "Nie znaleziono nawyku.",
     });
     render(<HabitDetail data={dane()} />);
-    await userEvent.click(screen.getByRole("button", { name: "Usuń" }));
+    await userEvent.click(screen.getByRole("button", { name: "Więcej akcji" }));
+    await userEvent.click(screen.getByRole("button", { name: "Usuń nawyk…" }));
     await userEvent.click(
-      within(screen.getByRole("alertdialog")).getByRole("button", { name: "Usuń" }),
+      within(screen.getByRole("alertdialog")).getByRole("button", { name: "Usuń na zawsze" }),
     );
     expect(await screen.findByRole("alert")).toHaveTextContent(
       "Nie znaleziono nawyku.",
@@ -254,7 +256,7 @@ describe("HabitDetail", () => {
     await waitFor(() => expect(pole).toHaveValue(""));
     expect(pole).toHaveFocus();
   });
-  it("nagłówek .topbar: okruszki .crumb, Usuń destructive-outline, Edytuj primary", () => {
+  it("nagłówek .topbar: okruszki .crumb, Edytuj i menu „⋯”", () => {
     render(<HabitDetail data={dane()} />);
     const link = screen.getByRole("link", { name: "Nawyki i sen" });
     const okruszki = link.parentElement as HTMLElement;
@@ -263,14 +265,9 @@ describe("HabitDetail", () => {
     const naglowek = okruszki.closest("header") as HTMLElement;
     expect(naglowek.className).toContain("px-6");
     expect(naglowek.className).toContain("py-2.5");
-    const usun = screen.getByRole("button", { name: "Usuń" });
-    // destructive-outline (.btndo), rozmiar md 32 px
-    expect(usun.className).toContain("border-input");
-    expect(usun.className).toContain("text-destructive-foreground");
-    expect(usun.className).toContain("h-8");
-    expect(usun.querySelector("svg")).not.toBeNull();
+    expect(screen.getByRole("button", { name: "Więcej akcji" }).className).toContain("h-8");
     const edytuj = screen.getByRole("button", { name: "Edytuj" });
-    expect(edytuj.className).toContain("bg-primary");
+    expect(edytuj.querySelector("svg")).not.toBeNull();
     expect(edytuj.className).toContain("h-8");
   });
 
@@ -380,13 +377,14 @@ describe("HabitDetail", () => {
 
   it("okno usuwania w stylu .dlg: opis 14 px, Usuń destructive z koszem", async () => {
     render(<HabitDetail data={dane()} />);
-    await userEvent.click(screen.getByRole("button", { name: "Usuń" }));
+    await userEvent.click(screen.getByRole("button", { name: "Więcej akcji" }));
+    await userEvent.click(screen.getByRole("button", { name: "Usuń nawyk…" }));
     const okno = screen.getByRole("alertdialog");
     expect(
-      within(okno).getByText("Historia odhaczeń i notatki zostaną usunięte.")
+      within(okno).getByText(/^Zniknie też historia: 5 odhaczeń/)
         .className,
     ).toContain("text-sm");
-    const usun = within(okno).getByRole("button", { name: "Usuń" });
+    const usun = within(okno).getByRole("button", { name: "Usuń na zawsze" });
     expect(usun.className).toContain("bg-destructive");
     expect(usun.querySelector("svg")).not.toBeNull();
     expect(

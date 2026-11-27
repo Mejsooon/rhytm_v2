@@ -2,24 +2,29 @@
 
 // Ekran „Nawyki i sen” na komputerze (CHabits.dc.html): nagłówek, kafelki, karta Nawyki + karta Sen, heatmapa.
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Moon, Plus } from "lucide-react";
+import { toast } from "sonner";
 
 import { Button } from "@/components/controls";
 import { ModuleHeader } from "@/components/shell/module-header";
-import { formatDatePl } from "@/components/controls/calendar-math";
 import type { IsoDate } from "@/components/controls/calendar-math";
 import { weekdayOf } from "@/features/calendar/view-range";
+import { setHabitArchived } from "./actions";
+import { DeleteHabitDialog } from "./delete-habit-dialog";
 import { HabitDialog } from "./habit-dialog";
 import { HabitHeatmap } from "./habit-heatmap";
-import { HabitTiles } from "./habit-tiles";
 import { HabitWeekGrid } from "./habit-week-grid";
 import type { HabitsPageData } from "./load-habits";
 import { MHabitSheet } from "./mobile/m-habit-sheet";
 import { MHabits } from "./mobile/m-habits";
 import { MSleepSheet } from "./mobile/m-sleep-sheet";
 import { SleepCard } from "./sleep-card";
+import { archivedSince, dayStats } from "./model";
+import { sleepMinutes } from "./sleep";
 import { SleepDialog } from "./sleep-dialog";
+import { formatDuration } from "./text";
 import { useHabitsStore } from "./use-habits-store";
 
 // Indeks 0 = poniedziałek
@@ -32,6 +37,8 @@ const DNI_TYGODNIA = [
   "sobota",
   "niedziela",
 ];
+
+const MIESIACE = ["stycznia", "lutego", "marca", "kwietnia", "maja", "czerwca", "lipca", "sierpnia", "września", "października", "listopada", "grudnia"];
 
 export function HabitsView({
   data,
@@ -81,7 +88,35 @@ export function HabitsView({
     if (!otwarte) setOtwarteOkno(null);
   };
 
-  const dataNaglowka = `${DNI_TYGODNIA[weekdayOf(data.today) - 1]} · ${formatDatePl(data.today)}`;
+  // Nawyki z archiwum znikają z list, ale ich historia zostaje w heatmapie
+  const aktywne = data.habits.filter((h) => archivedSince(h, data.today) === null);
+  const wArchiwum = data.habits.length - aktywne.length;
+  const [edytowany, setEdytowany] = useState<string | null>(null);
+  const [usuwany, setUsuwany] = useState<{ id: string; name: string } | null>(null);
+
+  async function archiwizuj(id: string, name: string) {
+    const wynik = await setHabitArchived(id, true).catch(() => null);
+    if (!wynik?.ok) {
+      toast.error(wynik?.message ?? "Nie udało się zapisać. Spróbuj ponownie.");
+      return;
+    }
+    toast.success(`Zarchiwizowano „${name}”. Historia zostaje.`, {
+      action: { label: "Cofnij", onClick: () => void setHabitArchived(id, false) },
+    });
+  }
+
+  // „Wtorek, 17 listopada · 3 z 8 nawyków zrobione dziś · ostatnia noc 7:12 snu”
+  const dzis = dayStats(aktywne, checks, data.today, data.today);
+  const noc = [...data.sleepLogs].reverse().find((l) => l.date <= data.today);
+  const minutyNocy = noc ? sleepMinutes(noc.sleptAt, noc.wokeAt) : null;
+  const dzien = DNI_TYGODNIA[weekdayOf(data.today) - 1];
+  const [, miesiac, dm] = data.today.split("-").map(Number);
+  const podtytul = [
+    `${dzien[0].toUpperCase()}${dzien.slice(1)}, ${dm} ${MIESIACE[miesiac - 1]}`,
+    `${dzis.done} z ${dzis.planned} nawyków zrobione dziś`,
+    ...(minutyNocy === null ? [] : [`ostatnia noc ${formatDuration(minutyNocy)} snu`]),
+  ].join(" · ");
+  const noweKonto = data.habits.length === 0 && data.sleepLogs.length === 0;
 
   // Oba układy są w DOM; przełącza je wyłącznie CSS (800 px)
   return (
@@ -91,7 +126,7 @@ export function HabitsView({
         className="flex min-w-0 flex-col min-[800px]:hidden"
       >
         <MHabits
-          data={data}
+          data={{ ...data, habits: aktywne }}
           checks={checks}
           initialTab={initialTab}
           onToggle={(habitId, date) => void toggle(habitId, date)}
@@ -107,13 +142,13 @@ export function HabitsView({
         <ModuleHeader
           title="Nawyki i sen"
           webOnly
-          webMeta={
-            <span className="text-xs text-muted-foreground tabular-nums">
-              {dataNaglowka}
-            </span>
-          }
           webAction={
             <>
+              {wArchiwum > 0 && (
+                <Button variant="ghost" asChild>
+                  <Link href="/nawyki/archiwum">{`Archiwum (${wArchiwum})`}</Link>
+                </Button>
+              )}
               {/* Ikona księżyca zamiast „+”; nazwa dostępna zostaje „+ Wpis snu” (e2e, testy) */}
               <Button aria-label="+ Wpis snu" onClick={() => onNewSleep()}>
                 <Moon size={16} aria-hidden="true" />
@@ -127,42 +162,65 @@ export function HabitsView({
           }
         />
 
-        <div className="box-border flex w-full flex-col gap-6 p-6">
-          <HabitTiles
-            habits={data.habits}
-            checks={checks}
-            today={data.today}
-            weekStart={data.weekStart}
-            sleepLogs={data.sleepLogs}
-            sleepGoalMin={data.sleepGoalMin}
-          />
+        {noweKonto ? (
+          <HabitsEmpty onNewHabit={() => onNewHabit()} onNewSleep={() => onNewSleep()} />
+        ) : (
+          <div className="box-border flex w-full flex-col gap-6 p-6">
+            {/* Tytuł „Nawyki i sen” jest w nagłówku modułu */}
+            <p className="m-0 text-muted-foreground tabular-nums">{podtytul}</p>
 
-          <div className="grid grid-cols-[minmax(0,3fr)_minmax(0,2fr)] items-stretch gap-6">
-            <HabitWeekGrid
+            <div className="grid grid-cols-[minmax(0,3fr)_minmax(0,2fr)] items-stretch gap-6">
+              <HabitWeekGrid
+                habits={aktywne}
+                checks={checks}
+                progress={data.progress ?? []}
+                today={data.today}
+                weekStart={data.weekStart}
+                onToggle={(habitId, date) => void toggle(habitId, date)}
+                onNewHabit={() => onNewHabit()}
+                onEdit={setEdytowany}
+                onArchive={(h) => void archiwizuj(h.id, h.name)}
+                onDelete={setUsuwany}
+              />
+              <SleepCard
+                sleepLogs={data.sleepLogs}
+                today={data.today}
+                goalMin={data.sleepGoalMin}
+                bedtime={data.sleepBedtime ?? "23:00"}
+                clock={data.clock}
+                onOpenLast={(log) => onNewSleep(log.date)}
+              />
+            </div>
+
+            <HabitHeatmap
               habits={data.habits}
               checks={checks}
               today={data.today}
               weekStart={data.weekStart}
-              onToggle={(habitId, date) => void toggle(habitId, date)}
-              onNewHabit={() => onNewHabit()}
-            />
-            <SleepCard
-              sleepLogs={data.sleepLogs}
-              today={data.today}
-              goalMin={data.sleepGoalMin}
-              clock={data.clock}
-              onOpenLast={(log) => onNewSleep(log.date)}
             />
           </div>
-
-          <HabitHeatmap
-            habits={data.habits}
-            checks={checks}
-            today={data.today}
-            weekStart={data.weekStart}
-          />
-        </div>
+        )}
       </div>
+
+      {edytowany && (
+        <HabitDialog
+          open
+          onOpenChange={(o) => !o && setEdytowany(null)}
+          habit={data.habits.find((h) => h.id === edytowany)}
+          weekStart={data.weekStart}
+          clock={data.clock}
+          today={data.today}
+        />
+      )}
+      {usuwany && (
+        <DeleteHabitDialog
+          habitId={usuwany.id}
+          name={usuwany.name}
+          open
+          onOpenChange={(o) => !o && setUsuwany(null)}
+          onDeleted={() => setUsuwany(null)}
+        />
+      )}
 
       {otwarteOkno?.rodzaj === "nawyk" && otwarteOkno.tel && (
         <MHabitSheet
@@ -204,5 +262,42 @@ export function HabitsView({
         />
       )}
     </>
+  );
+}
+
+// Nowe konto (S2HabitsEmpty)
+function HabitsEmpty({
+  onNewHabit,
+  onNewSleep,
+}: {
+  onNewHabit: () => void;
+  onNewSleep: () => void;
+}) {
+  return (
+    <div className="mx-auto flex max-w-[640px] flex-col items-center gap-4 px-6 py-16 text-center">
+      <h2 className="m-0 text-xl font-semibold">Dodaj pierwszy nawyk albo wpis snu</h2>
+      <p className="m-0 text-muted-foreground">
+        Nawyki odhaczasz na ekranie Dziś. Sen zapisujesz rano — wystarczą godziny zaśnięcia i wstania.
+      </p>
+      <div className="flex gap-2">
+        <Button variant="primary" onClick={onNewHabit}>
+          Nowy nawyk
+        </Button>
+        <Button onClick={onNewSleep}>Zapisz sen</Button>
+      </div>
+      <section aria-label="Co tu zobaczysz" className="mt-6 flex w-full flex-col gap-3 rounded-lg border border-dashed border-black/[.14] p-5 text-left">
+        <span className="text-xs font-medium text-muted-foreground">Co tu zobaczysz</span>
+        {[
+          ["Heatmapa nawyków", "Dni z celem w kalendarzu 30 dni, 3 mies., 6 mies. i roku"],
+          ["Sen", "Średnia długość, regularność i noce z celem"],
+          ["Przypomnienia", "Push o wybranej godzinie, w dni, w które nawyk obowiązuje"],
+        ].map(([t, o]) => (
+          <div key={t}>
+            <b className="font-medium">{t}</b>
+            <p className="m-0 text-muted-foreground">{o}</p>
+          </div>
+        ))}
+      </section>
+    </div>
   );
 }

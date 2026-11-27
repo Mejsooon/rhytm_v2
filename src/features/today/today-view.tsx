@@ -374,6 +374,8 @@ export function TodayView({
               })}
               onToggle={(habitId) => void toggleHabit(habitId, today)}
               onCreate={() => setNowyNawyk(true)}
+              today={today}
+              progress={data.progress}
             />
           )}
 

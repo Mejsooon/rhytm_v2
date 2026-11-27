@@ -21,6 +21,9 @@ export type HabitsPageData = {
   habits: Habit[];
   checks: Array<{ habitId: string; date: IsoDate }>;
   sleepLogs: SleepLog[];
+  // Pora snu 'HH:MM' i dzisiejszy częściowy postęp nawyków ilościowych
+  sleepBedtime?: string;
+  progress?: Array<{ habitId: string; qty: number }>;
 };
 
 export type HabitDetailData = HabitsPageData & {
@@ -54,6 +57,8 @@ export function mapHabits(
       showOnToday: h.show_on_today,
       createdAt: h.created_at ?? "",
       schedules,
+      goalQty: h.goal_qty == null ? null : Number(h.goal_qty),
+      goalUnit: h.goal_unit ?? null,
     };
   });
 }
@@ -73,7 +78,7 @@ export function mapSleepLogs(rows: SleepRow[]): SleepLog[] {
 async function loadProfile(supabase: SupabaseClient<Database>, userId: string) {
   const { data, error } = await supabase
     .from("profiles")
-    .select("timezone, week_start, clock, sleep_goal_min")
+    .select("timezone, week_start, clock, sleep_goal_min, sleep_bedtime")
     .eq("user_id", userId)
     .maybeSingle();
   if (error) throw new Error(error.message);
@@ -83,6 +88,7 @@ async function loadProfile(supabase: SupabaseClient<Database>, userId: string) {
     weekStart: (data?.week_start === "sun" ? "sun" : "mon") as "mon" | "sun",
     clock: (data?.clock === "12" ? "12" : "24") as "12" | "24",
     sleepGoalMin: data?.sleep_goal_min ?? DOMYSLNY_CEL_SNU_MIN,
+    sleepBedtime: (data?.sleep_bedtime ?? "23:00").slice(0, 5),
   };
 }
 
@@ -114,6 +120,21 @@ export async function loadChecks(
   return wynik;
 }
 
+// Częściowy postęp z jednego dnia
+export async function loadProgress(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+  date: IsoDate,
+): Promise<Array<{ habitId: string; qty: number }>> {
+  const { data, error } = await supabase
+    .from("habit_progress")
+    .select("habit_id, qty")
+    .eq("user_id", userId)
+    .eq("date", date);
+  if (error) throw new Error(error.message);
+  return (data ?? []).map((w) => ({ habitId: w.habit_id, qty: Number(w.qty) }));
+}
+
 // Lista nawyków z odhaczeniami z całej historii i snem z 60 dni.
 // Pełna historia odhaczeń jest potrzebna, żeby serie na liście zgadzały się ze stroną szczegółów.
 export async function loadHabitsPage(
@@ -123,7 +144,7 @@ export async function loadHabitsPage(
   const profil = await loadProfile(supabase, userId);
   const odSnu = addDays(profil.today, -60);
 
-  const [nawykiRes, wersjeRes, odhaczenia, senRes] = await Promise.all([
+  const [nawykiRes, wersjeRes, odhaczenia, senRes, progress] = await Promise.all([
     supabase
       .from("habits")
       .select("*")
@@ -142,6 +163,7 @@ export async function loadHabitsPage(
       .eq("user_id", userId)
       .gte("date", odSnu)
       .order("date", { ascending: true }),
+    loadProgress(supabase, userId, profil.today),
   ]);
   // Błąd zapytania ma trafić do granicy błędu trasy, a nie pokazać pustą listę
   for (const wynik of [nawykiRes, wersjeRes, senRes]) {
@@ -156,6 +178,7 @@ export async function loadHabitsPage(
     ),
     checks: odhaczenia,
     sleepLogs: mapSleepLogs((senRes.data ?? []) as SleepRow[]),
+    progress,
   };
 }
 
