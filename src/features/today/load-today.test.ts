@@ -91,6 +91,7 @@ describe("loadToday", () => {
       weeklyWorkoutsGoal: 3,
       fromHour: 7,
       toHour: 23,
+      weightKg: null,
     });
   });
 

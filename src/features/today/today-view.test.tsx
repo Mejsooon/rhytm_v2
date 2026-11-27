@@ -48,6 +48,8 @@ import { TodayView } from "./today-view";
 // Wtorek 17.11.2026, 10:20, tydzień od poniedziałku 16.11
 function dane(): TodayData {
   return {
+    templates: [],
+    activityKinds: [],
     profile: {
       timezone: "Europe/Warsaw",
       weekStart: "mon",
@@ -61,6 +63,7 @@ function dane(): TodayData {
       weeklyWorkoutsGoal: 3,
       fromHour: 7,
       toHour: 23,
+      weightKg: null,
     },
     today: "2026-11-17",
     nowMin: 10 * 60 + 20,

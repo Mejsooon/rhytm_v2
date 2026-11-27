@@ -5,9 +5,16 @@
 // Telefon: MToday (makieta CMToday, wariant F). Oba drzewa są w DOM, przełącza je wyłącznie CSS (800 px).
 import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Plus } from "lucide-react";
+import { ChevronDown, Plus } from "lucide-react";
+import { toast } from "sonner";
 
-import { Button, StatusBadge } from "@/components/controls";
+import {
+  ActionPopover,
+  Button,
+  Kbd,
+  MENU_ITEM,
+  StatusBadge,
+} from "@/components/controls";
 import { todayIso } from "@/components/controls/calendar-math";
 import { ModuleHeader } from "@/components/shell/module-header";
 import {
@@ -18,11 +25,17 @@ import { minutesNow } from "@/features/calendar/load-calendar";
 import { DNI_PELNE } from "@/features/calendar/mobile/pl";
 import { weekdayOf } from "@/features/calendar/view-range";
 import { HabitDialog } from "@/features/habits/habit-dialog";
+import { SleepDialog } from "@/features/habits/sleep-dialog";
+import { createGymSession } from "@/features/sport/actions";
+import { activityKinds } from "@/features/sport/activities";
+import { ActivityDialog } from "@/features/sport/activity-dialog";
+import { RunDialog } from "@/features/sport/run-dialog";
 import { DayPlan } from "./day-plan";
 import type { TodayData } from "./load-today";
 import { MQuickAdd } from "./mobile/m-quick-add";
 import { MToday } from "./mobile/m-today";
 import { isoWeekNumber, todayHabits, weekBars } from "./model";
+import { QuickAddDialog } from "./quick-add-dialog";
 import { TodayHabits } from "./today-habits";
 import { useTodayStore } from "./use-today-store";
 import { WeekCard } from "./week-card";
@@ -75,6 +88,21 @@ export function TodayView({
       window.clearInterval(interwal);
     };
   }, [timezone, today, router]);
+  // Menu „Więcej sposobów dodawania” i okno z niego otwarte
+  const [menu, setMenu] = useState(false);
+  const [okno, setOkno] = useState<"szybko" | "bieg" | "aktywnosc" | "sen" | null>(null);
+  // Skrót Ctrl/⌘+Shift+K: „Szybko dodaj” (tylko web; na telefonie jest pływający „+”)
+  useEffect(() => {
+    const klawisz = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.shiftKey && !e.altKey && e.key.toLowerCase() === "k") {
+        e.preventDefault();
+        setOkno("szybko");
+      }
+    };
+    window.addEventListener("keydown", klawisz);
+    return () => window.removeEventListener("keydown", klawisz);
+  }, []);
+
   // Otwarte okno nowego bloku (dane startowe) albo null
   const [nowyBlok, setNowyBlok] = useState<BlockDialogInitial | null>(null);
   // Otwarty arkusz szybkiego dodawania MQuickAdd (pływający „+” na telefonie)
@@ -98,13 +126,78 @@ export function TodayView({
     });
   }
 
+  // Pusty trening od teraz: sesja i od razu dziennik siłowni (menu zamyka się przy kliknięciu,
+  // więc nie ma jak kliknąć dwa razy)
+  async function rozpocznijTrening() {
+    const min = minutesNow(timezone);
+    const start = `${String(Math.floor(min / 60)).padStart(2, "0")}:${String(min % 60).padStart(2, "0")}`;
+    const wynik = await createGymSession({ date: todayIso(timezone), start }).catch(() => null);
+    if (wynik?.ok && wynik.id) router.push(`/sport/trening/${wynik.id}`);
+    else toast.error("Nie udało się zapisać. Spróbuj ponownie.");
+  }
+
+  const pozycje: [string, () => void][] = [
+    ["Szybko dodaj…", () => setOkno("szybko")],
+    ["Zapisz bieg", () => setOkno("bieg")],
+    ["Rozpocznij trening", () => void rozpocznijTrening()],
+    ["Dodaj aktywność", () => setOkno("aktywnosc")],
+    ["Zapisz sen", () => setOkno("sen")],
+    ["Nowy nawyk", () => setNowyNawyk(true)],
+  ];
+
   const przyciskNowyBlok = (
-    // .btnp z CToday: 32 px, ikona + 16 px
-    <Button variant="primary" size="md" onClick={otworzNowyBlok}>
-      <Plus size={16} aria-hidden="true" />
-      Nowy blok
-    </Button>
+    // .btnp z S2Today: przycisk dzielony „Nowy blok” + strzałka z menu
+    <div className="flex">
+      <Button variant="primary" size="md" onClick={otworzNowyBlok} className="rounded-r-none">
+        <Plus size={16} aria-hidden="true" />
+        Nowy blok
+      </Button>
+      <ActionPopover
+        open={menu}
+        onOpenChange={setMenu}
+        align="end"
+        width={240}
+        className="p-1"
+        trigger={
+          <Button variant="primary" size="md" icon aria-label="Więcej sposobów dodawania" className="rounded-l-none border-l-white/20">
+            <ChevronDown size={16} aria-hidden="true" />
+          </Button>
+        }
+      >
+        {pozycje.map(([nazwa, akcja], i) => (
+          <button
+            key={nazwa}
+            type="button"
+            className={MENU_ITEM}
+            onClick={() => {
+              setMenu(false);
+              akcja();
+            }}
+          >
+            {nazwa}
+            {i === 0 && <Kbd className="ml-auto">Ctrl⇧K</Kbd>}
+          </button>
+        ))}
+      </ActionPopover>
+    </div>
   );
+
+  const profilSportu = {
+    timezone,
+    weekStart: profile.weekStart,
+    clock: profile.clock,
+    weightKg: profile.weightKg,
+    workoutsGoalOn: profile.workoutsGoalOn,
+    weeklyWorkoutsGoal: profile.weeklyWorkoutsGoal,
+    kmGoalOn: profile.kmGoalOn,
+    weeklyKmGoal: profile.weeklyKmGoal,
+  };
+  const zamknij = () => {
+    setOkno(null);
+    router.refresh();
+  };
+  // Domyślna godzina w oknach: teraz
+  const godzinaTeraz = `${String(Math.floor(teraz / 60)).padStart(2, "0")}:${String(teraz % 60).padStart(2, "0")}`;
 
   // ?szybko=blok: otwieramy dodawanie (także gdy widok już działa), a potem czyścimy adres, żeby odświeżenie
   // ani „wstecz” nie otwierały go drugi raz. Wariant wybiera matchMedia dopiero w efekcie, po hydratacji,
@@ -240,6 +333,40 @@ export function TodayView({
         </div>
       </div>
 
+      {okno === "szybko" && (
+        <QuickAddDialog
+          today={today}
+          nowMin={teraz}
+          templates={data.templates}
+          kinds={activityKinds(data.activityKinds)}
+          sleepLogs={data.sleepLogs}
+          onClose={() => setOkno(null)}
+          onFullForm={(typ) => {
+            setOkno(typ === "run" ? "bieg" : typ === "other" ? "aktywnosc" : typ === "sleep" ? "sen" : null);
+            if (typ === "block") otworzNowyBlok();
+            if (typ === "habit") setNowyNawyk(true);
+            if (typ === "gym") void rozpocznijTrening();
+          }}
+        />
+      )}
+      {okno === "bieg" && (
+        <RunDialog item={null} date={today} start={godzinaTeraz} profile={profilSportu} onClose={zamknij} />
+      )}
+      {okno === "aktywnosc" && (
+        <ActivityDialog item={null} date={today} start={godzinaTeraz} profile={profilSportu} kinds={data.activityKinds} onClose={zamknij} onDelete={zamknij} />
+      )}
+      {okno === "sen" && (
+        <SleepDialog
+          open
+          onOpenChange={(otwarte) => !otwarte && zamknij()}
+          date={today}
+          logs={data.sleepLogs}
+          goalMin={profile.sleepGoalMin}
+          clock={profile.clock}
+          weekStart={profile.weekStart}
+          today={today}
+        />
+      )}
       {oknoBloku}
       {/* Okno nowego nawyku z modułu Nawyki; akcja odświeża /dzis, a refresh dociąga dane od razu */}
       <HabitDialog

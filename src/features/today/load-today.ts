@@ -19,6 +19,7 @@ import {
 } from "@/features/habits/load-habits";
 import type { Checks, Habit } from "@/features/habits/model";
 import type { SleepLog } from "@/features/habits/sleep";
+import type { ActivityKindRow } from "@/features/sport/activities";
 import type { SportItem } from "@/features/sport/model";
 import type { TaskRow } from "@/features/tasks/model";
 import { safeTimezone } from "@/lib/time/timezones";
@@ -48,7 +49,12 @@ export type TodayData = {
     // Godziny aktywne planu dnia (Ustawienia → Kalendarz)
     fromHour: number;
     toHour: number;
+    // Waga do liczenia kcal w oknach biegu i aktywności
+    weightKg: number | null;
   };
+  // Szablony siłowni i własne rodzaje aktywności (menu dodawania i „Szybko dodaj”)
+  templates: { id: string; name: string }[];
+  activityKinds: ActivityKindRow[];
   today: IsoDate;
   nowMin: number;
   weekStartDate: IsoDate;
@@ -75,7 +81,7 @@ export async function loadToday(
   const { data: p, error: blad } = await supabase
     .from("profiles")
     .select(
-      "timezone, week_start, clock, display_name, avatar_path, sleep_goal_min, km_goal_on, weekly_km_goal, workouts_goal_on, weekly_workouts_goal, calendar_from_hour, calendar_to_hour",
+      "timezone, week_start, clock, display_name, avatar_path, sleep_goal_min, km_goal_on, weekly_km_goal, workouts_goal_on, weekly_workouts_goal, calendar_from_hour, calendar_to_hour, weight_kg",
     )
     .eq("user_id", userId)
     .maybeSingle();
@@ -96,6 +102,7 @@ export async function loadToday(
     weeklyWorkoutsGoal: p?.weekly_workouts_goal ?? DOMYSLNY_CEL_TRENINGOW,
     fromHour: p?.calendar_from_hour ?? 7,
     toHour: p?.calendar_to_hour ?? 23,
+    weightKg: p?.weight_kg ?? null,
   };
 
   const today = todayIso(timezone, now);
@@ -111,6 +118,8 @@ export async function loadToday(
     wersjeRes,
     odhaczenia,
     senRes,
+    szablonyRes,
+    rodzajeRes,
   ] = await Promise.all([
     // Bloki, wyjątki, zadania tygodnia, kategorie i treningi tygodnia (wszystkie)
     loadCalendar(
@@ -145,10 +154,20 @@ export async function loadToday(
       .gte("date", odPoprzedniego)
       .lte("date", koniecTygodnia)
       .order("date", { ascending: true }),
+    supabase
+      .from("workout_templates")
+      .select("id, name")
+      .eq("user_id", userId)
+      .order("name"),
+    supabase
+      .from("activity_kinds")
+      .select("name, color, has_distance")
+      .eq("user_id", userId)
+      .order("name"),
   ]);
 
   // Błąd zapytania ma trafić do granicy błędu trasy, a nie pokazać pusty ekran
-  for (const wynik of [nawykiRes, wersjeRes, senRes]) {
+  for (const wynik of [nawykiRes, wersjeRes, senRes, szablonyRes, rodzajeRes]) {
     if (wynik.error) throw new Error(wynik.error.message);
   }
 
@@ -165,6 +184,8 @@ export async function loadToday(
 
   return {
     profile,
+    templates: szablonyRes.data ?? [],
+    activityKinds: rodzajeRes.data ?? [],
     today,
     nowMin,
     weekStartDate,
