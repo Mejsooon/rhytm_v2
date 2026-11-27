@@ -108,6 +108,14 @@ describe("signIn", () => {
     });
   });
 
+  it("limit prób Supabase → osobny komunikat, bez czerwonych pól", async () => {
+    signInWithPassword.mockResolvedValue({ data: { user: null }, error: { status: 429 } });
+    expect(await signIn({ status: "idle" }, formularz(poprawne))).toEqual({
+      status: "error",
+      message: "Za dużo prób, spróbuj za chwilę.",
+    });
+  });
+
   it("błąd autoryzacji → „Nieprawidłowy e-mail lub hasło”", async () => {
     signInWithPassword.mockResolvedValue({
       data: { user: null },
@@ -117,6 +125,7 @@ describe("signIn", () => {
     expect(wynik).toEqual({
       status: "error",
       message: "Nieprawidłowy e-mail lub hasło",
+      fieldErrors: { haslo: "Nieprawidłowy e-mail lub hasło" },
     });
   });
 
@@ -128,6 +137,7 @@ describe("signIn", () => {
     expect(wynik).toEqual({
       status: "error",
       message: "Nieprawidłowy e-mail lub hasło",
+      fieldErrors: { haslo: "Nieprawidłowy e-mail lub hasło" },
     });
     expect(signInWithPassword).not.toHaveBeenCalled();
   });

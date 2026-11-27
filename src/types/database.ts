@@ -290,6 +290,36 @@ export type Database = {
           },
         ];
       };
+      feedback: {
+        Row: {
+          context: Json;
+          contact: boolean;
+          created_at: string;
+          id: string;
+          kind: string;
+          message: string;
+          user_id: string;
+        };
+        Insert: {
+          context?: Json;
+          contact?: boolean;
+          created_at?: string;
+          id?: string;
+          kind: string;
+          message: string;
+          user_id?: string;
+        };
+        Update: {
+          context?: Json;
+          contact?: boolean;
+          created_at?: string;
+          id?: string;
+          kind?: string;
+          message?: string;
+          user_id?: string;
+        };
+        Relationships: [];
+      };
       habit_checks: {
         Row: {
           date: string;

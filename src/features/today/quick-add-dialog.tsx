@@ -49,6 +49,7 @@ export function QuickAddDialog({
   sleepLogs,
   onFullForm,
   onClose,
+  initialText = "",
 }: {
   today: IsoDate;
   nowMin: number;
@@ -58,9 +59,11 @@ export function QuickAddDialog({
   sleepLogs: SleepLog[];
   onFullForm: (typ: QuickAdd["type"]) => void;
   onClose: () => void;
+  // Tekst wpisany wcześniej w oknie szukania
+  initialText?: string;
 }) {
   const router = useRouter();
-  const [tekst, setTekst] = useState("");
+  const [tekst, setTekst] = useState(initialText);
   const [pending, setPending] = useState(false);
   const [blad, setBlad] = useState("");
   // Blokada podwójnego zapisu (dwa Entery, zanim stan pending się odświeży)

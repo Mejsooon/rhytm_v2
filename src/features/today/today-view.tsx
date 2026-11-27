@@ -37,6 +37,7 @@ import { MQuickAdd } from "./mobile/m-quick-add";
 import { MToday } from "./mobile/m-today";
 import { isoWeekNumber, todayHabits, weekBars } from "./model";
 import { QuickAddDialog } from "./quick-add-dialog";
+import { takeQuickRequest, type QuickAction } from "./quick-request";
 import { TodayHabits } from "./today-habits";
 import { useTodayStore } from "./use-today-store";
 import { WeekCard } from "./week-card";
@@ -51,9 +52,9 @@ export function TodayView({
   name: string;
   // Podpisany adres zdjęcia profilu (awatar na telefonie); null → inicjał
   avatarUrl?: string | null;
-  // ?szybko=blok (z ekranu Szukaj): od razu otwiera dodawanie bloku — arkusz szybkiego dodawania
-  // na telefonie, okno „Nowy blok” na webie
-  openOnLoad?: "blok" | null;
+  // ?szybko=… (⌘K, skróty, ekran Szukaj): od razu otwiera okno. „blok” na telefonie to arkusz
+  // szybkiego dodawania, na webie okno „Nowy blok”
+  openOnLoad?: QuickAction | null;
 }) {
   const router = useRouter();
   // Dane z optymistycznymi zmianami: plan dnia („x/y”) liczy się z tych samych zadań co dymek
@@ -104,6 +105,8 @@ export function TodayView({
     return () => window.removeEventListener("keydown", klawisz);
   }, []);
 
+  // Tekst z „Szybko dodaj „…”” w oknie szukania
+  const [tekstSzybki, setTekstSzybki] = useState("");
   // Otwarte okno nowego bloku (dane startowe) albo null
   const [nowyBlok, setNowyBlok] = useState<BlockDialogInitial | null>(null);
   // Otwarty arkusz szybkiego dodawania MQuickAdd (pływający „+” na telefonie)
@@ -200,22 +203,33 @@ export function TodayView({
   // Domyślna godzina w oknach: teraz
   const godzinaTeraz = `${String(Math.floor(teraz / 60)).padStart(2, "0")}:${String(teraz % 60).padStart(2, "0")}`;
 
-  // ?szybko=blok: otwieramy dodawanie (także gdy widok już działa), a potem czyścimy adres, żeby odświeżenie
+  // ?szybko=…: otwieramy okno (także gdy widok już działa), a potem czyścimy adres, żeby odświeżenie
   // ani „wstecz” nie otwierały go drugi raz. Wariant wybiera matchMedia dopiero w efekcie, po hydratacji,
   // więc HTML z serwera i pierwszy render klienta są takie same (nic nie jest jeszcze otwarte).
   useEffect(() => {
     if (!openOnLoad) return;
+    const prosba = takeQuickRequest();
     const tel =
       typeof window.matchMedia === "function" &&
       window.matchMedia("(max-width: 799px)").matches;
-    if (tel) {
-      // eslint-disable-next-line react-hooks/set-state-in-effect -- otwarcie arkusza jest reakcją na parametr adresu
-      setSzybkieDodawanie(true);
-    } else {
-      otworzNowyBlok();
+    /* eslint-disable react-hooks/set-state-in-effect -- otwarcie okna jest reakcją na parametr adresu */
+    if (openOnLoad === "blok") {
+      if (tel) setSzybkieDodawanie(true);
+      else otworzNowyBlok();
+    } else if (openOnLoad === "dodaj") {
+      if (prosba !== null) setTekstSzybki(prosba);
+      setOkno("szybko");
+    } else if (openOnLoad === "aktywnosc") {
+      setOkno("aktywnosc");
+    } else if (openOnLoad === "nawyk") {
+      setNowyNawyk(true);
+    } else if (prosba !== null) {
+      // Trening zapisuje się od razu, więc tylko na prośbę z aplikacji, nie z samego adresu
+      void rozpocznijTrening();
     }
+    /* eslint-enable react-hooks/set-state-in-effect */
     router.replace("/dzis");
-    // otworzNowyBlok czyta tylko strefę profilu i zawsze aktualny zegar
+    // otworzNowyBlok i rozpocznijTrening czytają tylko strefę profilu i zawsze aktualny zegar
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [openOnLoad]);
 
@@ -396,7 +410,11 @@ export function TodayView({
           templates={data.templates}
           kinds={activityKinds(data.activityKinds)}
           sleepLogs={data.sleepLogs}
-          onClose={() => setOkno(null)}
+          initialText={tekstSzybki}
+          onClose={() => {
+            setOkno(null);
+            setTekstSzybki("");
+          }}
           onFullForm={(typ) => {
             setOkno(typ === "run" ? "bieg" : typ === "other" ? "aktywnosc" : typ === "sleep" ? "sen" : null);
             if (typ === "block") otworzNowyBlok();

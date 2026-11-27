@@ -40,6 +40,8 @@ beforeEach(() => {
     habits: fakeTable({ data: [] }),
     habit_checks: fakeTable({ data: [] }),
     sport_sessions: fakeTable({ data: [] }),
+    workout_templates: fakeTable({ data: [] }),
+    exercises: fakeTable({ data: [] }),
   };
   from.mockImplementation((nazwa: string) => tables[nazwa]);
 });
@@ -135,7 +137,7 @@ describe("searchAll", () => {
     expect(filtr).toBe(`values->>${POLE}.ilike."%a,\\"b)%"`);
   });
 
-  it("grupy w kolejności Strony, Kalendarz, Nawyki, Sport; puste pomijane", async () => {
+  it("grupy: strony, wiersze, kalendarz, sport (z szablonami i ćwiczeniami), nawyki; puste pomijane", async () => {
     tables.pages = fakeTable({
       data: [
         { id: STRONA, title: "Books", is_system: false, page_blocks: [{ page_rows: [{ count: 11 }] }] },
@@ -189,6 +191,11 @@ describe("searchAll", () => {
       ],
     });
 
+    tables.workout_templates = fakeTable({
+      data: [{ id: "t1", name: "Pull", workout_template_items: [{ count: 5 }] }],
+    });
+    tables.exercises = fakeTable({ data: [{ id: "c1", name: "Wiosłowanie" }] });
+
     const wynik = await searchAll("ee");
     expect(wynik).toEqual({
       ok: true,
@@ -199,23 +206,25 @@ describe("searchAll", () => {
             { title: "Books", meta: "11 wierszy", href: `/strony/${STRONA}` },
             { title: "Pusta", meta: "pusta strona", href: "/strony/p2" },
             { title: "Hasła", meta: "moduł", href: "/hasla" },
-            { title: "Dune", meta: "w Books", href: `/strony/${STRONA}` },
           ],
         },
+        { title: "Wiersze stron", items: [{ title: "Dune", meta: "w Books", href: `/strony/${STRONA}` }] },
         {
           title: "Kalendarz",
           items: [
             { title: "Matematyka", meta: "dziś 10:30–12:30", href: "/kalendarz?widok=dzien&data=2026-11-26" },
           ],
         },
-        { title: "Nawyki", items: [{ title: "Czytanie", meta: "seria 2 dni", href: `/nawyki/${NAWYK}` }] },
         {
           title: "Sport",
           items: [
             { title: "Bieg poranny", meta: "czw 12.11 · 10,2 km", href: "/sport?miesiac=2026-11&bieg=s1" },
             { title: "Push", meta: "wt 10.11", href: "/sport/trening/s2" },
+            { title: "Szablon Pull", meta: "trening siłowy · 5 ćwiczeń", href: "/sport/szablony/t1" },
+            { title: "Wiosłowanie", meta: "ćwiczenie · historia i rekordy", href: "/sport/cwiczenia/c1" },
           ],
         },
+        { title: "Nawyki i sen", items: [{ title: "Czytanie", meta: "seria 2 dni", href: `/nawyki/${NAWYK}` }] },
       ],
     });
   });

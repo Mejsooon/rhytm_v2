@@ -2,7 +2,7 @@
 
 import * as React from "react";
 import Link from "next/link";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { Plus, Search, Settings } from "lucide-react";
 
 import { RhytmLogo } from "@/components/brand/rhytm-logo";
@@ -10,6 +10,8 @@ import { Button, FIELD, Kbd } from "@/components/controls";
 import type { PageSummary } from "@/features/pages/load-pages";
 import { PageIcon } from "@/features/pages/page-icon";
 import { PageMenu } from "@/features/pages/page-menu";
+import { HelpMenu } from "@/features/help/help-menu";
+import { openSearch } from "@/features/search/open-search";
 import { usePagesStore } from "@/features/pages/use-pages-store";
 import { cn } from "@/lib/utils";
 import { AccountPopover, type SidebarUser } from "./account-popover";
@@ -32,8 +34,8 @@ const POZYCJA_SZYNY =
 const KRESKA_SZYNY = "my-1.5 h-px w-6 flex-none bg-black/[.08]";
 
 // Sidebar web (S2Sidebar.dc.html): 232 px, przyklejony do góry, poniżej 800 px ukryty (jest TabBar).
-// Schowany (Ctrl+\) zamienia się w szynę 56 px z ikonami (S2SidebarCollapsed); karty planu i „Pomoc i opinie”
-// z makiety nie ma (decyzja 3 pakietu Tabele v3).
+// Schowany (Ctrl+\) zamienia się w szynę 56 px z ikonami (S2SidebarCollapsed); karty planu z makiety
+// jeszcze nie ma (pakiet Plan Free/Pro).
 // Strony: kolejność z `position`; ulubione są tylko w sekcji „Ulubione” (ukrytej, gdy pusta).
 // Przeciąganie w obrębie sekcji zmienia kolejność, upuszczenie w drugiej sekcji przełącza ulubione.
 // F2 zmienia nazwę aktywnej, „⋯” otwiera menu strony (PageMenu). Pusty tytuł → „Bez tytułu”.
@@ -45,7 +47,6 @@ export function AppSidebar({
   pages?: PageSummary[];
 }) {
   const sciezka = usePathname();
-  const router = useRouter();
   const { collapsed } = useSidebarState();
   const store = usePagesStore(pages);
   const strony = store.pages;
@@ -64,18 +65,6 @@ export function AppSidebar({
   const aktywnaStrona = strony.find((s) => sciezka === `/strony/${s.id}`);
   const aktywnaStronaId = aktywnaStrona?.id;
   const aktywnaStronaTytul = aktywnaStrona?.title;
-
-  // ⌘K / Ctrl+K z dowolnego miejsca otwiera Szukaj (także z pola tekstowego — jak w pasku Kbd)
-  React.useEffect(() => {
-    function przyKlawiszu(e: KeyboardEvent) {
-      if ((e.ctrlKey || e.metaKey) && !e.altKey && !e.shiftKey && e.key.toLowerCase() === "k") {
-        e.preventDefault();
-        router.push("/szukaj");
-      }
-    }
-    window.addEventListener("keydown", przyKlawiszu);
-    return () => window.removeEventListener("keydown", przyKlawiszu);
-  }, [router]);
 
   // F2 na aktywnej stronie włącza zmianę nazwy (poza polami tekstowymi)
   React.useEffect(() => {
@@ -158,9 +147,15 @@ export function AppSidebar({
           <RhytmLogo size={22} />
         </span>
         <SidebarToggle placement="rail" />
-        <Link href="/szukaj" aria-label="Szukaj" title="Szukaj · ⌘K" className={klasaSzyny("/szukaj")}>
+        <button
+          type="button"
+          onClick={openSearch}
+          aria-label="Szukaj"
+          title="Szukaj · ⌘K"
+          className={cn(klasaSzyny("/szukaj"), "cursor-pointer border-0 bg-transparent")}
+        >
           <Search size={16} aria-hidden="true" />
-        </Link>
+        </button>
         <span aria-hidden="true" className={KRESKA_SZYNY} />
         {NAV_MODULES.map(({ key, label, href, icon: Ikona }) => (
           <Link
@@ -193,6 +188,7 @@ export function AppSidebar({
           );
         })}
         <span className="min-h-6 flex-1" />
+        <HelpMenu email={user.email} compact />
         <Link
           href="/ustawienia/ogolne"
           aria-label="Ustawienia"
@@ -222,16 +218,17 @@ export function AppSidebar({
         <SidebarToggle placement="sidebar" />
       </div>
 
-      {/* Wyszukiwarka: link do /szukaj w wyglądzie .igroup; skrót ⌘K / Ctrl+K robi to samo z klawiatury */}
-      <Link
-        href="/szukaj"
+      {/* Wyszukiwarka w wyglądzie .igroup otwiera okno szukania; ⌘K / Ctrl+K robi to samo z klawiatury */}
+      <button
+        type="button"
+        onClick={openSearch}
         // .igroup z coss.css
-        className="mt-1 mb-2 flex h-8 cursor-pointer items-center gap-2 rounded-md border border-input bg-white bg-clip-padding px-[11px] text-left text-sm text-muted-foreground no-underline shadow-xs outline-none transition-colors hover:bg-panel focus-visible:shadow-focus"
+        className="mt-1 mb-2 flex h-8 flex-none cursor-pointer items-center gap-2 rounded-md border border-input bg-white bg-clip-padding px-[11px] text-left text-sm text-muted-foreground shadow-xs outline-none transition-colors hover:bg-panel focus-visible:shadow-focus"
       >
         <Search size={16} aria-hidden="true" />
         <span className="flex-1">Szukaj…</span>
         <Kbd>⌘K</Kbd>
-      </Link>
+      </button>
 
       <div className={cn(GRUPA, "px-2 pt-3 pb-1")}>Moduły</div>
       {NAV_MODULES.map(({ key, label, href, icon: Ikona }) => (
@@ -426,6 +423,7 @@ export function AppSidebar({
       </Link>
 
       <div className="min-h-6 flex-1" />
+      <HelpMenu email={user.email} />
       {/* Web prowadzi wprost do „Ogólne” (/ustawienia to na telefonie indeks), ale aktywna jest każda podstrona /ustawienia */}
       <Link
         href="/ustawienia/ogolne"

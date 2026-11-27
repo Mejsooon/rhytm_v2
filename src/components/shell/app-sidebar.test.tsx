@@ -67,19 +67,13 @@ describe("AppSidebar", () => {
     movePage.mockResolvedValue({ ok: true });
   });
 
-  it("pole „Szukaj…” to link do /szukaj, a ⌘K i Ctrl+K przechodzą do Szukaj", () => {
+  it("pole „Szukaj…” otwiera okno szukania", async () => {
+    const otworz = vi.fn((e: Event) => e.preventDefault());
+    window.addEventListener("rhytm:szukaj", otworz);
     render(<AppSidebar user={uzytkownik} />);
-    expect(screen.getByRole("link", { name: /Szukaj…/ })).toHaveAttribute("href", "/szukaj");
-    fireEvent.keyDown(window, { key: "k", ctrlKey: true });
-    expect(push).toHaveBeenCalledWith("/szukaj");
-    push.mockClear();
-    fireEvent.keyDown(window, { key: "K", metaKey: true });
-    expect(push).toHaveBeenCalledWith("/szukaj");
-    push.mockClear();
-    // Samo „k” i inne złożenia nie przechodzą
-    fireEvent.keyDown(window, { key: "k" });
-    fireEvent.keyDown(window, { key: "k", ctrlKey: true, shiftKey: true });
-    expect(push).not.toHaveBeenCalled();
+    await userEvent.setup().click(screen.getByRole("button", { name: /Szukaj…/ }));
+    expect(otworz).toHaveBeenCalledOnce();
+    window.removeEventListener("rhytm:szukaj", otworz);
   });
 
   it("pokazuje wyszukiwarkę z keycapem, sekcje, 5 modułów, Ustawienia i inicjał", () => {
@@ -426,12 +420,11 @@ describe("AppSidebar", () => {
     ]);
   });
 
-  it("decyzja 3: bez karty „Plan Free … Przejdź na Pro” i bez „Pomoc i opinie”", () => {
+  it("ma „Pomoc i opinie”; karty planu jeszcze nie ma", () => {
     render(<AppSidebar user={uzytkownik} pages={[strona("a", "Alfa", 0)]} />);
     expect(screen.queryByText(/Plan Free/)).toBeNull();
     expect(screen.queryByText("Przejdź na Pro")).toBeNull();
-    expect(screen.queryByText("Pomoc i opinie")).toBeNull();
-    expect(screen.queryByRole("link", { name: "Pomoc i opinie" })).toBeNull();
+    expect(screen.getByRole("button", { name: "Pomoc i opinie" })).toBeInTheDocument();
   });
 
   it("rozwinięty pasek nie ma zwiniętej nawigacji", () => {
@@ -463,7 +456,7 @@ describe("AppSidebar", () => {
     expect(within(szyna).getByRole("img", { name: "rhytm" })).toBeInTheDocument();
     const pokaz = within(szyna).getByRole("button", { name: "Pokaż pasek boczny" });
     expect(pokaz.getAttribute("title")).toMatch(/Pokaż pasek boczny · (Ctrl|⌘)\+\\/);
-    expect(within(szyna).getByRole("link", { name: "Szukaj" })).toHaveAttribute("href", "/szukaj");
+    expect(within(szyna).getByRole("button", { name: "Szukaj" })).toBeInTheDocument();
     for (const [nazwa, href] of [
       ["Dziś", "/dzis"],
       ["Kalendarz", "/kalendarz"],
@@ -485,8 +478,8 @@ describe("AppSidebar", () => {
     expect(strony[0].querySelector("[data-page-icon]")).toHaveAttribute("data-page-icon", "book-open");
     expect(within(szyna).getByRole("link", { name: "Ustawienia" })).toHaveAttribute("href", "/ustawienia/ogolne");
     expect(within(szyna).getByRole("button", { name: "Konto Mejson" })).toBeInTheDocument();
-    // Decyzja 3: bez „Pomoc i opinie”; bez dzwonka (powiadomienia to osobny pakiet)
-    expect(within(szyna).queryByRole("link", { name: "Pomoc i opinie" })).toBeNull();
+    // Bez dzwonka (centrum powiadomień to część B2)
+    expect(within(szyna).getByRole("button", { name: "Pomoc i opinie" })).toBeInTheDocument();
 
     await user.click(pokaz);
     expect(screen.queryByRole("navigation", { name: "Główna nawigacja (zwinięta)" })).toBeNull();

@@ -44,7 +44,7 @@ export async function signIn(
     password: formData.get("password"),
   });
   if (!parsed.success) {
-    return { status: "error", message: BLAD_LOGOWANIA };
+    return { status: "error", message: BLAD_LOGOWANIA, fieldErrors: { haslo: BLAD_LOGOWANIA } };
   }
 
   // 2. Logowanie hasłem
@@ -54,8 +54,13 @@ export async function signIn(
     options: { captchaToken: tokenZFormularza(formData) },
   });
   if (error?.code === "captcha_failed") return BLAD_BOTA;
+  // Limit prób Supabase: to nie jest informacja o haśle, więc mówimy wprost
+  if (error?.code === "over_request_rate_limit" || error?.status === 429) {
+    return { status: "error", message: "Za dużo prób, spróbuj za chwilę." };
+  }
   if (error || !data.user) {
-    return { status: "error", message: BLAD_LOGOWANIA };
+    // fieldErrors: formularz zaznacza oba pola na czerwono
+    return { status: "error", message: BLAD_LOGOWANIA, fieldErrors: { haslo: BLAD_LOGOWANIA } };
   }
 
   // 3. Profil decyduje: ekran przywracania (konto do usunięcia), aplikacja albo onboarding

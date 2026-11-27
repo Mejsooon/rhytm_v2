@@ -27,6 +27,7 @@ export function LoginForm({ oauthError = false }: { oauthError?: boolean }) {
       : oauthError
         ? "Nie udało się zalogować przez Google"
         : undefined;
+  const zleDane = state.status === "error" && state.fieldErrors?.haslo !== undefined;
 
   return (
     // Kontener: grupa karty (na telefonie `m-auth-card`, CMLogin) i stopka „Nie masz konta?” poza kartą.
@@ -73,6 +74,7 @@ export function LoginForm({ oauthError = false }: { oauthError?: boolean }) {
             autoComplete="email"
             placeholder="ty@example.com"
             required
+            aria-invalid={zleDane || undefined}
             className="leading-[1.21]"
             value={email}
             onChange={(e) => setEmail(e.target.value)}
@@ -82,6 +84,7 @@ export function LoginForm({ oauthError = false }: { oauthError?: boolean }) {
             name="password"
             label="Hasło"
             autoComplete="current-password"
+            invalid={zleDane}
             rightLink={
               <Link
                 href="/reset-hasla"

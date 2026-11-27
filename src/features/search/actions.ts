@@ -21,7 +21,7 @@ import { formatClockTime, safeTimezone } from "@/lib/time/timezones";
 
 export type SearchItem = { title: string; meta: string; href: string };
 export type SearchGroup = {
-  title: "Strony" | "Kalendarz" | "Nawyki" | "Sport";
+  title: "Strony" | "Wiersze stron" | "Kalendarz" | "Sport" | "Nawyki i sen";
   items: SearchItem[];
 };
 export type SearchResult =
@@ -58,7 +58,7 @@ export async function searchAll(q: string): Promise<SearchResult> {
   const wzorzec = `%${fraza.replace(/[\\%_]/g, (znak) => `\\${znak}`)}%`;
 
   // Krok 1: równolegle, każde zapytanie z user_id i limitem
-  const [profilWynik, stronyWynik, polaWynik, blokiWynik, nawykiWynik, sportWynik] =
+  const [profilWynik, stronyWynik, polaWynik, blokiWynik, nawykiWynik, sportWynik, szablonyWynik, cwiczeniaWynik] =
     await Promise.all([
       supabase
         .from("profiles")
@@ -109,9 +109,25 @@ export async function searchAll(q: string): Promise<SearchResult> {
         .ilike("title", wzorzec)
         .order("start_local", { ascending: false })
         .limit(LIMIT),
+      supabase
+        .from("workout_templates")
+        .select("id, name, workout_template_items(count)")
+        .eq("user_id", user.id)
+        .ilike("name", wzorzec)
+        .order("name", { ascending: true })
+        .limit(LIMIT),
+      supabase
+        .from("exercises")
+        .select("id, name")
+        .eq("user_id", user.id)
+        .ilike("name", wzorzec)
+        .order("name", { ascending: true })
+        .limit(LIMIT),
     ]);
 
-  if (stronyWynik.error || polaWynik.error || blokiWynik.error || nawykiWynik.error || sportWynik.error) {
+  if (
+    [stronyWynik, polaWynik, blokiWynik, nawykiWynik, sportWynik, szablonyWynik, cwiczeniaWynik].some((w) => w.error)
+  ) {
     return { ok: false, message: "Nie udało się wyszukać." };
   }
 
@@ -168,8 +184,9 @@ export async function searchAll(q: string): Promise<SearchResult> {
 
   const grupy: SearchGroup[] = [];
 
-  // ---------- Strony: tytuły stron, potem wiersze tabel ----------
+  // ---------- Strony, osobno wiersze tabel ----------
   const elementyStron: SearchItem[] = [];
+  const elementyWierszy: SearchItem[] = [];
   for (const s of stronyWynik.data ?? []) {
     if (s.is_system) {
       elementyStron.push({ title: s.title, meta: "moduł", href: "/hasla" });
@@ -198,7 +215,7 @@ export async function searchAll(q: string): Promise<SearchResult> {
     }
     const strona = polaBloku[0]?.page_blocks?.pages;
     if (tytul === "" || !strona) continue;
-    elementyStron.push({
+    elementyWierszy.push({
       title: tytul,
       meta: `w ${strona.title.trim() === "" ? "Bez tytułu" : strona.title}`,
       href: `/strony/${strona.id}`,
@@ -207,6 +224,7 @@ export async function searchAll(q: string): Promise<SearchResult> {
   if (elementyStron.length > 0) {
     grupy.push({ title: "Strony", items: elementyStron.slice(0, LIMIT) });
   }
+  if (elementyWierszy.length > 0) grupy.push({ title: "Wiersze stron", items: elementyWierszy });
 
   // ---------- Kalendarz: najbliższe wystąpienie bloku, a bez przyszłego — ostatnie ----------
   const elementyKalendarza: SearchItem[] = [];
@@ -243,29 +261,6 @@ export async function searchAll(q: string): Promise<SearchResult> {
   }
   if (elementyKalendarza.length > 0) grupy.push({ title: "Kalendarz", items: elementyKalendarza });
 
-  // ---------- Nawyki: bieżąca seria ----------
-  if (nawykiWiersze.length > 0) {
-    const harmonogramy = nawykiWiersze.flatMap((n) => n.habit_schedules ?? []);
-    const nawyki = mapHabits(nawykiWiersze, harmonogramy);
-    const odhaczenia: Checks = new Map();
-    for (const o of odhaczeniaWynik.data ?? []) {
-      const dni = odhaczenia.get(o.habit_id) ?? new Set<string>();
-      dni.add(o.date);
-      odhaczenia.set(o.habit_id, dni);
-    }
-    grupy.push({
-      title: "Nawyki",
-      items: nawyki.map((n) => {
-        const seria = currentStreak(n, odhaczenia, dzis, weekStart);
-        const meta =
-          seria.unit === "weeks"
-            ? `seria ${seria.value} tyg.`
-            : `seria ${seria.value} ${seria.value === 1 ? "dzień" : "dni"}`;
-        return { title: n.name, meta, href: `/nawyki/${n.id}` };
-      }),
-    });
-  }
-
   // ---------- Sport: najnowsze sesje ----------
   const elementySportu: SearchItem[] = [];
   for (const s of sportWynik.data ?? []) {
@@ -283,7 +278,42 @@ export async function searchAll(q: string): Promise<SearchResult> {
           : `/sport/trening/${s.id}`,
     });
   }
+  for (const t of szablonyWynik.data ?? []) {
+    const ile = t.workout_template_items?.[0]?.count ?? 0;
+    const slowo = ile === 1 ? "ćwiczenie" : ile % 10 >= 2 && ile % 10 <= 4 && (ile % 100 < 12 || ile % 100 > 14) ? "ćwiczenia" : "ćwiczeń";
+    elementySportu.push({
+      title: `Szablon ${t.name}`,
+      meta: `trening siłowy · ${ile} ${slowo}`,
+      href: `/sport/szablony/${t.id}`,
+    });
+  }
+  for (const c of cwiczeniaWynik.data ?? []) {
+    elementySportu.push({ title: c.name, meta: "ćwiczenie · historia i rekordy", href: `/sport/cwiczenia/${c.id}` });
+  }
   if (elementySportu.length > 0) grupy.push({ title: "Sport", items: elementySportu });
+
+  // ---------- Nawyki: bieżąca seria ----------
+  if (nawykiWiersze.length > 0) {
+    const harmonogramy = nawykiWiersze.flatMap((n) => n.habit_schedules ?? []);
+    const nawyki = mapHabits(nawykiWiersze, harmonogramy);
+    const odhaczenia: Checks = new Map();
+    for (const o of odhaczeniaWynik.data ?? []) {
+      const dni = odhaczenia.get(o.habit_id) ?? new Set<string>();
+      dni.add(o.date);
+      odhaczenia.set(o.habit_id, dni);
+    }
+    grupy.push({
+      title: "Nawyki i sen",
+      items: nawyki.map((n) => {
+        const seria = currentStreak(n, odhaczenia, dzis, weekStart);
+        const meta =
+          seria.unit === "weeks"
+            ? `seria ${seria.value} tyg.`
+            : `seria ${seria.value} ${seria.value === 1 ? "dzień" : "dni"}`;
+        return { title: n.name, meta, href: `/nawyki/${n.id}` };
+      }),
+    });
+  }
 
   return { ok: true, groups: grupy };
 }

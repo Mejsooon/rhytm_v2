@@ -57,13 +57,13 @@ describe("404", () => {
     );
   });
 
-  it("przyciski „Wróć do Dziś” (primary) i „Szukaj ⌘K” (wyłączony, aria-disabled) w rozmiarze z makiety", () => {
+  it("przyciski „Wróć do Dziś” (primary) i „Szukaj ⌘K” (otwiera okno) w rozmiarze z makiety", () => {
     render(<NotFound />);
     const wroc = screen.getByRole("link", { name: "Wróć do Dziś" });
     expect(wroc).toHaveAttribute("href", "/dzis");
     expect(wroc).toHaveClass("bg-primary", "h-8");
     const szukaj = screen.getByRole("button", { name: /Szukaj/ });
-    expect(szukaj).toHaveAttribute("aria-disabled", "true");
+    expect(szukaj).not.toHaveAttribute("aria-disabled");
     expect(szukaj).toHaveClass("h-8");
     const kbd = screen.getByText("⌘K");
     expect(kbd.tagName).toBe("KBD");

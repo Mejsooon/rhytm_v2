@@ -11,7 +11,9 @@ const {
   toggleTask,
   setHabitCheck,
   createHabit,
+  createGymSession,
 } = vi.hoisted(() => ({
+  createGymSession: vi.fn(),
   replace: vi.fn(),
   createBlock: vi.fn(),
   changeOccurrence: vi.fn(),
@@ -37,6 +39,7 @@ vi.mock("@/features/habits/actions", () => ({
   updateHabit: vi.fn(),
 }));
 vi.mock("sonner", () => ({ toast: { error: vi.fn() } }));
+vi.mock("@/features/sport/actions", async (oryginal) => ({ ...(await oryginal<object>()), createGymSession }));
 vi.mock("next/navigation", () => ({
   useRouter: () => ({ refresh, push: vi.fn(), replace }),
 }));
@@ -156,6 +159,20 @@ describe("TodayView — ?szybko=blok", () => {
     expect(
       await screen.findByRole("dialog", { name: "Nowy blok" }),
     ).toBeInTheDocument();
+    expect(replace).toHaveBeenCalledWith("/dzis");
+  });
+
+  it("?szybko=dodaj otwiera szybkie dodawanie z tekstem z okna szukania", () => {
+    sessionStorage.setItem("rhytm_szybko", "bieg 10 km");
+    render(<TodayView data={dane()} name="Mejson" openOnLoad="dodaj" />);
+    expect(screen.getByDisplayValue("bieg 10 km")).toBeInTheDocument();
+    expect(sessionStorage.getItem("rhytm_szybko")).toBeNull();
+  });
+
+  it("?szybko=trening bez prośby z aplikacji (sam adres) niczego nie tworzy", () => {
+    sessionStorage.clear();
+    render(<TodayView data={dane()} name="Mejson" openOnLoad="trening" />);
+    expect(createGymSession).not.toHaveBeenCalled();
     expect(replace).toHaveBeenCalledWith("/dzis");
   });
 
