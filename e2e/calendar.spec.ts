@@ -310,7 +310,8 @@ test.describe("kalendarz (web)", () => {
       page.getByRole("heading", { level: 1, name: "Wtorek, 12 stycznia" }),
     ).toBeVisible();
     await expect(page.getByText("1 z 1 bloków")).toBeVisible();
-    await expect(blok(page, "Matematyka")).toBeVisible();
+    // Blok stoi w siatce i na liście „Planu dnia”, więc szukamy w siatce
+    await expect(page.getByTestId("przewijanie").getByRole("button", { name: /Matematyka/ })).toBeVisible();
     await expect(page.getByRole("region", { name: "Styczeń 2027" })).toBeVisible();
     const plan = page.getByRole("complementary", { name: "Plan dnia" });
     await expect(plan.getByTestId("liczba-Bloki")).toContainText("1");
