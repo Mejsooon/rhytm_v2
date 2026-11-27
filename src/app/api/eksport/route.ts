@@ -25,6 +25,8 @@ const TABELE: [string, string[], string][] = [
   ["template_skips", ["template_id", "date"], "*"],
   ["sport_sessions", ["id"], "*"],
   ["runs", ["session_id"], "*"],
+  ["activities", ["session_id"], "*"],
+  ["activity_kinds", ["id"], "*"],
   ["exercises", ["id"], "*"],
   ["gym_sets", ["id"], "*"],
   ["pages", ["id"], "*"],

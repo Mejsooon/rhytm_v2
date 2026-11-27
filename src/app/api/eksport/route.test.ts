@@ -130,6 +130,8 @@ describe("GET /api/eksport", () => {
       "template_skips",
       "sport_sessions",
       "runs",
+      "activities",
+      "activity_kinds",
       "exercises",
       "gym_sets",
       "pages",
