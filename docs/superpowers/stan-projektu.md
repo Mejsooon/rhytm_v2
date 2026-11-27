@@ -35,6 +35,8 @@ Wygląd COSS według makiet na kanwie „Rhytm Design”.
 
 ## W toku
 
+- **Filtr tabeli jak w makiecie:** gałąź `feat/filtr-jak-makieta`, czeka na CI i „scal do main”.
+
 - **Porządek i captcha (2026-11-27):** `feat/martwy-kod` i `feat/captcha-w-supabase` scalone do `main`. Do zrobienia przez Mejsona po wdrożeniu: włączyć CAPTCHA (Turnstile) w panelu Supabase.
 
 - **Nowe makiety (2026-11-26):** kanwa „Rhytm Design” mocno zmieniona przez Mejsona (95 ekranów zmienionych, 79 nowych, sekcja Trener). Kopie w `docs/design/mockups` na gałęzi `docs/makiety-2026-11-26`, różnice w dzienniku 26.11. Seria „nowe makiety” w toku. **Pakiet 1 Tabele v3** scalony do `main` (`05063b0`) (spec `specs/2026-11-26-tabele-v3-design.md`, plan `plans/2026-11-26-tabele-v3.md`); migracja `20261130100000_szablony_po_polsku.sql` do uruchomienia przez Mejsona. Następny: Kalendarz (warstwy na koncie, jedna warstwa „Odnowienia”) — start po sprawdzeniu Tabel przez Mejsona.

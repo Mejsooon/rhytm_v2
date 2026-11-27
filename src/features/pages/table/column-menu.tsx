@@ -237,10 +237,13 @@ export function ColumnMenu({
             </button>
           </>
         )}
-        <button type="button" role="menuitem" onClick={() => wykonaj(onFilter)} className={POZYCJA}>
-          <Funnel aria-hidden="true" className={IKONA} />
-          <span className="flex-1">Filtruj po tym polu</span>
-        </button>
+        {/* S2Table: filtr weba zna tylko pola wyboru */}
+        {jestWyborem && (
+          <button type="button" role="menuitem" onClick={() => wykonaj(onFilter)} className={POZYCJA}>
+            <Funnel aria-hidden="true" className={IKONA} />
+            <span className="flex-1">Filtruj po tym polu</span>
+          </button>
+        )}
         {jestWyborem && onGroupBy && (
           <button type="button" role="menuitem" onClick={() => wykonaj(onGroupBy)} className={POZYCJA}>
             <TextAlignStart aria-hidden="true" className={IKONA} />

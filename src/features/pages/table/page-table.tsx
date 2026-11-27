@@ -36,7 +36,7 @@ import { TypeChangeDialog } from "../editor/type-change-dialog";
 import type { LoadedBlock } from "../load-page";
 import { TEMPLATES, templateSummaries, type TemplateKey } from "../templates";
 import { rowsForm, rowsLabel } from "../rows-label";
-import { operatorsFor, summarize, visibleRows, type PageRow, type PinnedCard } from "../table-model";
+import { summarize, visibleRows, type PageRow, type PinnedCard } from "../table-model";
 import { toCsv } from "../csv";
 import { effectiveView, groupRows, searchRows, viewCount } from "../table-views";
 import { AddFieldDialog } from "./add-field-dialog";
@@ -720,6 +720,7 @@ export function PageTable({
                 fields={fields}
                 filters={filtry}
                 today={today}
+                rows={zywe}
                 shown={widoczneWiersze.length}
                 total={zywe.length}
                 open={filtrOtwarty}
@@ -989,7 +990,6 @@ export function PageTable({
                         onGroupBy={() => void store.setGroupBy(f.id)}
                         onFilter={() => {
                           bezZwrotuFokusu.current = true;
-                          void store.patchView({ filters: [...filtry, { field_id: f.id, op: operatorsFor(f.type)[0] }] });
                           setFiltrOtwarty(true);
                         }}
                         onSummary={(kind) => {
