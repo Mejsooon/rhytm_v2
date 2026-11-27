@@ -658,6 +658,8 @@ export type Database = {
           created_at: string | null;
           currency: string | null;
           deletion_requested_at: string | null;
+          first_steps: Json;
+          first_steps_hidden: boolean;
           display_name: string | null;
           goals: string[] | null;
           height_cm: number | null;
@@ -691,6 +693,8 @@ export type Database = {
           created_at?: string | null;
           currency?: string | null;
           deletion_requested_at?: string | null;
+          first_steps?: Json;
+          first_steps_hidden?: boolean;
           display_name?: string | null;
           goals?: string[] | null;
           height_cm?: number | null;
@@ -724,6 +728,8 @@ export type Database = {
           created_at?: string | null;
           currency?: string | null;
           deletion_requested_at?: string | null;
+          first_steps?: Json;
+          first_steps_hidden?: boolean;
           display_name?: string | null;
           goals?: string[] | null;
           height_cm?: number | null;
