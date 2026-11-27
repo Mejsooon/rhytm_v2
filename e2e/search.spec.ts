@@ -148,6 +148,8 @@ test.describe("szukaj", () => {
     await page.keyboard.press("Control+k");
     await okno.getByRole("combobox", { name: "Szukaj" }).fill("kosz");
     await expect(okno.getByRole("option", { name: /Kosz/ }).first()).toBeVisible();
+    // „Przejdź do” widać od razu, ale Enter działa dopiero po odpowiedzi serwera
+    await expect(okno.getByRole("listbox", { name: "Wyniki" })).toHaveAttribute("aria-busy", "false");
     await page.keyboard.press("Enter");
     await expect(page).toHaveURL(/\/ustawienia\/kosz$/);
     await expect(okno).toHaveCount(0);
