@@ -160,7 +160,8 @@ test.describe("sport (web)", () => {
       .click();
     await expect(page).toHaveURL(/\/sport\/trening\/[0-9a-f-]+$/);
     expect(page.url().split("/").pop()).not.toBe(sesjaId);
-    const drugi = page.getByTestId("gym");
+    // Next trzyma poprzednią trasę treningu ukrytą w DOM — bierzemy tylko widoczny ekran
+    const drugi = page.getByTestId("gym").filter({ visible: true });
     // Puste serie, a „Poprzednio” z pierwszego treningu; odhaczenie wpisuje wynik
     await expect(drugi.getByLabel("Wyciskanie, seria 1 — ciężar")).toHaveValue("");
     await drugi.getByRole("button", { name: "Wyciskanie, seria 1 zrobiona" }).click();
