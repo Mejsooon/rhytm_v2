@@ -28,13 +28,11 @@ import {
   sessionVolume,
   sportItemHref,
   templateOccurrences,
-  templateSets,
   weekStats,
   type GymSetRow,
   type RunRow,
   type SessionRow,
   type SkipRow,
-  type TemplateItemRow,
   type TemplateRow,
   type SportItem,
   formatSet,
@@ -715,81 +713,8 @@ describe("monthGrid", () => {
   });
 });
 
-describe("templateSets i firstReps", () => {
-  const poz: TemplateItemRow = {
-    id: "i1",
-    user_id: "u",
-    template_id: "t1",
-    exercise_id: "e1",
-    position: 3,
-    sets_count: 3,
-    reps_text: "8–10",
-    rest_s: 120,
-  };
-  it("serie z historii, brakujące kopiują ostatnią", () => {
-    const hist = new Map([
-      [
-        "e1",
-        [
-          set({ set_no: 1, weight_kg: 60, reps: 8 }),
-          set({ set_no: 2, weight_kg: 62.5, reps: 6 }),
-        ],
-      ],
-    ]);
-    expect(templateSets([poz], hist)).toEqual([
-      {
-        exercise_id: "e1",
-        exercise_position: 3,
-        set_no: 1,
-        weight_kg: 60,
-        reps: 8,
-      },
-      {
-        exercise_id: "e1",
-        exercise_position: 3,
-        set_no: 2,
-        weight_kg: 62.5,
-        reps: 6,
-      },
-      {
-        exercise_id: "e1",
-        exercise_position: 3,
-        set_no: 3,
-        weight_kg: 62.5,
-        reps: 6,
-      },
-    ]);
-  });
-  it("bez historii kg puste, powtórzenia z reps_text", () => {
-    const w = templateSets([poz], new Map());
-    expect(w).toHaveLength(3);
-    expect(w.every((s) => s.weight_kg === null && s.reps === 8)).toBe(true);
-  });
-  it("null powt. w historii wraca do reps_text", () => {
-    const hist = new Map([
-      ["e1", [set({ set_no: 1, weight_kg: 60, reps: null })]],
-    ]);
-    const w = templateSets([poz], hist);
-    expect(w[0]).toMatchObject({ weight_kg: 60, reps: 8 });
-  });
-  it("to samo ćwiczenie drugi raz w szablonie jest pomijane (jedno ćwiczenie w treningu)", () => {
-    const w = templateSets(
-      [
-        { ...poz, id: "i1", position: 1, sets_count: 2 },
-        { ...poz, id: "i2", exercise_id: "e2", position: 2, sets_count: 1 },
-        { ...poz, id: "i3", position: 3, sets_count: 4 },
-      ],
-      new Map(),
-    );
-    expect(
-      w.map((s) => [s.exercise_id, s.exercise_position, s.set_no]),
-    ).toEqual([
-      ["e1", 1, 1],
-      ["e1", 1, 2],
-      ["e2", 2, 1],
-    ]);
-  });
-  it("firstReps", () => {
+describe("firstReps", () => {
+  it("pierwsza liczba z zapisu powtórzeń", () => {
     expect(firstReps("8–10")).toBe(8);
     expect(firstReps("12")).toBe(12);
     expect(firstReps("AMRAP")).toBeNull();
@@ -814,7 +739,7 @@ describe("searchExercises", () => {
       .map((e) => e.name)
       .sort();
     expect(zMasaCiala).toEqual(
-      ["Dipy", "Plank", "Podciąganie", "Pompki", "Pompki na poręczach"].sort(),
+      ["Dipy", "Podciąganie", "Pompki", "Pompki na poręczach"].sort(),
     );
     expect(EXERCISE_LIBRARY.find((e) => e.name === "Dipy")?.group).toBe(
       "triceps",

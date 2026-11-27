@@ -537,54 +537,6 @@ export function firstReps(repsText: string): number | null {
   return trafienie ? Number(trafienie[0]) : null;
 }
 
-// Serie nowego treningu z szablonu: kg i powt. z ostatniej wykonanej sesji
-// (seria o tym samym numerze, a gdy jej brak, ostatnia seria); bez historii
-// kg puste, a powt. = pierwsza liczba z reps_text. Ćwiczenie powtórzone w szablonie
-// bierzemy tylko z pierwszej pozycji — w treningu każde ćwiczenie jest raz (jak w addExercise),
-// a (sesja, ćwiczenie, numer serii) jest w bazie unikalne.
-export function templateSets(
-  items: TemplateItemRow[],
-  lastSetsByExercise: Map<string, GymSetRow[]>,
-): {
-  exercise_id: string;
-  exercise_position: number;
-  set_no: number;
-  weight_kg: number | null;
-  reps: number | null;
-}[] {
-  const wynik: {
-    exercise_id: string;
-    exercise_position: number;
-    set_no: number;
-    weight_kg: number | null;
-    reps: number | null;
-  }[] = [];
-  const pozycje = [...items].sort((a, b) => a.position - b.position);
-
-  const uzyte = new Set<string>();
-  for (const poz of pozycje) {
-    if (uzyte.has(poz.exercise_id)) continue;
-    uzyte.add(poz.exercise_id);
-    const historia = [...(lastSetsByExercise.get(poz.exercise_id) ?? [])].sort(
-      (a, b) => a.set_no - b.set_no,
-    );
-    for (let nr = 1; nr <= poz.sets_count; nr++) {
-      const zHistorii =
-        historia.find((s) => s.set_no === nr) ??
-        historia[historia.length - 1] ??
-        null;
-      wynik.push({
-        exercise_id: poz.exercise_id,
-        exercise_position: poz.position,
-        set_no: nr,
-        weight_kg: zHistorii ? zHistorii.weight_kg : null,
-        reps: zHistorii?.reps ?? firstReps(poz.reps_text),
-      });
-    }
-  }
-  return wynik;
-}
-
 // Przerwa w szablonie wpisywana jako "m:ss": "2:00" -> 120, "0:45" -> 45; do 30:00, zły zapis -> null
 export function parseRest(text: string): number | null {
   const m = text.trim().match(/^(\d{1,2}):([0-5]\d)$/);

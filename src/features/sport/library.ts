@@ -48,14 +48,29 @@ export const EXERCISE_LIBRARY: {
   name: string;
   group: string;
   bodyweight: boolean;
+  kind: "wr" | "bw" | "dur";
+  equipment: string;
 }[] = [];
+
+// Sprzęt wynika z nazwy (jak chipy w makiecie); reszta to sztanga
+function sprzet(nazwa: string, bodyweight: boolean): string {
+  if (bodyweight || nazwa === "hip thrust") return bodyweight ? "Masa ciała" : "Sztanga";
+  if (/wyciąg|face pull/.test(nazwa)) return "Wyciąg";
+  if (/hantl|wznosy|wykroki|^uginanie ramion$/.test(nazwa)) return "Hantle";
+  return "Sztanga";
+}
 for (const [name, group] of [...GYM_LOG, ...WORKOUT_TEMPLATES]) {
   if (widziane.has(name.toLowerCase())) continue;
   widziane.add(name.toLowerCase());
+  const bodyweight = Z_MASA_CIALA.has(name.toLowerCase());
+  const czas = name.toLowerCase() === "plank";
   EXERCISE_LIBRARY.push({
     name,
     group,
-    bodyweight: Z_MASA_CIALA.has(name.toLowerCase()),
+    // Plank mierzy się czasem, nie ciężarem
+    bodyweight: bodyweight && !czas,
+    kind: czas ? "dur" : bodyweight ? "bw" : "wr",
+    equipment: sprzet(name.toLowerCase(), bodyweight),
   });
 }
 

@@ -74,6 +74,7 @@ export function daneTreningu(zmiany: Partial<WorkoutData> = {}): WorkoutData {
       started_at: null,
     },
     templateName: "Push",
+    templateItems: [],
     sets,
     exercises: [
       {
