@@ -5,6 +5,7 @@ import { connection } from "next/server";
 import { ModuleHeader } from "@/components/shell/module-header";
 import { getAvatarUrl } from "@/features/profile/avatar-url";
 import { loadToday } from "@/features/today/load-today";
+import { QUICK_ACTIONS } from "@/features/today/quick-request";
 import { TodayView } from "@/features/today/today-view";
 import { createClient } from "@/lib/supabase/server";
 
@@ -28,9 +29,9 @@ async function Dzis({ searchParams }: { searchParams: Parametry }) {
   // Awatar na telefonie: podpisany adres zdjęcia z profilu (brak → inicjał)
   const avatarUrl = await getAvatarUrl(supabase, dane.profile.avatarPath);
 
-  // ?szybko=blok (ekran Szukaj → „Nowy blok”) — otwiera dodawanie bloku od razu
+  // ?szybko=… (⌘K, skróty, ekran Szukaj) — otwiera wybrane okno od razu
   const parametry = await searchParams;
-  const szybko = parametry.szybko === "blok" ? "blok" : null;
+  const szybko = QUICK_ACTIONS.find((a) => a === parametry.szybko) ?? null;
 
   return (
     <TodayView

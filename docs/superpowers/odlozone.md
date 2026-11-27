@@ -226,3 +226,11 @@ Final review: Important #1 phone delete dialog leak → fix; #2 heat-2 → Do de
 - Karta „Kategorie” (Ustawienia → Kalendarz) bez liczby bloków i opisu z `S2SettingsCalendar`.
 - „Wygląd i region” i klucz odzyskiwania sejfu: osobne etapy (decyzja Mejsona).
 - Kosz: ⌘K („Kosz”) dojdzie w części B.
+
+## Nowe ekrany B1 (2026-11-27)
+- Zgłoszenia (`public.feedback`) nie są w eksporcie danych, a polityka prywatności o nich nie wspomina — do uzupełnienia przed udostępnieniem aplikacji innym.
+- Brak limitu liczby zgłoszeń na konto.
+- „Pierwsze kroki n / 6” wczytuje całe dane Dziś przy otwarciu menu pomocy.
+- Szablon z ⌘K otwiera stronę szablonu (makieta od razu zaczyna trening).
+- Okno ⌘K: bez kolorów ikon biegów i aktywności z makiety (litera tytułu na szarym tle).
+- Po błędzie logowania nie ma licznika prób (decyzja Mejsona).

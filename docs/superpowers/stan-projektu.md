@@ -35,7 +35,7 @@ Wygląd COSS według makiet na kanwie „Rhytm Design”.
 
 ## W toku
 
-- **Pakiet „Ustawienia, kosz i nowe ekrany” (od 2026-11-27):** część A (Ustawienia i kosz) scalona 27.11, migracja `20261206100000_ustawienia_sejfu.sql` na produkcji; czeka na sprawdzenie. Potem, na sygnał Mejsona, B (nowe ekrany) i C (onboarding w 5 krokach).
+- **Pakiet „Ustawienia, kosz i nowe ekrany” (od 2026-11-27):** część A (Ustawienia i kosz) scalona 27.11, migracja `20261206100000_ustawienia_sejfu.sql` na produkcji; czeka na sprawdzenie. Część B podzielona: B1 (⌘K, 404/500, Pomoc i opinie, błędy logowania; gałąź `feat/nowe-ekrany`, spec `specs/2026-11-27-nowe-ekrany-b1-design.md`) zbudowana, czeka na CI, migrację `20261207100000_opinie.sql` i „scal do main”; potem B2 (centrum powiadomień) i C (onboarding w 5 krokach).
 
 - **Pakiet „Dziś, Nawyki i sen” (od 2026-11-27, gałąź `feat/dzis-v2`):** część A (Dziś, spec `specs/2026-11-27-dzis-v2-design.md`) scalona 27.11, migracja `20261204100000_pierwsze_kroki.sql` na produkcji; czeka na sprawdzenie. Część B (Nawyki i sen, gałąź `feat/nawyki-v2`): spec `specs/2026-11-27-nawyki-v2-design.md`, scalona 27.11, migracja `20261205100000_nawyki_v2.sql` na produkcji; czeka na sprawdzenie. Następny w serii: Ustawienia, kosz i nowe ekrany — na sygnał Mejsona.
 

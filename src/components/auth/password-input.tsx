@@ -19,6 +19,7 @@ export function PasswordInput({
   value,
   onChange,
   className,
+  invalid = false,
 }: {
   name: string;
   label: string;
@@ -33,6 +34,8 @@ export function PasswordInput({
   value?: string;
   onChange?: (value: string) => void;
   className?: string;
+  // Czerwona ramka (złe dane logowania)
+  invalid?: boolean;
 }) {
   const id = useId();
   const [shown, setShown] = useState(false);
@@ -56,6 +59,7 @@ export function PasswordInput({
           type={shown ? "text" : "password"}
           autoComplete={autoComplete}
           required
+          aria-invalid={invalid || undefined}
           placeholder={placeholder ?? "••••••••"}
           value={value}
           onChange={onChange ? (e) => onChange(e.target.value) : undefined}

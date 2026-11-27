@@ -5,6 +5,7 @@ import { connection } from "next/server";
 
 import { loadPages } from "@/features/pages/load-pages";
 import { getAvatarUrl } from "@/features/profile/avatar-url";
+import { CommandMenu } from "@/features/search/command-menu";
 import { VaultProvider } from "@/features/vault/vault-provider";
 import { createClient } from "@/lib/supabase/server";
 import { AppSidebar } from "./app-sidebar";
@@ -75,6 +76,7 @@ async function Powloka({
           {children}
         </main>
         <TabBar />
+        <CommandMenu />
       </SidebarStateProvider>
     </VaultProvider>
   );

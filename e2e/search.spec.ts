@@ -90,17 +90,17 @@ test.describe("szukaj", () => {
     await blok.click();
     await expect(page).toHaveURL(new RegExp(`/kalendarz\\?widok=dzien&data=${jutro}`));
 
-    // „dune” → wiersz w grupie „Strony”, link do strony Books
+    // „dune” → wiersz w grupie „Wiersze stron”, link do strony Books
     await page.goto("/szukaj");
     await poleSzukaj.fill("dune");
-    await expect(tresc.getByText("Strony", { exact: true })).toBeVisible();
+    await expect(tresc.getByText("Wiersze stron", { exact: true })).toBeVisible();
     const wiersz = tresc.getByRole("link", { name: /Dune/ });
     await expect(wiersz).toContainText("w Książki");
     await expect(wiersz).toHaveAttribute("href", `/strony/${books.id}`);
 
     // „czyt” → nawyk z serią
     await poleSzukaj.fill("czyt");
-    await expect(tresc.getByText("Nawyki", { exact: true })).toBeVisible();
+    await expect(tresc.getByText("Nawyki i sen", { exact: true })).toBeVisible();
     await expect(tresc.getByRole("link", { name: /Czytanie/ })).toContainText("seria");
 
     // „git”: wiersz „GitHub” i login „git-konto” z Haseł nie trafiają do wyników
@@ -136,17 +136,31 @@ test.describe("szukaj", () => {
       await expect(page).toHaveURL(/\/dzis$/);
       return;
     }
+    // Web: pole w pasku bocznym i Ctrl+K otwierają okno nad bieżącym ekranem
+    const okno = page.getByRole("dialog", { name: "Szukaj" });
     await page
       .getByRole("navigation", { name: "Główna nawigacja" })
-      .getByRole("link", { name: /Szukaj…/ })
+      .getByRole("button", { name: /Szukaj…/ })
       .click();
-    await expect(page).toHaveURL(/\/szukaj$/);
-    await page.goto("/dzis");
-    // Nasłuch skrótu dochodzi po hydratacji paska, więc ponawiamy wciśnięcie
-    await expect(async () => {
-      await page.keyboard.press("Control+k");
-      await expect(page).toHaveURL(/\/szukaj$/, { timeout: 1000 });
-    }).toPass();
+    await expect(okno).toBeVisible();
+    await page.keyboard.press("Escape");
+    await expect(okno).toHaveCount(0);
+    await page.keyboard.press("Control+k");
+    await okno.getByRole("combobox", { name: "Szukaj" }).fill("kosz");
+    await expect(okno.getByRole("option", { name: /Kosz/ }).first()).toBeVisible();
+    await page.keyboard.press("Enter");
+    await expect(page).toHaveURL(/\/ustawienia\/kosz$/);
+    await expect(okno).toHaveCount(0);
+  });
+
+  test("web: „Pomoc i opinie” zapisuje opinię w bazie", async ({ page }, info) => {
+    test.skip(info.project.name === "mobile", "pasek boczny jest tylko w web");
+    await zalozKontoStron(page, info.project.name);
+    await page.getByRole("button", { name: "Pomoc i opinie" }).click();
+    await page.getByRole("button", { name: "Wyślij opinię" }).click();
+    await page.getByRole("textbox", { name: "Co by Ci pomogło?" }).fill("Widok tablicy");
+    await page.getByRole("button", { name: "Wyślij" }).click();
+    await expect(page.getByRole("dialog", { name: "Dzięki, dostaliśmy to" })).toBeVisible();
   });
 
   test("szybkie akcje otwierają okna w modułach", async ({ page }, info) => {

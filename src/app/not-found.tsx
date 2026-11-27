@@ -1,8 +1,8 @@
 import Link from "next/link";
-import { Search } from "lucide-react";
 
-import { Button, Kbd } from "@/components/controls";
+import { Button } from "@/components/controls";
 import { AppShell } from "@/components/shell/app-shell";
+import { SearchButton } from "@/features/search/search-button";
 
 // 404 wg CNotFound.dc.html. Poza grupą (app), więc powłokę dokładamy sami —
 // tylko dla zalogowanego (requireUser=false: gość widzi samą treść).
@@ -46,16 +46,7 @@ export default function NotFound() {
             <Button asChild variant="primary" size="md">
               <Link href="/dzis">Wróć do Dziś</Link>
             </Button>
-            {/* Wyszukiwarka ⌘K dojdzie w kolejnych etapach */}
-            <Button
-              variant="secondary"
-              size="md"
-              aria-disabled="true"
-              className="cursor-default"
-            >
-              <Search size={16} aria-hidden="true" />
-              Szukaj <Kbd>⌘K</Kbd>
-            </Button>
+            <SearchButton />
           </div>
         </div>
       </div>
