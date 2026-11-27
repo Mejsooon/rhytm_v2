@@ -892,7 +892,7 @@ test.describe("ekrany z sesją", () => {
       await zrzut(page, "strony-menu-kolumny", projekt);
       await page.keyboard.press("Escape");
       await page.getByRole("button", { name: "Filtruj", exact: true }).click();
-      await expect(page.getByText("Filtr", { exact: true })).toBeVisible();
+      await expect(page.getByRole("dialog", { name: "Filtr" })).toBeVisible();
       await zrzut(page, "strony-filtr", projekt);
       await page.keyboard.press("Escape");
       // Menu „⋯” tabeli (S2TableMenu)

@@ -117,13 +117,12 @@ test.describe("strony", () => {
     await expect(czytam).toHaveAttribute("aria-pressed", "true");
     await expect(wiersze).toHaveCount(1);
 
-    // „Wszystkie” → filtr „Tytuł zawiera »deep«” → „Zapisz jako widok” → „Mój widok 1” z jedną książką
+    // „Wszystkie” → filtr Status „Czytam” → „Zapisz jako widok” → „Mój widok 1” z jedną książką
     await zakladki.getByRole("button", { name: /^Wszystkie/ }).click();
     await expect(wiersze).toHaveCount(4);
     await page.getByRole("button", { name: "Filtruj", exact: true }).click();
     const filtr = page.getByRole("dialog", { name: "Filtr" });
-    await filtr.getByRole("button", { name: "Dodaj warunek" }).click();
-    await filtr.getByRole("textbox", { name: "Wartość warunku 1" }).fill("deep");
+    await filtr.getByRole("checkbox", { name: "Czytam" }).click();
     await expect(wiersze).toHaveCount(1);
     const zapisNowego = page.waitForResponse(AKCJA_SERWERA);
     await filtr.getByRole("button", { name: "Zapisz jako widok" }).click();
@@ -133,7 +132,7 @@ test.describe("strony", () => {
     await page.reload();
     await expect(moj).toHaveAttribute("aria-pressed", "true");
     await expect(wiersze).toHaveCount(1);
-    await expect(page.getByRole("textbox", { name: "Tytuł", exact: true })).toHaveValue("Deep Work");
+    await expect(page.getByRole("textbox", { name: "Tytuł", exact: true })).toHaveValue("Atomic Habits");
     // „Wszystkie” bez filtra (zapis jako widok czyści filtr „Wszystkich”)
     await zakladki.getByRole("button", { name: /^Wszystkie/ }).click();
     await expect(wiersze).toHaveCount(4);

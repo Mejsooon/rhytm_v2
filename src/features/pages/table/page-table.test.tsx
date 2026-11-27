@@ -324,24 +324,21 @@ describe("PageTable", () => {
       render(<PageTable block={b} today={TODAY} />);
       await user.click(screen.getByRole("button", { name: "Filtruj" }));
       const filtr = await screen.findByRole("dialog", { name: "Filtr" });
-      await user.click(within(filtr).getByRole("button", { name: "+ Dodaj warunek" }));
-      await user.type(within(filtr).getByRole("textbox", { name: "Wartość warunku 1" }), "deep");
-      await waitFor(() => expect(tytuly()).toEqual(["Deep Work"]));
+      await user.click(within(filtr).getByRole("checkbox", { name: "Przeczytane" }));
+      expect(tytuly()).toHaveLength(7);
       expect(karta("Czytam teraz").textContent).toContain("0");
       expect(screen.getByRole("button", { name: "Filtruj · 1" })).toBeInTheDocument();
       expect(actions.saveTableSettings).toHaveBeenLastCalledWith(b.id, {
-        filters: [expect.objectContaining({ op: "contains", value: "deep" })],
+        filters: [expect.objectContaining({ op: "in" })],
       });
     });
 
-    it("„Filtruj po tym polu” otwiera filtr z warunkiem dla pola", async () => {
+    it("„Filtruj po tym polu” otwiera menu filtra", async () => {
       const user = userEvent.setup();
       render(<PageTable block={blok("books", BOOKS)} today={TODAY} />);
-      const menu = await otworzMenu(user, "Autor");
+      const menu = await otworzMenu(user, "Status");
       await user.click(within(menu).getByRole("menuitem", { name: "Filtruj po tym polu" }));
-      const filtr = await screen.findByRole("dialog", { name: "Filtr" });
-      expect(within(filtr).getByRole("button", { name: "Pole warunku 1" }).textContent).toContain("Autor");
-      expect(screen.getByRole("button", { name: "Filtruj · 1" })).toBeInTheDocument();
+      expect(await screen.findByRole("dialog", { name: "Filtr" })).toBeInTheDocument();
     });
   });
 
@@ -602,10 +599,7 @@ describe("PageTable", () => {
         render(<PageTable block={b} today={TODAY} />);
         await user.click(screen.getByRole("button", { name: "Filtruj" }));
         const filtr = await screen.findByRole("dialog", { name: "Filtr" });
-        await user.click(within(filtr).getByRole("button", { name: "+ Dodaj warunek" }));
-        await user.click(within(filtr).getByRole("button", { name: "Pole warunku 1" }));
-        await user.click(within(screen.getByRole("listbox", { name: "Pole warunku 1" })).getByRole("option", { name: /Status/ }));
-        await user.click(within(filtr).getByRole("button", { name: "Przeczytane" }));
+        await user.click(within(filtr).getByRole("checkbox", { name: "Przeczytane" }));
         expect(tytuly()).toHaveLength(7);
         await user.keyboard("{Escape}");
         const menu = await otworzMenu(user, "Status");
@@ -747,12 +741,11 @@ describe("PageTable", () => {
       expect(nowaKomorka).toBeDefined();
       await user.click(screen.getByRole("button", { name: "Filtruj" }));
       const filtr = await screen.findByRole("dialog", { name: "Filtr" });
-      await user.click(within(filtr).getByRole("button", { name: "+ Dodaj warunek" }));
-      const wartosc = within(filtr).getByRole("textbox", { name: "Wartość warunku 1" });
-      // Warunek ukrywa nowy (pusty) wiersz, a po wyczyszczeniu wiersz wraca jako świeżo zamontowana komórka
-      await user.type(wartosc, "deep");
+      const wartosc = within(filtr).getByRole("checkbox", { name: "Przeczytane" });
+      // Warunek ukrywa nowy (pusty) wiersz, a po odznaczeniu wiersz wraca jako świeżo zamontowana komórka
+      await user.click(wartosc);
       await waitFor(() => expect(nowaKomorka).not.toBeInTheDocument());
-      await user.clear(wartosc);
+      await user.click(wartosc);
       await waitFor(() =>
         expect(screen.getAllByRole("textbox", { name: "Tytuł" }).some((i) => (i as HTMLInputElement).value === "")).toBe(true),
       );
@@ -1845,15 +1838,14 @@ describe("PageTable", () => {
       render(<PageTable block={b} today={TODAY} />);
       await user.click(screen.getByRole("button", { name: "Filtruj" }));
       const filtr = await screen.findByRole("dialog", { name: "Filtr" });
-      await user.click(within(filtr).getByRole("button", { name: "+ Dodaj warunek" }));
-      await user.type(within(filtr).getByRole("textbox", { name: "Wartość warunku 1" }), "deep");
+      await user.click(within(filtr).getByRole("checkbox", { name: "Przeczytane" }));
       await user.click(within(filtr).getByRole("button", { name: "Zapisz jako widok" }));
       const patch = actions.saveTableSettings.mock.calls.at(-1)![1];
-      expect(patch.views.at(-1).filters).toEqual([{ field_id: b.fields[0].id, op: "contains", value: "deep" }]);
-      expect(screen.getByRole("button", { name: "Mój widok 1 1" })).toHaveAttribute("aria-pressed", "true");
+      expect(patch.views.at(-1).filters).toEqual([expect.objectContaining({ op: "in" })]);
+      expect(screen.getByRole("button", { name: "Mój widok 1 7" })).toHaveAttribute("aria-pressed", "true");
       // Nowy widok ma warunek z filtra: przycisk „Filtruj · 1” liczy warunki widoku
       expect(screen.getByRole("button", { name: "Filtruj · 1" })).toBeInTheDocument();
-      expect(tytuly()).toEqual(["Deep Work"]);
+      expect(tytuly()).toHaveLength(7);
       // „Wszystkie” znów pokazują wszystko (filtr przeszedł do nowego widoku)
       expect(patch.filters).toEqual([]);
       await user.keyboard("{Escape}");

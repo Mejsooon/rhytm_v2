@@ -76,7 +76,6 @@ describe("menu kolumny", () => {
     for (const nazwa of [
       "Sortuj rosnąco",
       "Sortuj malejąco",
-      "Filtruj po tym polu",
       "Podsumowanie Brak ›",
       "Ukryj kolumnę",
       "Usuń pole",
@@ -95,7 +94,7 @@ describe("menu kolumny", () => {
     expect(dymek).toHaveClass("p-1", "rounded-lg", "shadow-lg");
     expect(dymek).toHaveStyle({ width: "260px" });
     expect(within(menu).getByRole("textbox", { name: "Nazwa kolumny" })).toHaveClass("h-8", "rounded-md", "shadow-xs");
-    for (const nazwa of ["Sortuj rosnąco", "Filtruj po tym polu", "Ukryj kolumnę", /Typ: Data/, /Pokaż w kalendarzu/]) {
+    for (const nazwa of ["Sortuj rosnąco", "Ukryj kolumnę", /Typ: Data/, /Pokaż w kalendarzu/]) {
       expect(within(menu).getByRole("menuitem", { name: nazwa })).toHaveClass("min-h-8", "rounded-sm", "hover:bg-accent");
     }
     expect(within(menu).getByRole("menuitem", { name: "Usuń pole" })).toHaveClass("text-destructive-foreground");
@@ -375,15 +374,16 @@ describe("menu kolumny", () => {
     });
   });
 
-  it("„Filtruj po tym polu” otwiera filtr z warunkiem dla pola", async () => {
+  it("„Filtruj po tym polu” (tylko Wybór i Status) otwiera menu filtra bez dodawania warunku", async () => {
     const user = userEvent.setup();
     render(<PageTable block={(stronaTestowa("books", "Books", BOOKS)).blocks[0]} today={DZIS} />);
-    const menu = await otworzMenu(user, "Autor");
+    const autor = await otworzMenu(user, "Autor");
+    expect(within(autor).queryByRole("menuitem", { name: "Filtruj po tym polu" })).toBeNull();
+    await user.keyboard("{Escape}");
+    const menu = await otworzMenu(user, "Status");
     await user.click(within(menu).getByRole("menuitem", { name: "Filtruj po tym polu" }));
-    const filtr = await screen.findByRole("dialog", { name: "Filtr" });
-    expect(within(filtr).getByRole("button", { name: "Pole warunku 1" }).textContent).toContain("Autor");
-    expect(within(filtr).getByRole("button", { name: "Operator warunku 1" }).textContent).toContain("zawiera");
-    expect(screen.getByRole("button", { name: "Filtruj · 1" })).toBeInTheDocument();
+    expect(await screen.findByRole("dialog", { name: "Filtr" })).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Filtruj · 1" })).toBeNull();
   });
 
   it("„Grupuj po tym polu” (tylko Wybór i Status) grupuje bieżący widok po kolumnie", async () => {
@@ -424,11 +424,11 @@ describe("menu kolumny", () => {
       const user = userEvent.setup();
       let odrzuc!: (v: { ok: false; message: string }) => void;
       actions.deleteField.mockReturnValue(new Promise((r) => (odrzuc = r)));
-      render(<PageTable block={(stronaTestowa("books", "Books", BOOKS)).blocks[0]} today={DZIS} />);
-      const menu = await otworzMenu(user, "Autor");
-      await user.click(within(menu).getByRole("menuitem", { name: "Filtruj po tym polu" }));
-      expect(await screen.findByRole("button", { name: "Filtruj · 1" })).toBeInTheDocument();
-      await user.keyboard("{Escape}");
+      const b = stronaTestowa("books", "Books", BOOKS).blocks[0];
+      const autor = b.fields.find((f) => f.name === "Autor")!;
+      (b.content as { settings: { filters: unknown[] } }).settings.filters = [{ field_id: autor.id, op: "contains", value: "a" }];
+      render(<PageTable block={b} today={DZIS} />);
+      expect(screen.getByRole("button", { name: "Filtruj · 1" })).toBeInTheDocument();
       const menu2 = await otworzMenu(user, "Autor");
       await user.click(within(menu2).getByRole("menuitem", { name: "Usuń pole" }));
       expect(screen.getByRole("button", { name: "Filtruj" })).toBeInTheDocument();
@@ -629,7 +629,7 @@ describe("menu kolumny zablokowanej (moduł Hasła)", () => {
     expect(within(m).queryByRole("menuitem", { name: /Przesuń/ })).not.toBeInTheDocument();
     expect(within(m).queryByRole("menuitem", { name: /Usuń pole/ })).not.toBeInTheDocument();
     expect(within(m).getByRole("menuitem", { name: /Sortuj rosnąco/ })).toBeInTheDocument();
-    expect(within(m).getByRole("menuitem", { name: /Filtruj po tym polu/ })).toBeInTheDocument();
+    expect(within(m).queryByRole("menuitem", { name: /Filtruj po tym polu/ })).not.toBeInTheDocument();
     expect(within(m).getByRole("menuitem", { name: /Podsumowanie/ })).toBeInTheDocument();
     await user.click(within(m).getByRole("menuitem", { name: /Ukryj kolumnę/ }));
     expect(onHide).toHaveBeenCalled();

@@ -7,11 +7,15 @@ import {
   ActionPopover,
   Button,
   Card,
+  Checkbox,
   Chip,
   DatePicker,
   Dropdown,
   FIELD,
   FormDialog,
+  MENU_ITEM,
+  MENU_LABEL,
+  MENU_SEPARATOR,
   Segment,
   StatusBadge,
   TextField,
@@ -19,7 +23,8 @@ import {
 } from "@/components/controls";
 import type { PageField } from "../fields";
 import { cn } from "@/lib/utils";
-import { operatorsFor, type FilterCond, type SortKey } from "../table-model";
+import { operatorsFor, type FilterCond, type PageRow, type SortKey } from "../table-model";
+import { OptionBadge } from "./option-badge";
 import { PLAKIETKA } from "./table-toolbar";
 
 // Nazwy operatorów w liście „Operator” (makieta: „jest”, „jest jednym z”, „≥”); dla Checkboxa
@@ -56,15 +61,16 @@ function czyTelefon() {
   return typeof window.matchMedia === "function" && window.matchMedia("(max-width: 799px)").matches;
 }
 
-// Filtr tabeli z FilterPopover.dc.html: warunki „Gdzie … i …”, operatory zależne od typu pola,
-// licznik „x z N wierszy”, „Wyczyść” i „Zapisz jako widok” (S2Table). Każda zmiana działa od razu — wywołujący
-// zapisuje ją w bieżącym widoku. Wyzwalaczem jest przycisk „Filtruj” w pasku tabeli.
+// Filtr tabeli. Web (S2Table): menu z opcjami pól Wybór i Status do odhaczenia (warunek „in”), „Wyczyść”
+// i „Zapisz jako widok”. Inne warunki (z gotowych widoków albo telefonu) działają dalej i liczą się w plakietce.
+// Każda zmiana działa od razu — wywołujący zapisuje ją w bieżącym widoku.
 // Telefon (CMFilterSheet): przycisk „Filtr i sortowanie” 44 px i arkusz „Wyczyść · Filtr i sortowanie · Gotowe”
-// z warunkami (te same kontrolki co w dymku), sortowaniem (pole + „Rosnąco / Malejąco”) i „Zapisz jako widok”.
+// z kreatorem warunków, sortowaniem (pole + „Rosnąco / Malejąco”) i „Zapisz jako widok”.
 export function FilterPopover({
   fields,
   filters: filtryZapisane,
   today,
+  rows,
   shown,
   total,
   open,
@@ -78,6 +84,8 @@ export function FilterPopover({
   fields: PageField[];
   filters: FilterCond[];
   today: IsoDate;
+  // Wszystkie wiersze (bez usuniętych): liczby przy opcjach w menu weba
+  rows: PageRow[];
   // Wiersze po filtrze i wszystkie (bez usuniętych)
   shown: number;
   total: number;
@@ -331,18 +339,6 @@ export function FilterPopover({
 
     </>
   );
-  const brakWarunkow = (
-    <>
-        {/* .empty z paddingiem 18 px: stan bez warunków */}
-        {warunki.length === 0 && (
-          <div className="flex flex-col items-center gap-2 p-[18px] text-center">
-            Brak warunków. Tabela pokazuje wszystkie wiersze.
-          </div>
-        )}
-
-    </>
-  );
-
   // Telefon: arkusz zamiast dymku
   if (telefon) {
     const wolneDoSortu = fields.filter((f) => !(sort ?? []).some((k) => k.field_id === f.id));
@@ -451,72 +447,75 @@ export function FilterPopover({
     );
   }
 
+  // Web: opcje pól wyboru; liczba w plakietce to odhaczone opcje plus pozostałe warunki
+  const polaWyboru = fields.filter((f) => (f.type === "select" || f.type === "status") && f.config.options?.length);
+  const liczba = warunki.reduce((n, { c }) => n + (c.op === "in" ? (Array.isArray(c.value) ? c.value.length : 0) : 1), 0);
+
+  function przelacz(poleId: string, opcjaId: string) {
+    const i = filters.findIndex((c) => c.field_id === poleId && c.op === "in");
+    const obecne = i >= 0 && Array.isArray(filters[i].value) ? (filters[i].value as string[]) : [];
+    const value = obecne.includes(opcjaId) ? obecne.filter((id) => id !== opcjaId) : [...obecne, opcjaId];
+    const warunek: FilterCond = { field_id: poleId, op: "in", value };
+    if (i < 0) wyslij([...filters, warunek]);
+    else wyslij(value.length ? filters.map((c, j) => (j === i ? warunek : c)) : filters.filter((_, j) => j !== i));
+  }
+
   return (
     <ActionPopover
       open={open}
       onOpenChange={zmienOtwarcie}
       align="end"
       ariaLabel="Filtr"
-      // Dymek wg .pop: padding 14 px (cn = twMerge nadpisuje domyślne 10 px)
-      className="p-3.5"
+      // .pop.menu z makiety: 240 px, padding 4 px
+      className="max-h-[var(--radix-popover-content-available-height)] w-[240px] overflow-y-auto p-1"
       trigger={
         <button
           type="button"
           aria-haspopup="dialog"
           aria-expanded={open}
-          // Nazwa z liczbą warunków (plakietka sama nie czyta się jako część nazwy)
-          aria-label={warunki.length > 0 ? `Filtruj · ${warunki.length}` : undefined}
+          // Nazwa z liczbą (plakietka sama nie czyta się jako część nazwy)
+          aria-label={liczba > 0 ? `Filtruj · ${liczba}` : undefined}
           // Otwarty filtr: tło jak aria-expanded na przycisku w makiecie (rgba(0,0,0,.04))
           className={cn(triggerClassName, open && "bg-accent")}
         >
           <Funnel aria-hidden="true" className="size-3.5 flex-none" />
           Filtruj
-          {warunki.length > 0 && <span className={PLAKIETKA}>{warunki.length}</span>}
+          {liczba > 0 && <span className={PLAKIETKA}>{liczba}</span>}
         </button>
       }
     >
-      <div className="flex w-[min(600px,calc(100vw-48px))] flex-col gap-3">
-        <div className="flex items-center justify-between">
-          <span className="font-semibold">Filtr</span>
-          <StatusBadge tone="gray" className="font-mono">
-            {shown} z {total} {total === 1 ? "wiersza" : "wierszy"}
-          </StatusBadge>
+      {polaWyboru.map((pole) => (
+        <div key={pole.id} role="group" aria-label={pole.name}>
+          <div className={MENU_LABEL}>{pole.name}</div>
+          {pole.config.options!.map((o) => (
+            <div key={o.id} className={MENU_ITEM}>
+              <Checkbox
+                checked={filters.some(
+                  (c) => c.field_id === pole.id && c.op === "in" && Array.isArray(c.value) && c.value.includes(o.id),
+                )}
+                onChange={() => przelacz(pole.id, o.id)}
+                label={<OptionBadge option={o} />}
+              />
+              <span className="ml-auto font-mono text-xs text-muted-foreground">
+                {rows.filter((r) => r.values[pole.id] === o.id).length}
+              </span>
+            </div>
+          ))}
         </div>
-
-        {listaWarunkow}
-        {brakWarunkow}
-
-        <div className="flex items-center justify-between border-t border-border pt-3">
-          <Button
-            size="sm"
-            onClick={() => dodaj(fields[0])}
-            className="max-[799px]:h-11"
-          >
-            + Dodaj warunek
-          </Button>
-          <div className="flex gap-2">
-            <Button
-              variant="ghost"
-              size="sm"
-              onClick={() => {
-                setSzkice({});
-                wyslij([]);
-              }}
-              className="max-[799px]:h-11"
-            >
-              Wyczyść
-            </Button>
-            {onSaveAsView && (
-              <Button variant="primary" size="sm" onClick={zapiszJakoWidok} className="max-[799px]:h-11">
-                Zapisz jako widok
-              </Button>
-            )}
-          </div>
-        </div>
-        <p className="m-0 text-xs text-muted-foreground">
-          Filtr zmienia tabelę i sumy. Nie wpływa na kalendarz.
-        </p>
+      ))}
+      {polaWyboru.length === 0 && <p className="m-0 px-2 py-1.5 text-xs text-muted-foreground">Brak pól wyboru do filtrowania.</p>}
+      <div className={MENU_SEPARATOR} />
+      <div className="flex justify-between gap-1">
+        <button type="button" onClick={() => wyslij([])} className={cn(MENU_ITEM, "w-auto text-muted-foreground")}>
+          Wyczyść
+        </button>
+        {onSaveAsView && (
+          <button type="button" onClick={zapiszJakoWidok} className={cn(MENU_ITEM, "w-auto")}>
+            Zapisz jako widok
+          </button>
+        )}
       </div>
+      <p className="m-0 mx-2 mt-1 mb-1.5 text-xs text-muted-foreground">Filtr zmienia tabelę i sumy. Nie wpływa na kalendarz.</p>
     </ActionPopover>
   );
 }
