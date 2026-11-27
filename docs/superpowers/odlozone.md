@@ -221,3 +221,8 @@ Final review: Important #1 phone delete dialog leak → fix; #2 heat-2 → Do de
 
 ## Niestabilne e2e: ustawienia na telefonie (27.11)
 - `[mobile] settings.spec.ts` (sesje `:341`, eksport `:409`): „strict mode violation”, tekst w karcie znaleziony dwa razy (`getByTestId('karta-…').getByText(…)`). Prawdopodobnie poprzednia trasa trzymana ukryta w DOM — pomaga `filter({ visible: true })`.
+
+## Ustawienia i kosz (2026-11-27)
+- Karta „Kategorie” (Ustawienia → Kalendarz) bez liczby bloków i opisu z `S2SettingsCalendar`.
+- „Wygląd i region” i klucz odzyskiwania sejfu: osobne etapy (decyzja Mejsona).
+- Kosz: ⌘K („Kosz”) dojdzie w części B.

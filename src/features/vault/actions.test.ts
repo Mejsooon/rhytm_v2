@@ -63,6 +63,7 @@ describe("getVault", () => {
     const w = await getVault();
     expect(w).toEqual({
       ok: true,
+      settings: { lockMin: 5, clearClipboard: true, askOnReveal: false },
       vault: {
         kdf: MATERIAL.kdf,
         wrapped_key: MATERIAL.wrapped_key,
@@ -77,9 +78,9 @@ describe("getVault", () => {
 
   it("brak wiersza albo status reset → vault: null", async () => {
     vaults = fakeTable({ single: null });
-    expect(await getVault()).toEqual({ ok: true, vault: null });
+    expect(await getVault()).toMatchObject({ ok: true, vault: null });
     vaults = fakeTable({ single: { ...AKTYWNY, status: "reset" } });
-    expect(await getVault()).toEqual({ ok: true, vault: null });
+    expect(await getVault()).toMatchObject({ ok: true, vault: null });
   });
 
   it("błąd bazy → ok:false", async () => {

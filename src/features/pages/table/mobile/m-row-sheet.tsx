@@ -227,6 +227,7 @@ export function MRowSheet({
                           return;
                         }
                         // „Pokaż” odszyfrowuje dopiero teraz (jeśli fokus tego jeszcze nie zrobił)
+                        if (isSecretValue(surowa) && !(await vault.confirmReveal())) return;
                         if (zaszyfrowany && isSecretValue(surowa)) {
                           const epoka = epokaRef.current;
                           const t = await decrypt(surowa);
@@ -250,6 +251,7 @@ export function MRowSheet({
                       onClick={async () => {
                         // Zaszyfrowany sekret: odszyfrowanie na potrzeby kopiowania, tekst nie zostaje w stanie
                         let doSchowka = tekst;
+                        if (isSecretValue(surowa) && !(await vault.confirmReveal())) return;
                         if (zaszyfrowany && isSecretValue(surowa)) {
                           const epoka = epokaRef.current;
                           const t = await decrypt(surowa);
@@ -268,7 +270,9 @@ export function MRowSheet({
                         }
                         // Czyszczenie schowka planuje PageTable (ten sam plan co lista); false = sejf zablokowany w trakcie
                         if (!planClipboardClear()) return;
-                        toast(`Skopiowano: ${f.name}`, { description: "Schowek wyczyści się za 30 s." });
+                        toast(`Skopiowano: ${f.name}`, {
+                          description: vault.settings?.clearClipboard === false ? undefined : "Schowek wyczyści się za 30 s.",
+                        });
                       }}
                       className="size-11"
                     >

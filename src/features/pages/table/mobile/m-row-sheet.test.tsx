@@ -27,6 +27,7 @@ function stan(status: string) {
     status,
     decrypt: vi.fn(async (v: { ct: string }) => JAWNE[v.ct] ?? null),
     encrypt: vi.fn(async () => NOWY),
+    confirmReveal: async () => true,
   };
 }
 

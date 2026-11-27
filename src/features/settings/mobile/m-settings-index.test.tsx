@@ -38,9 +38,9 @@ describe("MSettingsIndex", () => {
     expect(hrefy).toEqual([
       "/ustawienia/ogolne",
       "/ustawienia/konto",
-      "/ustawienia/sejf",
       "/ustawienia/powiadomienia",
       "/ustawienia/kalendarz",
+      "/ustawienia/sejf",
     ]);
     expect(nav.getByRole("link", { name: /Sejf/ })).toHaveClass("m-row", "min-h-14");
   });

@@ -1,6 +1,6 @@
 "use client";
 
-// Karta „Usuń konto” (Ustawienia → Ogólne, S2Settings.dc.html): czerwona ramka, potwierdzenie słowem USUŃ.
+// Karta „Usuń konto” (Ustawienia → Konto i bezpieczeństwo, S2SettingsAccount): czerwona ramka, potwierdzenie słowem USUŃ.
 // Teksty mówią o 30 dniach na przywrócenie zamiast trwałego usunięcia (decyzja C2).
 import * as React from "react";
 import { unstable_rethrow } from "next/navigation";
@@ -54,9 +54,10 @@ export function DeleteAccountCard() {
         <div>
           <CardTitle as="h2">Usuń konto</CardTitle>
           <CardDescription>
-            Konto zostanie usunięte po 30 dniach razem ze stronami, sejfem i
-            danymi modułów. Do tego czasu możesz je przywrócić, logując się.
-            Zdjęcie profilowe usuwamy od razu.
+            Konto zostanie wyłączone od razu i usunięte na stałe po 30 dniach —
+            razem ze stronami, sejfem i danymi modułów. Do tego czasu możesz je
+            przywrócić, logując się. Przed usunięciem pobierz eksport. Zdjęcie
+            profilowe usuwamy od razu.
           </CardDescription>
         </div>
       </CardHeader>

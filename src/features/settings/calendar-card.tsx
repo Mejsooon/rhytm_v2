@@ -5,6 +5,7 @@ import { useState } from "react";
 import Link from "next/link";
 
 import {
+  Button,
   Card,
   CardContent,
   CardDescription,
@@ -138,9 +139,9 @@ export function CalendarSettingsCard({ settings }: { settings: CalendarSettings 
         <span role="status" className="text-[13px] text-muted-foreground">
           {komunikat}
         </span>
-        <Link href="/kalendarz" className="text-sm font-medium underline-offset-4 hover:underline">
-          Otwórz kalendarz
-        </Link>
+        <Button asChild>
+          <Link href="/kalendarz">Otwórz kalendarz</Link>
+        </Button>
       </CardFooter>
     </Card>
   );

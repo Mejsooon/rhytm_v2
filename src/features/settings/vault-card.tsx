@@ -1,7 +1,8 @@
 "use client";
 
 import * as React from "react";
-import { Lock, TriangleAlert } from "lucide-react";
+import Link from "next/link";
+import { Lock } from "lucide-react";
 
 import {
   Button,
@@ -11,13 +12,16 @@ import {
   CardFooter,
   CardHeader,
   CardTitle,
+  Segment,
   StatusBadge,
+  Switch,
   TextField,
 } from "@/components/controls";
 import {
   masterPasswordStrength,
   MASTER_MIN_STRENGTH,
 } from "@/features/vault/strength";
+import { czasBlokady, DOMYSLNE_USTAWIENIA, type VaultSettings } from "@/features/vault/settings";
 import { useVault } from "@/features/vault/vault-provider";
 import { VaultResetDialog } from "@/features/vault/vault-reset-dialog";
 import { VaultSetup } from "@/features/vault/vault-setup";
@@ -32,22 +36,13 @@ const ETYKIETY = [
 ] as const;
 const ZLE_HASLO = "Nieprawidłowe hasło główne.";
 
-// Zakładka Ustawienia → Sejf (styl CSettingsAccount.dc.html): stan sejfu, zmiana hasła głównego,
-// strefa niebezpieczna. Hasła istnieją tylko w stanie pól i są czyszczone zaraz po wysłaniu.
-export function VaultCard() {
-  const { status, createdAt, lock } = useVault();
+// Zakładka Ustawienia → Sejf (S2SettingsVault): stan sejfu, blokada i schowek, zmiana hasła głównego,
+// reset. Hasła istnieją tylko w stanie pól i są czyszczone zaraz po wysłaniu.
+export function VaultCard({ liczbaHasel }: { liczbaHasel?: number }) {
+  const { status, lock } = useVault();
   const [ustawianie, setUstawianie] = React.useState(false);
   const [reset, setReset] = React.useState(false);
   const id = React.useId();
-
-  // Data utworzenia jako dd.mm.rrrr (createdAt przychodzi dopiero po wczytaniu sejfu w przeglądarce)
-  const data = createdAt
-    ? new Date(createdAt).toLocaleDateString("pl-PL", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-      })
-    : null;
 
   // Flaga formularza ustawiania gaśnie, gdy sejf przestaje być „brak” (po utworzeniu), żeby po resecie nie wracał formularz
   if (status !== "brak" && ustawianie) setUstawianie(false);
@@ -55,95 +50,74 @@ export function VaultCard() {
     return <VaultSetup onCancel={() => setUstawianie(false)} />;
   }
 
-  const wierszKlasy =
-    "flex flex-wrap items-center justify-between gap-3 border-b border-border py-3.5 last:border-b-0 max-[799px]:flex-col max-[799px]:items-stretch";
+  const istnieje = status === "zablokowany" || status === "odblokowany";
 
   return (
     <>
-      <Card
-        role="region"
-        aria-labelledby={`${id}-sejf`}
-        data-testid="karta-sejf"
-      >
-        <CardHeader>
-          <div>
-            <CardTitle as="h2" id={`${id}-sejf`}>
-              Sejf
-            </CardTitle>
-            <CardDescription>
-              Szyfruje pola „Sekret” w przeglądarce. Serwer widzi tylko
-              szyfrogram.
-            </CardDescription>
+      <Card role="region" aria-labelledby={`${id}-sejf`} data-testid="karta-sejf">
+        <CardContent className="flex flex-wrap items-center gap-3 py-5 max-[799px]:px-4">
+          <span className="flex size-10 flex-none items-center justify-center rounded-full border border-border bg-black/[.03]">
+            <Lock aria-hidden="true" className="size-4" />
+          </span>
+          <div className="min-w-0 flex-1">
+            <div className="flex flex-wrap items-center gap-2">
+              <CardTitle as="h2" id={`${id}-sejf`}>
+                Sejf
+              </CardTitle>
+              {status === "brak" && <StatusBadge tone="gray">Nie ustawiony</StatusBadge>}
+              {istnieje && (
+                <StatusBadge tone={status === "odblokowany" ? "green" : "gray"}>
+                  {status === "odblokowany" ? "Odblokowany" : "Zablokowany"}
+                </StatusBadge>
+              )}
+            </div>
+            {status === "ladowanie" && (
+              <div role="status" className="text-[13px] text-muted-foreground">
+                Wczytywanie…
+              </div>
+            )}
+            {status === "nieobslugiwany" && (
+              <div role="alert" className="text-[13px] text-destructive-foreground">
+                Sejf wymaga nowoczesnej przeglądarki i połączenia HTTPS.
+              </div>
+            )}
+            {status === "brak" && (
+              <div className="text-[13px] text-muted-foreground">
+                Ustaw hasło główne, żeby zapisywać hasła w module Hasła.
+              </div>
+            )}
+            {istnieje && (
+              <div className="text-[13px] text-muted-foreground">
+                {liczbaHasel === undefined ? "" : `${liczbaHasel} ${odmienHasla(liczbaHasel)} · `}
+                szyfrowanie AES-256 na Twoim urządzeniu
+              </div>
+            )}
           </div>
-        </CardHeader>
-        <CardContent className="py-2 max-[799px]:px-4">
-          {status === "ladowanie" && (
-            <div
-              role="status"
-              className="py-3.5 text-[13px] text-muted-foreground"
-            >
-              Wczytywanie…
-            </div>
-          )}
-          {status === "nieobslugiwany" && (
-            <div
-              role="alert"
-              className="py-3.5 text-[13px] text-destructive-foreground"
-            >
-              Sejf wymaga nowoczesnej przeglądarki i połączenia HTTPS.
-            </div>
-          )}
           {status === "brak" && (
-            <div className={wierszKlasy}>
-              <div>
-                <div className="flex items-center gap-2 font-medium">
-                  Nie ustawiony
-                  <StatusBadge tone="gray">Brak</StatusBadge>
-                </div>
-                <div className="text-[13px] text-muted-foreground">
-                  Ustaw hasło główne, żeby zapisywać sekrety w tabelach
-                  Passwords.
-                </div>
-              </div>
-              <Button
-                variant="primary"
-                onClick={() => setUstawianie(true)}
-                className="max-[799px]:h-12"
-              >
-                <Lock aria-hidden="true" className="size-4" />
-                Ustaw sejf
-              </Button>
-            </div>
+            <Button variant="primary" onClick={() => setUstawianie(true)} className="max-[799px]:h-12">
+              <Lock aria-hidden="true" className="size-4" />
+              Ustaw sejf
+            </Button>
           )}
-          {(status === "zablokowany" || status === "odblokowany") && (
-            <div className={wierszKlasy}>
-              <div>
-                <div className="flex items-center gap-2 font-medium">
-                  {data ? `Ustawiony ${data}` : "Ustawiony"}
-                  <StatusBadge
-                    tone={status === "odblokowany" ? "green" : "gray"}
-                  >
-                    {status === "odblokowany" ? "Odblokowany" : "Zablokowany"}
-                  </StatusBadge>
-                </div>
-                <div className="text-[13px] text-muted-foreground">
-                  Klucz zostaje tylko w pamięci tej karty. Blokada po 5 min
-                  bezczynności.
-                </div>
-              </div>
+          {istnieje && (
+            <span className="flex flex-wrap gap-2 max-[799px]:w-full max-[799px]:[&>*]:h-12 max-[799px]:[&>*]:flex-1">
+              <Button asChild>
+                <Link href="/hasla">{status === "odblokowany" ? "Otwórz Hasła" : "Odblokuj"}</Link>
+              </Button>
               {status === "odblokowany" && (
-                <Button onClick={lock} className="max-[799px]:h-12">
+                <Button variant="primary" onClick={lock}>
                   <Lock aria-hidden="true" className="size-4" />
                   Zablokuj teraz
                 </Button>
               )}
-            </div>
+            </span>
           )}
         </CardContent>
       </Card>
 
-      {(status === "zablokowany" || status === "odblokowany") && (
+      {istnieje && (
         <>
+          <Blokada />
           <ZmianaHasla />
 
           <Card
@@ -152,30 +126,17 @@ export function VaultCard() {
             data-testid="karta-sejf-strefa"
             className="border-destructive-border"
           >
-            <CardContent className="flex flex-wrap items-center justify-between gap-3 max-[799px]:flex-col max-[799px]:items-stretch max-[799px]:bg-destructive/[.04] max-[799px]:px-4">
+            <CardContent className="flex flex-wrap items-center justify-between gap-3 py-5 max-[799px]:flex-col max-[799px]:items-stretch max-[799px]:bg-destructive/[.04] max-[799px]:px-4">
               <div>
-                <CardTitle
-                  as="h2"
-                  id={`${id}-strefa`}
-                  className="flex items-center gap-2 text-destructive-foreground"
-                >
-                  <TriangleAlert
-                    aria-hidden="true"
-                    className="size-4 flex-none"
-                  />
-                  Strefa niebezpieczna
+                <CardTitle as="h2" id={`${id}-strefa`}>
+                  Zresetuj sejf
                 </CardTitle>
                 <CardDescription>
-                  Reset usuwa wszystkie zapisane sekrety. Serwisy, loginy i
-                  URL-e zostają.
+                  Gdy nie pamiętasz hasła głównego. Usuwa wszystkie sekrety; serwisy, loginy i URL-e zostają.
                 </CardDescription>
               </div>
-              <Button
-                variant="destructive-outline"
-                onClick={() => setReset(true)}
-                className="max-[799px]:h-12"
-              >
-                Zresetuj sejf
+              <Button variant="destructive" onClick={() => setReset(true)} className="max-[799px]:h-12">
+                Zresetuj sejf…
               </Button>
             </CardContent>
           </Card>
@@ -183,6 +144,87 @@ export function VaultCard() {
       )}
       <VaultResetDialog open={reset} onOpenChange={setReset} />
     </>
+  );
+}
+
+const odmienHasla = (n: number) =>
+  n === 1 ? "hasło" : n % 10 >= 2 && n % 10 <= 4 && (n % 100 < 12 || n % 100 > 14) ? "hasła" : "haseł";
+
+const WIERSZ = "flex flex-wrap items-center justify-between gap-3 border-t border-border py-3.5 first:border-t-0";
+
+// „Blokada i schowek”: każda zmiana zapisuje się od razu na koncie
+function Blokada() {
+  const { settings = DOMYSLNE_USTAWIENIA, saveSettings, status, confirmReveal } = useVault();
+  const [komunikat, setKomunikat] = React.useState("Zmiany zapisują się od razu.");
+
+  async function zapisz(patch: Partial<VaultSettings>) {
+    const wynik = await saveSettings(patch);
+    setKomunikat(wynik.ok ? "Zapisano" : wynik.message);
+  }
+
+  const wiersz = (nazwa: string, opis: string, kontrolka: React.ReactNode) => (
+    <div className={WIERSZ}>
+      <div className="min-w-0">
+        <div className="font-medium">{nazwa}</div>
+        <div className="text-[13px] text-muted-foreground">{opis}</div>
+      </div>
+      {kontrolka}
+    </div>
+  );
+
+  return (
+    <Card data-testid="karta-sejf-blokada">
+      <CardHeader>
+        <div>
+          <CardTitle as="h2">Blokada i schowek</CardTitle>
+          <CardDescription>Sejf blokuje się sam — hasło główne nigdy nie opuszcza urządzenia.</CardDescription>
+        </div>
+      </CardHeader>
+      <CardContent className="max-[799px]:px-4">
+        {wiersz(
+          "Automatyczna blokada",
+          `Po ${czasBlokady(settings.lockMin)} bez aktywności`,
+          <Segment
+            ariaLabel="Automatyczna blokada"
+            value={String(settings.lockMin)}
+            onChange={(v) => void zapisz({ lockMin: Number(v) as VaultSettings["lockMin"] })}
+            options={([1, 5, 15, 60] as const).map((m) => ({ value: String(m), label: czasBlokady(m) }))}
+          />,
+        )}
+        {wiersz(
+          "Blokada po zamknięciu karty",
+          "Po powrocie trzeba wpisać hasło główne",
+          <StatusBadge tone="gray">Zawsze włączona</StatusBadge>,
+        )}
+        {wiersz(
+          "Czyść schowek",
+          "Skopiowane hasło znika ze schowka po 30 s",
+          <Switch
+            ariaLabel="Czyść schowek"
+            checked={settings.clearClipboard}
+            onChange={(clearClipboard) => void zapisz({ clearClipboard })}
+          />,
+        )}
+        {wiersz(
+          "Pytaj o hasło przy podglądzie",
+          "Także gdy sejf jest odblokowany; dotyczy też kopiowania",
+          <Switch
+            ariaLabel="Pytaj o hasło przy podglądzie"
+            checked={settings.askOnReveal}
+            // Wyłączenie też wymaga hasła, inaczej bramkę zdejmie każdy przy odblokowanym komputerze
+            onChange={async (askOnReveal) => {
+              if (!askOnReveal && status !== "odblokowany") setKomunikat("Odblokuj sejf, żeby to wyłączyć.");
+              else if (askOnReveal || (await confirmReveal())) void zapisz({ askOnReveal });
+            }}
+          />,
+        )}
+      </CardContent>
+      <CardFooter>
+        <span role="status" className="text-[13px] text-muted-foreground">
+          {komunikat}
+        </span>
+      </CardFooter>
+    </Card>
   );
 }
 
@@ -213,7 +255,7 @@ function ZmianaHasla() {
 
   const bladStopki = blad !== null && blad !== ZLE_HASLO;
   // Próg „Min. „Mocne”” odpowiada MASTER_MIN_STRENGTH = 3; zaktualizuj tekst przy zmianie progu
-  let komunikat = "Min. „Mocne”, 12+ znaków.";
+  let komunikat = "Nie da się go odzyskać — zapisz je w bezpiecznym miejscu. Wymagane „Mocne”, 12+ znaków.";
   if (bladStopki) komunikat = blad;
   else if (zmieniono)
     komunikat =
@@ -260,8 +302,7 @@ function ZmianaHasla() {
               Zmień hasło główne
             </CardTitle>
             <CardDescription>
-              Hasło główne nie jest hasłem do konta. Zapisane sekrety zostają
-              bez zmian.
+              Inne niż hasło do konta. Zapisane sekrety zostają bez zmian.
             </CardDescription>
           </div>
         </CardHeader>
@@ -351,7 +392,7 @@ function ZmianaHasla() {
             disabled={!mozna}
             className="max-[799px]:h-12"
           >
-            Zmień hasło
+            Zmień hasło główne
           </Button>
         </CardFooter>
       </Card>

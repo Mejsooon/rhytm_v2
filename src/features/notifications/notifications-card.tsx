@@ -10,7 +10,10 @@ import {
   Button,
   Card,
   CardContent,
+  CardDescription,
   CardFooter,
+  CardHeader,
+  CardTitle,
   Switch,
   TimePicker,
 } from "@/components/controls";
@@ -268,6 +271,12 @@ export function NotificationsCard({
 
   return (
     <Card data-testid="karta-powiadomienia">
+      <CardHeader className="max-[799px]:hidden">
+        <div>
+          <CardTitle as="h2">Kanały i pory</CardTitle>
+          <CardDescription>Rodzaje powiadomień i godziny, w których mają milczeć.</CardDescription>
+        </div>
+      </CardHeader>
       <CardContent className="py-1.5 max-[799px]:p-0">
         <div className={WIERSZ}>
           <div>

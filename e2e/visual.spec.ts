@@ -1010,8 +1010,8 @@ test.describe("ekrany z sesją", () => {
       ).toBeVisible();
     await zrzut(page, "strony-lista", projekt);
 
-    // Karta Kosz w Ustawieniach → Ogólne
-    await page.goto("/ustawienia/ogolne#kosz");
+    // Strona Kosza (S2Trash)
+    await page.goto("/ustawienia/kosz");
     await expect(page.getByRole("heading", { name: "Kosz" })).toBeVisible();
     await zrzut(page, "ustawienia-kosz", projekt);
   });

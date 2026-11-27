@@ -235,7 +235,9 @@ export function SecretTableCell({
         aria-label={haslo ? (revealed ? "Ukryj hasło" : "Pokaż hasło") : `${revealed ? "Ukryj" : "Pokaż"}: ${field.name}`}
         aria-pressed={revealed}
         // Klik w trakcie edycji najpierw zabiera fokus z pola (blur zapisuje), przycisk zostaje na miejscu
-        onClick={onToggleReveal}
+        onClick={async () => {
+          if (revealed || (await vault.confirmReveal())) onToggleReveal();
+        }}
         className={cn(AKCJA, "aria-pressed:opacity-100")}
       >
         {revealed ? <EyeOff aria-hidden="true" className="size-3.5" /> : <Eye aria-hidden="true" className="size-3.5" />}
@@ -248,6 +250,7 @@ export function SecretTableCell({
         disabled={!isSecretValue(v)}
         onClick={async () => {
           if (!isSecretValue(v)) return;
+          if (!(await vault.confirmReveal())) return;
           // Odszyfrowanie lokalne; tekst jawny żyje tylko w tej funkcji
           const t = await decrypt(v);
           // Blokada w trakcie odszyfrowywania: nic nie trafia do schowka

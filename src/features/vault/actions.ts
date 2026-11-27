@@ -7,6 +7,7 @@ import { createClient } from "@/lib/supabase/server";
 import { BLAD_ZAPISU } from "@/features/pages/messages";
 import type { VaultMaterial } from "./crypto";
 import { updatedAtSchema, vaultMaterialSchema } from "./schemas";
+import { DOMYSLNE_USTAWIENIA, vaultSettingsSchema, type VaultSettings } from "./settings";
 
 type Blad = { ok: false; message: string };
 
@@ -20,6 +21,7 @@ const INNA_KARTA = "Sejf zmienił się w innej karcie. Odblokuj go ponownie.";
 export async function getVault(): Promise<
   | {
       ok: true;
+      settings: VaultSettings;
       vault:
         | (VaultMaterial & { generation: number; created_at: string; updated_at: string })
         | null;
@@ -38,9 +40,21 @@ export async function getVault(): Promise<
     .eq("user_id", user.id)
     .maybeSingle();
   if (error) return { ok: false, message: BLAD_ZAPISU };
-  if (!data || data.status !== "active") return { ok: true, vault: null };
+  // Ustawienia z profilu; błąd odczytu = domyślne (sejf ma działać także wtedy)
+  const { data: profil } = await supabase
+    .from("profiles")
+    .select("vault_lock_min, vault_clear_clipboard, vault_ask_on_reveal")
+    .eq("user_id", user.id)
+    .maybeSingle();
+  const settings: VaultSettings = {
+    lockMin: (profil?.vault_lock_min as VaultSettings["lockMin"]) ?? DOMYSLNE_USTAWIENIA.lockMin,
+    clearClipboard: profil?.vault_clear_clipboard ?? DOMYSLNE_USTAWIENIA.clearClipboard,
+    askOnReveal: profil?.vault_ask_on_reveal ?? DOMYSLNE_USTAWIENIA.askOnReveal,
+  };
+  if (!data || data.status !== "active") return { ok: true, settings, vault: null };
   return {
     ok: true,
+    settings,
     vault: {
       kdf: data.kdf as unknown as VaultMaterial["kdf"],
       wrapped_key: data.wrapped_key,
@@ -164,4 +178,24 @@ export async function countSecrets(): Promise<{ ok: true; count: number } | Blad
   const { data, error } = await supabase.rpc("count_secrets");
   if (error || typeof data !== "number") return { ok: false, message: BLAD_ZAPISU };
   return { ok: true, count: data };
+}
+
+export async function saveVaultSettings(patch: Partial<VaultSettings>): Promise<{ ok: true } | Blad> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/logowanie");
+
+  const dane = vaultSettingsSchema.safeParse(patch);
+  if (!dane.success || Object.keys(dane.data).length === 0) return { ok: false, message: BLAD_ZAPISU };
+
+  const { lockMin, clearClipboard, askOnReveal } = dane.data;
+  // Pola o wartości undefined nie trafiają do zapytania
+  const { error } = await supabase
+    .from("profiles")
+    .update({ vault_lock_min: lockMin, vault_clear_clipboard: clearClipboard, vault_ask_on_reveal: askOnReveal })
+    .eq("user_id", user.id);
+  if (error) return { ok: false, message: BLAD_ZAPISU };
+  return { ok: true };
 }

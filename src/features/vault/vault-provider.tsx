@@ -2,9 +2,10 @@
 
 import * as React from "react";
 
-import { createVault, getVault, resetVault, rewrapVault as rewrapVaultAction } from "./actions";
-import { BLOKADA_MS } from "./lock-timeout";
+import { createVault, getVault, resetVault, rewrapVault as rewrapVaultAction, saveVaultSettings } from "./actions";
+import { DOMYSLNE_USTAWIENIA, type VaultSettings } from "./settings";
 import { masterPasswordStrength, MASTER_MIN_STRENGTH } from "./strength";
+import { VaultConfirmDialog } from "./vault-confirm-dialog";
 import {
   createVaultMaterial,
   decryptSecret,
@@ -31,6 +32,10 @@ export type VaultState = {
   changePassword(oldPw: string, newPw: string): Promise<Wynik>;
   reset(): Promise<{ ok: true; cleared: number } | { ok: false; message: string }>;
   onStaleGeneration(): void;
+  settings: VaultSettings;
+  saveSettings(patch: Partial<VaultSettings>): Promise<Wynik>;
+  // Przy włączonym „Pytaj o hasło przy podglądzie” otwiera okno; false = anulowano albo sejf się zablokował
+  confirmReveal(): Promise<boolean>;
 };
 
 const AKTYWNOSC = ["pointerdown", "keydown", "touchstart", "wheel", "scroll"] as const;
@@ -53,6 +58,17 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
   const [generation, setGeneration] = React.useState<number | null>(null);
   const [createdAt, setCreatedAt] = React.useState<string | null>(null);
   const [remainingMs, setRemainingMs] = React.useState(0);
+  const [settings, setSettings] = React.useState<VaultSettings>(DOMYSLNE_USTAWIENIA);
+  // Czas blokady w ref, bo czytają go callbacki i nasłuch aktywności
+  const blokadaMsRef = React.useRef(DOMYSLNE_USTAWIENIA.lockMin * 60_000);
+  // Trwające pytanie o hasło przy podglądzie (null = okno zamknięte)
+  const [pytanie, setPytanie] = React.useState<((ok: boolean) => void) | null>(null);
+  const pytanieRef = React.useRef<((ok: boolean) => void) | null>(null);
+  const odpowiedz = React.useCallback((ok: boolean) => {
+    pytanieRef.current?.(ok);
+    pytanieRef.current = null;
+    setPytanie(null);
+  }, []);
 
   // Klucz danych (nieeksportowalny CryptoKey) tylko w pamięci, nigdy w stanie Reacta ani w magazynie przeglądarki
   const keyRef = React.useRef<CryptoKey | null>(null);
@@ -72,7 +88,8 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
     deadlineRef.current = 0;
     setRemainingMs(0);
     setStatus((s) => (s === "odblokowany" ? "zablokowany" : s));
-  }, []);
+    odpowiedz(false);
+  }, [odpowiedz]);
 
   // Pobiera sejf z serwera i uzgadnia z nim materiał, generację i status.
   // Odrzuca odpowiedź, jeśli w międzyczasie zmieniła się epoka; zmiana generacji lub brak sejfu czyści klucz.
@@ -86,6 +103,10 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
     }
     if (epoka !== epokaRef.current || !res.ok) return false;
     zaladowanoRef.current = true;
+    if (res.settings) {
+      setSettings(res.settings);
+      blokadaMsRef.current = res.settings.lockMin * 60_000;
+    }
 
     if (keyRef.current && (!res.vault || res.vault.generation !== generationRef.current)) {
       epokaRef.current += 1;
@@ -139,7 +160,7 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
     const naAktywnosc = (e: Event) => {
       // Tylko prawdziwa aktywność użytkownika: zdarzenia wysłane skryptem nie przedłużają odblokowania
       if (!e.isTrusted) return;
-      deadlineRef.current = Date.now() + BLOKADA_MS;
+      deadlineRef.current = Date.now() + blokadaMsRef.current;
     };
     // Po powrocie na kartę sprawdzamy czas od razu (w tle timery bywają wstrzymane)
     const naWidocznosc = () => {
@@ -176,8 +197,8 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
         keyRef.current = key;
         generationRef.current = res.generation;
         setGeneration(res.generation);
-        deadlineRef.current = Date.now() + BLOKADA_MS;
-        setRemainingMs(BLOKADA_MS);
+        deadlineRef.current = Date.now() + blokadaMsRef.current;
+        setRemainingMs(blokadaMsRef.current);
         setStatus("odblokowany");
         // Doczytujemy created_at i updated_at (do późniejszej zmiany hasła); błąd nie cofa założonego sejfu
         await odswiez();
@@ -214,8 +235,8 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
         if (!key) return { ok: false, message: ZLE_HASLO };
 
         keyRef.current = key;
-        deadlineRef.current = Date.now() + BLOKADA_MS;
-        setRemainingMs(BLOKADA_MS);
+        deadlineRef.current = Date.now() + blokadaMsRef.current;
+        setRemainingMs(blokadaMsRef.current);
         setStatus("odblokowany");
         return { ok: true };
       } catch {
@@ -308,6 +329,42 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
     void odswiez();
   }, [lock, odswiez]);
 
+  const saveSettings = React.useCallback(
+    async (patch: Partial<VaultSettings>): Promise<Wynik> => {
+      const przed = settings;
+      const po = { ...przed, ...patch };
+      const ustaw = (s: VaultSettings) => {
+        setSettings(s);
+        blokadaMsRef.current = s.lockMin * 60_000;
+        // Nowy czas liczy się od teraz
+        if (keyRef.current) deadlineRef.current = Date.now() + blokadaMsRef.current;
+      };
+      ustaw(po);
+      const res = await saveVaultSettings(patch).catch(() => null);
+      if (res?.ok) return { ok: true };
+      ustaw(przed);
+      // Przy kilku zmianach naraz prawdą jest serwer
+      void odswiez();
+      return { ok: false, message: res?.message ?? BLAD_SEJFU };
+    },
+    [settings, odswiez],
+  );
+
+  const confirmReveal = React.useCallback((): Promise<boolean> => {
+    if (!keyRef.current) return Promise.resolve(false);
+    if (!settings.askOnReveal) return Promise.resolve(true);
+    odpowiedz(false);
+    return new Promise((resolve) => {
+      pytanieRef.current = resolve;
+      setPytanie(() => resolve);
+    });
+  }, [settings.askOnReveal, odpowiedz]);
+
+  const sprawdzHaslo = React.useCallback(async (password: string) => {
+    const material = materialRef.current;
+    return !!material && (await unwrapDataKey(password, material)) !== null;
+  }, []);
+
   const value = React.useMemo<VaultState>(
     () => ({
       status,
@@ -322,9 +379,17 @@ export function VaultProvider({ children }: { children: React.ReactNode }) {
       changePassword,
       reset,
       onStaleGeneration,
+      settings,
+      saveSettings,
+      confirmReveal,
     }),
-    [status, generation, createdAt, remainingMs, setup, unlock, lock, encrypt, decrypt, changePassword, reset, onStaleGeneration],
+    [status, generation, createdAt, remainingMs, setup, unlock, lock, encrypt, decrypt, changePassword, reset, onStaleGeneration, settings, saveSettings, confirmReveal],
   );
 
-  return <VaultContext.Provider value={value}>{children}</VaultContext.Provider>;
+  return (
+    <VaultContext.Provider value={value}>
+      {children}
+      {pytanie && <VaultConfirmDialog verify={sprawdzHaslo} onDone={odpowiedz} />}
+    </VaultContext.Provider>
+  );
 }

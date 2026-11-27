@@ -1,9 +1,11 @@
 import { Suspense } from "react";
+import Link from "next/link";
 import { headers } from "next/headers";
 import { notFound, redirect } from "next/navigation";
 import { connection } from "next/server";
 
 import { todayIso } from "@/components/controls/calendar-math";
+import { Button, Card, CardDescription, CardHeader, CardTitle } from "@/components/controls";
 import { ModuleHeader } from "@/components/shell/module-header";
 import { AccountCard } from "@/features/settings/account-card";
 import { loadCalendarSettings } from "@/features/calendar/settings";
@@ -15,7 +17,6 @@ import { GoalsCard } from "@/features/settings/goals-card";
 import { PasswordCard } from "@/features/settings/password-card";
 import { ProfileCard } from "@/features/settings/profile-card";
 import { SessionsCard } from "@/features/settings/sessions-card";
-import { TrashCard } from "@/features/settings/trash-card";
 import { VaultCard } from "@/features/settings/vault-card";
 import { loadTrash } from "@/features/pages/actions";
 import {
@@ -33,14 +34,8 @@ import { safeTimezone, timezoneOptions } from "@/lib/time/timezones";
 import { createClient } from "@/lib/supabase/server";
 
 // Karty Profil i Cele z zapisanymi wartościami (dane zależą od ciasteczek → connection + Suspense)
-async function Ogolne({
-  searchParams,
-}: {
-  searchParams: Promise<{ email?: string | string[] }>;
-}) {
+async function Ogolne() {
   await connection();
-  // ?email=potwierdzono dopisuje auth/confirm po kliknięciu linku ze zmiany adresu (czytane tu, w Suspense)
-  const emailConfirmed = (await searchParams).email === "potwierdzono";
   const supabase = await createClient();
   const {
     data: { user },
@@ -58,18 +53,10 @@ async function Ogolne({
   // Podpisany adres zdjęcia (null → inicjały)
   const avatarUrl = await getAvatarUrl(supabase, profil?.avatar_path);
   const strefa = safeTimezone(profil?.timezone);
-  // Kosz: usunięte strony i wiersze z ostatnich 30 dni (błąd odczytu = komunikat w karcie)
+  // Liczba pozycji na przycisku kosza; błąd odczytu = przycisk bez liczby
   const kosz = await loadTrash();
+  const wKoszu = kosz.ok ? kosz.pages.length + kosz.rows.length : 0;
   const waluta = profil?.currency;
-  // Czy konto ma hasło: z bazy (konto Google może ustawić hasło linkiem, bez tożsamości „email”);
-  // stara baza bez funkcji → tożsamość „email” jak dotąd
-  const { data: maHaslo, error: bladHasla } =
-    await supabase.rpc("my_has_password");
-  const hasPassword = bladHasla
-    ? (user.identities ?? []).some((t) => t.provider === "email")
-    : maHaslo === true;
-  const zmianaHasla = user.user_metadata?.password_changed_at;
-  const sesja = describeUserAgent((await headers()).get("user-agent"));
   return (
     <>
       <ProfileCard
@@ -107,29 +94,40 @@ async function Ogolne({
           week: profil?.week_start === "sun" ? "sun" : "mon",
         }}
       />
-      <AccountCard
-        email={user.email ?? ""}
-        newEmail={user.new_email ?? null}
-        hasPassword={hasPassword}
-        passwordChangedAt={typeof zmianaHasla === "string" ? zmianaHasla : null}
-        sessionLabel={sesja.label}
-        emailConfirmed={emailConfirmed}
-        timeZone={strefa}
-      />
-      <TrashCard
-        pages={kosz.ok ? kosz.pages : []}
-        rows={kosz.ok ? kosz.rows : []}
-        timeZone={strefa}
-        loadError={!kosz.ok}
-      />
-      <DeleteAccountCard />
+      <Card data-testid="karta-kosz">
+        <CardHeader className="pb-5">
+          <div>
+            <CardTitle as="h2">Kosz</CardTitle>
+            <CardDescription>
+              Usunięte strony i wiersze znikają na dobre po 30 dniach.
+            </CardDescription>
+          </div>
+          <Button asChild>
+            <Link href="/ustawienia/kosz">
+              {wKoszu > 0 ? `Otwórz kosz (${wKoszu})` : "Otwórz kosz"}
+            </Link>
+          </Button>
+        </CardHeader>
+      </Card>
+      <p className="m-0 text-xs text-muted-foreground max-[799px]:px-4">
+        E-mail, hasło, sesje i usunięcie konta są w{" "}
+        <Link href="/ustawienia/konto" className="font-medium text-foreground no-underline hover:underline">
+          Konto i bezpieczeństwo →
+        </Link>
+      </p>
     </>
   );
 }
 
-// Konto i bezpieczeństwo: hasło, sesje, eksport (dane zależą od ciasteczek → connection + Suspense)
-async function Konto() {
+// Konto i bezpieczeństwo: e-mail, hasło, sesje, eksport, usunięcie (dane zależą od ciasteczek → connection + Suspense)
+async function Konto({
+  searchParams,
+}: {
+  searchParams: Promise<{ email?: string | string[] }>;
+}) {
   await connection();
+  // ?email=potwierdzono dopisuje auth/confirm po kliknięciu linku ze zmiany adresu (czytane tu, w Suspense)
+  const emailConfirmed = (await searchParams).email === "potwierdzono";
   const supabase = await createClient();
   const {
     data: { user },
@@ -166,6 +164,12 @@ async function Konto() {
 
   return (
     <>
+      <AccountCard
+        email={user.email ?? ""}
+        newEmail={user.new_email ?? null}
+        hasPassword={hasPassword}
+        emailConfirmed={emailConfirmed}
+      />
       <PasswordCard hasPassword={hasPassword} email={user.email ?? ""} />
       <SessionsCard
         sessions={bladSesji ? [] : lista}
@@ -175,8 +179,28 @@ async function Konto() {
         timeZone={safeTimezone(profil?.timezone)}
       />
       <ExportCard />
+      <DeleteAccountCard />
     </>
   );
+}
+
+// Sejf: liczba haseł z serwera (same wiersze, bez wartości); reszta karty działa w przeglądarce
+async function Sejf() {
+  await connection();
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/logowanie");
+
+  const { count, error } = await supabase
+    .from("page_rows")
+    .select("id, page_blocks!inner(deleted_at, pages!inner(is_system, deleted_at))", { count: "exact", head: true })
+    .eq("user_id", user.id)
+    .is("deleted_at", null)
+    .is("page_blocks.deleted_at", null)
+    .eq("page_blocks.pages.is_system", true);
+  return <VaultCard liczbaHasel={error ? undefined : (count ?? 0)} />;
 }
 
 // Powiadomienia: ustawienia, urządzenia push i przypomnienia nawyków (dane zależą od ciasteczek → connection + Suspense)
@@ -325,26 +349,24 @@ export default async function ZakladkaPage({
             <h2 className="m-0 text-2xl font-semibold tracking-[-0.02em]">
               {tab.label}
             </h2>
-            {tab.description ? (
-              <p className="m-0 mt-1 text-muted-foreground">
-                {tab.description}
-              </p>
-            ) : null}
+            <p className="m-0 mt-1 text-muted-foreground">{tab.description}</p>
           </div>
           {tab.slug === "ogolne" ? (
             <Suspense fallback={null}>
-              <Ogolne searchParams={searchParams} />
+              <Ogolne />
             </Suspense>
           ) : tab.slug === "konto" ? (
             <Suspense fallback={null}>
-              <Konto />
+              <Konto searchParams={searchParams} />
             </Suspense>
           ) : tab.slug === "kalendarz" ? (
             <Suspense fallback={null}>
               <Kalendarz />
             </Suspense>
           ) : tab.slug === "sejf" ? (
-            <VaultCard />
+            <Suspense fallback={null}>
+              <Sejf />
+            </Suspense>
           ) : (
             <Suspense fallback={null}>
               <Powiadomienia />

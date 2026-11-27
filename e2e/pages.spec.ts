@@ -709,15 +709,27 @@ test.describe("strony", () => {
     await expect(wSidebarze).toHaveCount(0);
 
     await page.goto("/ustawienia/ogolne");
-    const kosz = page.locator("#kosz");
-    await expect(kosz.getByRole("heading", { name: "Kosz" })).toBeVisible();
-    const pozycja = kosz.getByRole("listitem", { name: "Książki" });
+    await page.getByRole("link", { name: "Otwórz kosz (1)" }).click();
+    await expect(page).toHaveURL(/\/ustawienia\/kosz$/);
+    const pozycja = page.getByRole("listitem", { name: "Książki" }).filter({ visible: true });
     await expect(pozycja).toContainText("zostało 30 dni");
     await pozycja.getByRole("button", { name: "Przywróć" }).click();
-    await expect(kosz.getByText("Kosz jest pusty.")).toBeVisible();
+    await expect(page.getByText("Kosz jest pusty.")).toBeVisible();
 
     await page.goto("/strony/nowa");
     await expect(wSidebarze).toBeVisible();
+
+    // Ponownie do kosza i „Usuń na zawsze”
+    await page.getByRole("button", { name: "Menu strony Książki", exact: true }).click();
+    await page.getByRole("menuitem", { name: "Usuń stronę" }).click();
+    await potwierdzenie.getByRole("button", { name: "Usuń", exact: true }).click();
+    await expect(wSidebarze).toHaveCount(0);
+    await page.goto("/ustawienia/kosz");
+    await pozycja.getByRole("button", { name: "Usuń na zawsze" }).click();
+    await page.getByRole("alertdialog").getByRole("button", { name: "Usuń na zawsze" }).click();
+    await expect(page.getByText("Usunięto na zawsze „Książki”.")).toBeVisible();
+    await page.reload();
+    await expect(page.getByText("Kosz jest pusty.")).toBeVisible();
   });
 
   // CMSubs i CMRowEdit (Subscriptions): ekran telefonu z tego samego magazynu co tabela, nowy wiersz w arkuszu

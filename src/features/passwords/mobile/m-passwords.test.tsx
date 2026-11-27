@@ -61,7 +61,7 @@ const WIERSZE: PageRow[] = [
 
 function stan(status = "odblokowany") {
   const decrypt = vi.fn(async (v: { ct: string }) => JAWNE[v.ct] ?? null);
-  vault.state = { status, remainingMs: 292_000, decrypt, lock: vi.fn() };
+  vault.state = { status, remainingMs: 292_000, decrypt, lock: vi.fn(), confirmReveal: async () => true };
   return decrypt;
 }
 

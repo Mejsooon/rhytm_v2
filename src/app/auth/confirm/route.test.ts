@@ -54,14 +54,14 @@ describe("GET /auth/confirm", () => {
     expect(cel(res)).toBe("/nowe-haslo");
   });
 
-  it("email_change → verifyOtp i /ustawienia/ogolne?email=potwierdzono", async () => {
+  it("email_change → verifyOtp i /ustawienia/konto?email=potwierdzono", async () => {
     const res = await GET(zadanie("?token_hash=abc&type=email_change"));
     expect(verifyOtp).toHaveBeenCalledWith({
       type: "email_change",
       token_hash: "abc",
     });
     expect(res.status).toBe(307);
-    expect(cel(res)).toBe("/ustawienia/ogolne?email=potwierdzono");
+    expect(cel(res)).toBe("/ustawienia/konto?email=potwierdzono");
   });
 
   it("email_change z błędem verifyOtp → /link-wygasl?type=signup", async () => {
