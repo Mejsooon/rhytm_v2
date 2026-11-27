@@ -45,6 +45,7 @@ export function ItemPopover({
   onOpenRun,
   onStartGym,
   onDelete,
+  onOpenActivity,
 }: {
   item: SportItem;
   openLeft: boolean;
@@ -59,6 +60,7 @@ export function ItemPopover({
   onOpenRun: (req: RunRequest) => void;
   onStartGym: (input: GymSessionInput) => void;
   onDelete: (item: SportItem) => void;
+  onOpenActivity?: (item: SportItem) => void;
 }) {
   const bieg = item.kind === "run";
   const godzina = (min: number) =>
@@ -86,7 +88,22 @@ export function ItemPopover({
   let statystyki: { k: string; v: string }[];
   let lista: { n: string; v: string }[] = [];
 
-  if (bieg && !item.planned) {
+  if (item.kind === "other") {
+    const dystans = item.distanceKm !== null ? `${formatKm(item.distanceKm)} km` : "—";
+    statystyki = item.planned
+      ? [
+          { k: "Start", v: godzina(item.startMin) },
+          { k: "Plan", v: dystans },
+          { k: "Rodzaj", v: "inna aktywność" },
+          { k: "Kcal", v: "—" },
+        ]
+      : [
+          { k: "Czas", v: formatDuration(item.durationS ?? item.durationMin * 60) },
+          item.distanceKm !== null ? { k: "Dystans", v: dystans } : { k: "Trudność", v: item.difficulty !== null ? `${item.difficulty}/10` : "—" },
+          { k: "Kcal", v: item.kcal !== null ? `≈ ${item.kcal}` : "—" },
+          { k: "Start", v: godzina(item.startMin) },
+        ];
+  } else if (bieg && !item.planned) {
     const km = item.distanceKm ?? 0;
     const czas = item.durationS ?? 0;
     statystyki = [
@@ -221,8 +238,8 @@ export function ItemPopover({
     >
       <div className="px-4 pt-3.5">
         <div className="flex items-center gap-2">
-          <StatusBadge tone={bieg ? "orange" : "gray"} size="lg">
-            {bieg ? "BIEG" : "SIŁA"}
+          <StatusBadge tone={bieg ? "orange" : item.kind === "other" ? "blue" : "gray"} size="lg">
+            {bieg ? "BIEG" : item.kind === "other" ? item.title.toUpperCase() : "SIŁA"}
           </StatusBadge>
           <span className="text-xs whitespace-nowrap text-muted-foreground">
             {item.planned ? "zaplanowany" : "wykonany"}
@@ -287,7 +304,11 @@ export function ItemPopover({
 
       {/* Stopka z makiety: szare tło, górna kreska, zaokrąglone dolne rogi */}
       <div className="mt-3.5 flex items-center gap-2 rounded-b-[11px] border-t border-border bg-black/[.025] px-4 py-3">
-        {bieg ? (
+        {item.kind === "other" ? (
+          <Button variant="primary" size="sm" onClick={() => onOpenActivity?.(item)}>
+            {item.planned ? "Uzupełnij dane" : "Edytuj aktywność"}
+          </Button>
+        ) : bieg ? (
           <Button
             variant="primary"
             size="sm"

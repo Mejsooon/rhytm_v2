@@ -99,7 +99,17 @@ describe("SportView", () => {
     await userEvent.click(screen.getByRole("radio", { name: "Bieg" }));
     expect(within(lista()).queryByText("Push")).not.toBeInTheDocument();
     await userEvent.click(within(lista()).getAllByRole("button", { name: /Długi bieg/ })[0]);
+    // Wiersz rozwija szczegóły, a przycisk w nich otwiera okno biegu
+    const panel = screen.getByTestId("szczegoly");
+    await userEvent.click(within(panel).getByRole("button", { name: /Edytuj bieg|Uzupełnij dane/ }));
     expect(push).toHaveBeenLastCalledWith(expect.stringContaining("&bieg="), { scroll: false });
+  });
+
+  it("przegląd: dymek słupka i wyłączona strzałka w przyszłość", async () => {
+    render(<SportView data={daneSportu()} selectedKey={null} newGym={null} />);
+    expect(screen.getByRole("button", { name: "Następny okres" })).toBeDisabled();
+    fireEvent.focus(screen.getAllByRole("button", { name: /^tydz. 46:/ })[0]);
+    expect(screen.getByRole("tooltip")).toHaveTextContent("km");
   });
 
   it("`?wybrany=` otwiera dymek", () => {
@@ -196,16 +206,13 @@ describe("SportView", () => {
     expect(push).not.toHaveBeenCalled();
   });
 
-  it("„Dodaj aktywność”: Pusty trening, szablony i link do listy szablonów", async () => {
+  it("„Dodaj aktywność”: Pusty trening, szablony i szablony jako przyciski", async () => {
     createGymSession.mockResolvedValue({ ok: true, id: "pusta" });
     renderuj(<SportView data={daneSportu()} selectedKey={null} newGym={null} />);
     await userEvent.click(screen.getByRole("button", { name: "Dodaj aktywność" }));
-    expect(
-      screen.getByRole("link", { name: "Szablony treningów…" }),
-    ).toHaveAttribute("href", "/sport/szablony");
     expect(screen.getByRole("button", { name: "Push" })).toBeInTheDocument();
     await userEvent.click(
-      screen.getByRole("button", { name: "Pusty trening" }),
+      screen.getByRole("button", { name: "Pusty" }),
     );
     expect(createGymSession).toHaveBeenCalledWith({
       date: "2026-11-17",

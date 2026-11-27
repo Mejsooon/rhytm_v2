@@ -13,8 +13,6 @@ import {
   ActionPopover,
   Button,
   MENU_ITEM,
-  MENU_LABEL,
-  MENU_SEPARATOR,
   Segment,
 } from "@/components/controls";
 import { MIESIACE, type IsoDate } from "@/components/controls/calendar-math";
@@ -23,13 +21,15 @@ import { minutesNow } from "@/features/calendar/load-calendar";
 import { createGymSession, type GymSessionInput } from "./actions";
 import { ActivityDialog } from "./activity-dialog";
 import { SportOverview } from "./overview";
+import { SportEmpty } from "./sport-empty";
 import { stats } from "./overview-model";
 import { DeleteSessionDialog } from "./delete-session-dialog";
 import { MRunNew } from "./mobile/m-run-new";
 import { MSport } from "./mobile/m-sport";
 import type { RunRequest } from "./item-popover";
+import { cn } from "@/lib/utils";
 import type { SportMonthData } from "./load-sport";
-import type { SportItem } from "./model";
+import { plPlural, type SportItem } from "./model";
 import { BIEG, MonthCalendar, SILA } from "./month-calendar";
 import { RunDialog } from "./run-dialog";
 
@@ -254,10 +254,9 @@ export function SportView({
     })();
   }, [nowyData, nowyStart, profile.timezone, month, router]);
 
-  // Okno innej aktywności: undefined = zamknięte, null = nowa. Wybrany w kalendarzu wpis „inny”
-  // otwiera to samo okno zamiast dymku.
+  // Okno innej aktywności: undefined = zamknięte, null = nowa (w dniu z kalendarza albo dziś)
+  const [dzienAktywnosci, setDzienAktywnosci] = useState<IsoDate | null>(null);
   const [aktywnosc, setAktywnosc] = useState<SportItem | null | undefined>(undefined);
-  const wybranaInna = data.items.find((i) => i.key === wybrany && i.kind === "other") ?? null;
   const godzinaAktywnosci = (i: SportItem | null | undefined) =>
     i ? `${String(Math.floor(i.startMin / 60)).padStart(2, "0")}:${String(i.startMin % 60).padStart(2, "0")}` : null;
 
@@ -272,7 +271,17 @@ export function SportView({
   // ?wybrany= prowadzi do dymka w kalendarzu
   const [zakladka, setZakladka] = useState<"przeglad" | "kalendarz">(selectedKey ? "kalendarz" : "przeglad");
   const wMiesiacu = stats(wszystkie.filter((i) => i.date.slice(0, 7) === today.slice(0, 7)));
-  const podtytul = `${MIESIACE[Number(today.slice(5, 7)) - 1]}: ${wMiesiacu.km.toLocaleString("pl-PL", { maximumFractionDigits: 1 })} km biegu · biegi: ${wMiesiacu.runs} · siłownia: ${wMiesiacu.gym} · inne: ${wMiesiacu.other}`;
+  const dzisPlan = wszystkie.find((i) => i.planned && i.date === today);
+  const podtytul = [
+    `${MIESIACE[Number(today.slice(5, 7)) - 1]}: ${wMiesiacu.km.toLocaleString("pl-PL", { maximumFractionDigits: 1 })} km biegu`,
+    plPlural(wMiesiacu.runs, "bieg", "biegi", "biegów"),
+    plPlural(wMiesiacu.gym, "trening siłowy", "treningi siłowe", "treningów siłowych"),
+    ...(wMiesiacu.other ? [plPlural(wMiesiacu.other, "inna aktywność", "inne aktywności", "innych aktywności")] : []),
+    ...(dzisPlan ? [`dziś w planie ${dzisPlan.title}`] : []),
+  ].join(" · ");
+
+  // Nowe konto: nic nie zapisane i żadnego szablonu w planie
+  const pusto = wszystkie.length === 0 && data.templates.length === 0;
 
   function otworzZPrzegladu(item: SportItem) {
     const start = `${String(Math.floor(item.startMin / 60)).padStart(2, "0")}:${String(item.startMin % 60).padStart(2, "0")}`;
@@ -338,75 +347,70 @@ export function SportView({
                 open={menuSilowni}
                 onOpenChange={setMenuSilowni}
                 align="end"
-                width={220}
+                width={260}
                 className="p-1"
                 trigger={<Button variant="primary">Dodaj aktywność</Button>}
               >
-                <div className="flex flex-col">
+                <div className="flex flex-col p-0.5">
+                  {(
+                    [
+                      ["Bieg", "dystans, czas, tempo", "B", "bg-[rgba(245,158,11,.14)] text-[#b45309]", () => otworzBieg({ date: today, start: godzinaTeraz() })],
+                      ["Trening siłowy", "pusty albo z szablonu:", "S", "bg-black/[.06] text-soft-foreground", () => void rozpocznijSilownie({ date: today, start: godzinaTeraz() })],
+                    ] as const
+                  ).map(([nazwa, opis, znak, kolor, akcja]) => (
+                    <button
+                      key={nazwa}
+                      type="button"
+                      aria-label={nazwa}
+                      className={cn(MENU_ITEM, "h-auto gap-2.5 py-1.5")}
+                      onClick={() => {
+                        setMenuSilowni(false);
+                        akcja();
+                      }}
+                    >
+                      <span aria-hidden="true" className={cn("grid size-7 flex-none place-items-center rounded-[8px] text-xs font-semibold", kolor)}>
+                        {znak}
+                      </span>
+                      <span className="flex flex-col text-left">
+                        <span className="font-medium">{nazwa}</span>
+                        <span className="text-xs text-muted-foreground">{opis}</span>
+                      </span>
+                    </button>
+                  ))}
+                  <div className="flex flex-wrap gap-1.5 py-1 pr-2 pl-[46px]">
+                    {[...data.templates, null].map((t) => (
+                      <button
+                        key={t?.id ?? "pusty"}
+                        type="button"
+                        onClick={() => {
+                          setMenuSilowni(false);
+                          void rozpocznijSilownie(
+                            t ? { date: today, start: t.start_time.slice(0, 5), templateId: t.id } : { date: today, start: godzinaTeraz() },
+                          );
+                        }}
+                        className="h-7 cursor-pointer rounded-full border border-input bg-white px-2.5 text-xs font-medium outline-none hover:bg-accent focus-visible:shadow-focus"
+                      >
+                        {t?.name ?? "Pusty"}
+                      </button>
+                    ))}
+                  </div>
                   <button
                     type="button"
-                    className={MENU_ITEM}
-                    onClick={() => {
-                      setMenuSilowni(false);
-                      otworzBieg({ date: today, start: godzinaTeraz() });
-                    }}
-                  >
-                    Bieg
-                  </button>
-                  <button
-                    type="button"
-                    className={MENU_ITEM}
+                    aria-label="Inna aktywność"
+                    className={cn(MENU_ITEM, "h-auto gap-2.5 py-1.5")}
                     onClick={() => {
                       setMenuSilowni(false);
                       setAktywnosc(null);
                     }}
                   >
-                    Inna aktywność
+                    <span aria-hidden="true" className="grid size-7 flex-none place-items-center rounded-[8px] bg-[#7c3aed1a] text-xs font-semibold text-[#6d28d9]">
+                      I
+                    </span>
+                    <span className="flex flex-col text-left">
+                      <span className="font-medium">Inna aktywność</span>
+                      <span className="text-xs text-muted-foreground">tenis, rower, joga, pole dance…</span>
+                    </span>
                   </button>
-                  <div className={MENU_SEPARATOR} />
-                  <div className={MENU_LABEL}>Trening siłowy</div>
-                  <button
-                    type="button"
-                    className={MENU_ITEM}
-                    onClick={() =>
-                      void rozpocznijSilownie({
-                        date: today,
-                        start: godzinaTeraz(),
-                      })
-                    }
-                  >
-                    Pusty trening
-                  </button>
-                  {data.templates.length > 0 && (
-                    <>
-                      <div className={MENU_SEPARATOR} />
-                      <div className={MENU_LABEL}>Z szablonu</div>
-                      {data.templates.map((t) => (
-                        <button
-                          key={t.id}
-                          type="button"
-                          className={MENU_ITEM}
-                          onClick={() =>
-                            void rozpocznijSilownie({
-                              date: today,
-                              start: t.start_time.slice(0, 5),
-                              templateId: t.id,
-                            })
-                          }
-                        >
-                          {t.name}
-                        </button>
-                      ))}
-                    </>
-                  )}
-                  <div className={MENU_SEPARATOR} />
-                  <Link
-                    href="/sport/szablony"
-                    className={MENU_ITEM}
-                    onClick={() => setMenuSilowni(false)}
-                  >
-                    Szablony treningów…
-                  </Link>
                 </div>
               </ActionPopover>
             </>
@@ -455,7 +459,15 @@ export function SportView({
             ))}
           </div>
 
-          {zakladka === "przeglad" && (
+          {pusto && (
+            <SportEmpty
+              onGym={() => void rozpocznijSilownie({ date: today, start: godzinaTeraz() })}
+              onRun={() => otworzBieg({ date: today, start: godzinaTeraz() })}
+              onActivity={() => setAktywnosc(null)}
+            />
+          )}
+
+          {!pusto && zakladka === "przeglad" && (
             <SportOverview
               items={wszystkie}
               filtr={filtr}
@@ -464,11 +476,14 @@ export function SportView({
               profile={profile}
               exercises={data.exercises}
               setsHistory={data.setsHistory}
+              templates={data.templates}
               onOpen={otworzZPrzegladu}
+              onDelete={setDoUsuniecia}
+              onResetFilter={() => setFiltr("all")}
             />
           )}
 
-          {zakladka === "kalendarz" && (
+          {!pusto && zakladka === "kalendarz" && (
             <>
           <div className="flex flex-wrap items-center gap-3">
             <div className="flex items-center gap-2.5">
@@ -513,7 +528,13 @@ export function SportView({
           <MonthCalendar
             data={data}
             items={widoczne}
-            selectedKey={wybranaInna ? null : wybrany}
+            selectedKey={wybrany}
+            onOpenActivity={(item, dzien) => {
+              setWybrany(null);
+              setDodaj(null);
+              setDzienAktywnosci(dzien);
+              setAktywnosc(item);
+            }}
             addDate={dodaj}
             onSelect={zaznacz}
             onAddDay={dodajWDniu}
@@ -539,6 +560,12 @@ export function SportView({
               />
               Siłownia
             </span>
+            {[...new Map(data.items.filter((i) => i.kind === "other").map((i) => [i.title, i.color])).entries()].map(([nazwa, kolor]) => (
+              <span key={nazwa} className="flex items-center gap-1.5">
+                <span className="size-2 rounded-full" style={{ background: kolor }} />
+                {nazwa}
+              </span>
+            ))}
             <span className="flex items-center gap-1.5">
               <span className="box-border h-2.5 w-3 rounded-[3px] border border-dashed border-muted-foreground" />
               Zaplanowany, bez danych
@@ -571,22 +598,21 @@ export function SportView({
         />
       )}
 
-      {(aktywnosc !== undefined || wybranaInna) && (
+      {aktywnosc !== undefined && (
         <ActivityDialog
-          key={(wybranaInna ?? aktywnosc)?.key ?? "nowa"}
-          item={wybranaInna ?? aktywnosc ?? null}
-          date={(wybranaInna ?? aktywnosc)?.date ?? today}
-          start={godzinaAktywnosci(wybranaInna ?? aktywnosc) ?? godzinaTeraz()}
+          key={aktywnosc?.key ?? "nowa"}
+          item={aktywnosc}
+          date={aktywnosc?.date ?? dzienAktywnosci ?? today}
+          start={godzinaAktywnosci(aktywnosc) ?? godzinaTeraz()}
           profile={profile}
           kinds={data.activityKinds ?? []}
           onDelete={(item) => {
             setAktywnosc(undefined);
-            setWybrany(null);
             setDoUsuniecia(item);
           }}
           onClose={() => {
             setAktywnosc(undefined);
-            setWybrany(null);
+            setDzienAktywnosci(null);
           }}
         />
       )}
