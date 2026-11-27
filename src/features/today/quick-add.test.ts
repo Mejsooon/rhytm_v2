@@ -20,5 +20,7 @@ describe("parseQuickAdd", () => {
     expect(parse("wt").date).toBe("2026-11-24");
     expect(parse("zakupy")).toMatchObject({ type: "block", title: "Zakupy", date: "2026-11-17", startMin: null });
     expect(parse("zakupy 25:00").startMin).toBeNull();
+    // Nazwa szablonu tylko jako całe słowo
+    expect(parse("pushowanie kodu").type).toBe("block");
   });
 });

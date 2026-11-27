@@ -49,6 +49,8 @@ import { TodayView } from "./today-view";
 function dane(): TodayData {
   return {
     templates: [],
+    firstSteps: { hidden: true, done: { profil: true, blok: true, nawyk: true, trening: true, push: true, strona: true } },
+    hasStats: true,
     activityKinds: [],
     profile: {
       timezone: "Europe/Warsaw",
@@ -201,22 +203,35 @@ describe("TodayView", () => {
     expect(screen.queryByText(/Witaj w rhytm/)).not.toBeInTheDocument();
   });
 
-  it("nowe konto bez niczego widzi pełny układ z zerami: kafelek „Utwórz nowy nawyk” i „Dodaj pierwszy blok”", () => {
+  it("nowe konto: powitanie, „Pierwsze kroki”, puste karty, bez nawyków i menu", () => {
     const d = dane();
     d.tasks = [];
+    d.hasStats = false;
+    d.firstSteps = {
+      hidden: false,
+      done: { profil: true, blok: false, nawyk: false, trening: false, push: false, strona: false },
+    };
     render(<TodayView data={d} name="Mejson" />);
     const web = within(screen.getByTestId("web-dzis"));
-    expect(
-      web.getByRole("heading", { name: "Ten tydzień" }),
-    ).toBeInTheDocument();
-    expect(
-      web.getByRole("button", { name: "Utwórz nowy nawyk" }),
-    ).toBeInTheDocument();
+    expect(web.getByRole("heading", { name: "Cześć, Mejson" })).toBeInTheDocument();
+    expect(web.getByText("1 z 6 zrobione")).toBeInTheDocument();
+    expect(web.getByText("Tu pojawią się Twoje statystyki")).toBeInTheDocument();
     expect(web.getByText("Brak bloków na dziś")).toBeInTheDocument();
-    expect(
-      web.getByRole("button", { name: "Dodaj pierwszy blok" }),
-    ).toBeInTheDocument();
-    expect(screen.queryByText(/Witaj w rhytm/)).not.toBeInTheDocument();
+    expect(web.queryByRole("heading", { name: "Nawyki na dziś" })).not.toBeInTheDocument();
+    expect(web.queryByRole("button", { name: "Więcej sposobów dodawania" })).not.toBeInTheDocument();
+    expect(web.queryByText("tydz. 47")).not.toBeInTheDocument();
+  });
+
+  it("menu dodawania otwiera „Szybko dodaj”, skrót Ctrl+Shift+K też", async () => {
+    render(<TodayView data={dane()} name="Mejson" />);
+    const web = within(screen.getByTestId("web-dzis"));
+    await userEvent.click(web.getByRole("button", { name: "Więcej sposobów dodawania" }));
+    await userEvent.click(screen.getByRole("button", { name: /^Szybko dodaj…/ }));
+    expect(screen.getByRole("dialog", { name: "Szybkie dodawanie" })).toBeInTheDocument();
+    await userEvent.keyboard("{Escape}");
+    expect(screen.queryByRole("dialog", { name: "Szybkie dodawanie" })).not.toBeInTheDocument();
+    await userEvent.keyboard("{Control>}{Shift>}K{/Shift}{/Control}");
+    expect(screen.getByRole("dialog", { name: "Szybkie dodawanie" })).toBeInTheDocument();
   });
 
   it("nawyk na dziś: klik odhacza od razu (kafelek, licznik, pasek „Nawyki”), błąd nie występuje", async () => {

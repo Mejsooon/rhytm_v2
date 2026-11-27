@@ -83,6 +83,8 @@ const codziennie = {
 function dane(): TodayData {
   return {
     templates: [],
+    firstSteps: { hidden: true, done: { profil: true, blok: true, nawyk: true, trening: true, push: true, strona: true } },
+    hasStats: true,
     activityKinds: [],
     profile: {
       timezone: "Europe/Warsaw",

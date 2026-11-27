@@ -68,8 +68,9 @@ export function parseQuickAdd(
     startMin = minuty(jedna[0]);
   }
 
-  const template = templates.find((t) => maly.includes(t.name.toLowerCase())) ?? null;
-  const activity = kinds.find((k) => maly.includes(k.name.toLowerCase())) ?? null;
+  // Całe słowa: szablon „A” nie może łapać każdego tekstu z literą „a”
+  const template = templates.find((t) => slowo(t.name.toLowerCase())) ?? null;
+  const activity = kinds.find((k) => slowo(k.name.toLowerCase())) ?? null;
   const blok = maly.startsWith(" blok ");
   const nawyk = maly.startsWith(" nawyk ");
   const type: QuickAdd["type"] = blok

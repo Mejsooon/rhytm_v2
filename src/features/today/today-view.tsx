@@ -31,6 +31,7 @@ import { activityKinds } from "@/features/sport/activities";
 import { ActivityDialog } from "@/features/sport/activity-dialog";
 import { RunDialog } from "@/features/sport/run-dialog";
 import { DayPlan } from "./day-plan";
+import { FirstSteps } from "./first-steps";
 import type { TodayData } from "./load-today";
 import { MQuickAdd } from "./mobile/m-quick-add";
 import { MToday } from "./mobile/m-today";
@@ -235,6 +236,11 @@ export function TodayView({
     />
   );
 
+  // Lista „Pierwsze kroki” i układ nowego konta (S2EmptyToday): lista widoczna i brak statystyk
+  const listaKrokow =
+    !data.firstSteps.hidden && !Object.values(data.firstSteps.done).every(Boolean);
+  const noweKonto = listaKrokow && !data.hasStats;
+
   const dzien = weekdayOf(today);
   const [rok, miesiac, dzienMiesiaca] = today.split("-");
 
@@ -299,31 +305,79 @@ export function TodayView({
               <StatusBadge tone="gray" size="lg" className="tabular-nums">
                 {dataNaglowka}
               </StatusBadge>
-              <span className="text-xs text-muted-foreground tabular-nums">
-                {tydzien}
-              </span>
+              {!noweKonto && (
+                <span className="text-xs text-muted-foreground tabular-nums">
+                  {tydzien}
+                </span>
+              )}
             </>
           }
-          webAction={przyciskNowyBlok}
+          webAction={
+            noweKonto ? (
+              <Button variant="primary" size="md" onClick={otworzNowyBlok}>
+                <Plus size={16} aria-hidden="true" />
+                Nowy blok
+              </Button>
+            ) : (
+              przyciskNowyBlok
+            )
+          }
         />
 
         <div className="box-border flex w-full flex-col gap-6 p-6">
+          {noweKonto && (
+            <div>
+              <h2 className="m-0 text-xl font-semibold">{`Cześć, ${name}`}</h2>
+              <p className="m-0 mt-1 text-muted-foreground">
+                Kilka kroków i „Dziś” zacznie pokazywać Twój tydzień.
+              </p>
+            </div>
+          )}
+          {/* Po ukryciu lista zostaje w drzewie, żeby pokazać pasek z „Pokaż” */}
+          <FirstStepsSlot show={listaKrokow}>
+            <FirstSteps
+              done={data.firstSteps.done}
+              onOpen={(krok) => {
+                if (krok === "blok") otworzNowyBlok();
+                else if (krok === "nawyk") setNowyNawyk(true);
+                else setOkno("bieg");
+              }}
+            />
+          </FirstStepsSlot>
+
           {/* 1. Cele tygodnia (4 paski) */}
-          <WeekCard bars={paski} weekStartDate={data.weekStartDate} />
+          {data.hasStats ? (
+            <WeekCard bars={paski} weekStartDate={data.weekStartDate} />
+          ) : (
+            <section aria-labelledby="ten-tydzien" className="flex flex-col gap-3">
+              <h2 id="ten-tydzien" className="m-0 text-base leading-[1.3] font-semibold">
+                Ten tydzień
+              </h2>
+              <div className="rounded-lg border border-dashed border-black/[.14] p-5">
+                <b className="font-medium">Tu pojawią się Twoje statystyki</b>
+                <p className="m-0 mt-1 text-muted-foreground">
+                  Treningi, kilometry, nawyki i sen, z porównaniem do poprzedniego tygodnia.
+                  Wystarczy pierwszy trening albo wpis snu.
+                </p>
+              </div>
+            </section>
+          )}
 
           {/* 2. Nawyki na dziś (kafelki z passą) */}
-          <TodayHabits
-            habits={todayHabits({
-              today,
-              weekStart: profile.weekStart,
-              habits: data.habits,
-              checks: data.checks,
-            })}
-            onToggle={(habitId) => void toggleHabit(habitId, today)}
-            onCreate={() => setNowyNawyk(true)}
-          />
+          {!(noweKonto && data.habits.length === 0) && (
+            <TodayHabits
+              habits={todayHabits({
+                today,
+                weekStart: profile.weekStart,
+                habits: data.habits,
+                checks: data.checks,
+              })}
+              onToggle={(habitId) => void toggleHabit(habitId, today)}
+              onCreate={() => setNowyNawyk(true)}
+            />
+          )}
 
-          {/* 3. Plan dnia (lista 00–24 z przerwami) */}
+          {/* 3. Plan dnia (lista w godzinach aktywnych) */}
           <DayPlan
             data={data}
             nowMin={teraz}
@@ -382,4 +436,11 @@ export function TodayView({
       />
     </>
   );
+}
+
+// Raz pokazana lista zostaje zamontowana do odświeżenia strony (pasek „Pokaż” po ukryciu)
+function FirstStepsSlot({ show, children }: { show: boolean; children: React.ReactNode }) {
+  const [byla, setByla] = useState(show);
+  if (show && !byla) setByla(true);
+  return byla ? children : null;
 }

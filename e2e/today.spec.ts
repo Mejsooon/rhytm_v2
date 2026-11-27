@@ -139,6 +139,67 @@ test.describe("Dziś (web)", () => {
   });
 });
 
+test.describe("Dziś: menu i pierwsze kroki (web)", () => {
+  test.use({ actionTimeout: 10_000 });
+  test.skip(!process.env.E2E_SUPABASE, "wymaga lokalnego Supabase");
+
+  test.beforeEach(({}, info) => {
+    test.skip(info.project.name !== "web", "układ webowy");
+  });
+
+  test("ręczne odhaczenie kroku zostaje po odświeżeniu, ukryta lista znika", async ({
+    page,
+  }, info) => {
+    await zalozKontoNawykow(page, info.project.name);
+    await page.goto("/dzis");
+    const web = page.getByTestId("web-dzis");
+    const kroki = web.getByRole("region", { name: "Pierwsze kroki" });
+
+    const zapis = poZapisie(page);
+    await kroki.getByRole("button", { name: "Oznacz jako zrobione: Włącz powiadomienia" }).click();
+    await zapis;
+    await page.reload();
+    await expect(
+      kroki.getByRole("button", { name: "Odznacz: Włącz powiadomienia" }),
+    ).toBeVisible();
+
+    const ukrycie = poZapisie(page);
+    await kroki.getByRole("button", { name: "Ukryj listę" }).click();
+    await expect(web.getByRole("status")).toContainText("jest ukryta");
+    await ukrycie;
+    await page.reload();
+    await expect(web.getByRole("heading", { name: "Plan dnia" })).toBeVisible();
+    await expect(kroki).toBeHidden();
+  });
+
+  test("Ctrl+Shift+K → „bieg 10 km jutro 18:00” → Enter → bieg w bazie", async ({
+    page,
+  }, info) => {
+    const userId = await zalozKontoNawykow(page, info.project.name);
+    await page.goto("/dzis");
+    await expect(
+      page.getByTestId("web-dzis").getByRole("heading", { name: "Plan dnia" }),
+    ).toBeVisible();
+    await page.keyboard.press("Control+Shift+K");
+    const okno = page.getByRole("dialog", { name: "Szybkie dodawanie" });
+    await okno.getByLabel("Co dodać?").fill("bieg 10 km jutro 18:00");
+    await expect(okno.getByTestId("rozumiem")).toContainText("10 km");
+    await okno.getByLabel("Co dodać?").press("Enter");
+    await expect(okno).toBeHidden();
+    await expect
+      .poll(async () => {
+        const { data } = await adminClient()
+          .from("sport_sessions")
+          .select("type, start_local")
+          .eq("user_id", userId);
+        return data ?? [];
+      })
+      .toEqual([
+        { type: "run", start_local: `${przesunDate(dzisWarszawa(), 1)}T18:00:00` },
+      ]);
+  });
+});
+
 test.describe("Dziś (telefon)", () => {
   test.use({ actionTimeout: 10_000 });
   test.skip(!process.env.E2E_SUPABASE, "wymaga lokalnego Supabase");

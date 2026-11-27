@@ -124,7 +124,7 @@ describe("loadToday", () => {
     expect(odhaczenia.gte).not.toHaveBeenCalled();
     expect(odhaczenia.lte).not.toHaveBeenCalled();
     const sen = zapytania.find((z) => z.tabela === "sleep_logs")!.q;
-    expect(sen.gte).toHaveBeenCalledWith("date", "2026-11-09");
+    expect(sen.gte).toHaveBeenCalledWith("date", "2026-09-20");
     expect(sen.lte).toHaveBeenCalledWith("date", "2026-11-22");
     const blokiTydzien = zapytania.filter((z) => z.tabela === "blocks")[0].q;
     expect(blokiTydzien.lte).toHaveBeenCalledWith(

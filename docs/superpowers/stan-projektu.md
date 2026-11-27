@@ -35,7 +35,7 @@ Wygląd COSS według makiet na kanwie „Rhytm Design”.
 
 ## W toku
 
-- **Pakiet „Dziś, Nawyki i sen” (od 2026-11-27, gałąź `feat/dzis-v2`):** spec części A (Dziś) `specs/2026-11-27-dzis-v2-design.md` czeka na akceptację; część B (Nawyki i sen) po niej.
+- **Pakiet „Dziś, Nawyki i sen” (od 2026-11-27, gałąź `feat/dzis-v2`):** część A (Dziś, spec `specs/2026-11-27-dzis-v2-design.md`) zbudowana; przed scaleniem migracja `20261204100000_pierwsze_kroki.sql` (Mejson). Część B (Nawyki i sen) po sprawdzeniu A.
 
 - **Pakiet 2 Kalendarz:** scalony 27.11, sprawdzony przez Mejsona.
 

@@ -24,6 +24,7 @@ import type { SportItem } from "@/features/sport/model";
 import type { TaskRow } from "@/features/tasks/model";
 import { safeTimezone } from "@/lib/time/timezones";
 import type { Database } from "@/types/database";
+import { firstStepsDone, type FirstStepKey } from "./first-steps-model";
 import { weekStart } from "./model";
 
 type HabitRow = Database["public"]["Tables"]["habits"]["Row"];
@@ -55,6 +56,9 @@ export type TodayData = {
   // Szablony siłowni i własne rodzaje aktywności (menu dodawania i „Szybko dodaj”)
   templates: { id: string; name: string }[];
   activityKinds: ActivityKindRow[];
+  // „Pierwsze kroki” i to, czy karta tygodnia ma już z czego liczyć (kiedykolwiek)
+  firstSteps: { hidden: boolean; done: Record<FirstStepKey, boolean> };
+  hasStats: boolean;
   today: IsoDate;
   nowMin: number;
   weekStartDate: IsoDate;
@@ -66,7 +70,7 @@ export type TodayData = {
   tasks: TaskRow[];
   habits: Habit[];
   checks: Checks;
-  // Poprzedni i bieżący tydzień
+  // Ostatnie 60 dni
   sleepLogs: SleepLog[];
   // Treningi tygodnia — wszystkie, także ukryte w kalendarzu
   sportItems: SportItem[];
@@ -81,7 +85,7 @@ export async function loadToday(
   const { data: p, error: blad } = await supabase
     .from("profiles")
     .select(
-      "timezone, week_start, clock, display_name, avatar_path, sleep_goal_min, km_goal_on, weekly_km_goal, workouts_goal_on, weekly_workouts_goal, calendar_from_hour, calendar_to_hour, weight_kg",
+      "timezone, week_start, clock, display_name, avatar_path, sleep_goal_min, km_goal_on, weekly_km_goal, workouts_goal_on, weekly_workouts_goal, calendar_from_hour, calendar_to_hour, weight_kg, height_cm, first_steps, first_steps_hidden",
     )
     .eq("user_id", userId)
     .maybeSingle();
@@ -151,7 +155,8 @@ export async function loadToday(
       .from("sleep_logs")
       .select("*")
       .eq("user_id", userId)
-      .gte("date", odPoprzedniego)
+      // 60 dni jak w Nawykach: okno snu z menu musi znaleźć starszy wpis, inaczej by go nadpisało
+      .gte("date", addDays(today, -60))
       .lte("date", koniecTygodnia)
       .order("date", { ascending: true }),
     supabase
@@ -171,6 +176,25 @@ export async function loadToday(
     if (wynik.error) throw new Error(wynik.error.message);
   }
 
+  // Czy cokolwiek takiego istnieje (same liczniki, bez wierszy)
+  const ile = (tabela: "blocks" | "sport_sessions" | "sleep_logs" | "push_subscriptions") =>
+    supabase.from(tabela).select("user_id", { count: "exact", head: true }).eq("user_id", userId);
+  const liczniki = await Promise.all([
+    ile("blocks"),
+    ile("sport_sessions"),
+    ile("sleep_logs"),
+    ile("push_subscriptions"),
+    supabase
+      .from("pages")
+      .select("id", { count: "exact", head: true })
+      .eq("user_id", userId)
+      .eq("is_system", false),
+  ]);
+  for (const wynik of liczniki) {
+    if (wynik.error) throw new Error(wynik.error.message);
+  }
+  const [bloki, treningi, noce, push, strony] = liczniki.map((w) => (w.count ?? 0) > 0);
+
   // Zadania tygodnia (kafelki i plan dnia)
   const tasks = kalendarz.tasks;
 
@@ -183,6 +207,18 @@ export async function loadToday(
   }
 
   return {
+    firstSteps: {
+      hidden: p?.first_steps_hidden ?? false,
+      done: firstStepsDone(p?.first_steps, {
+        profil: Boolean(p?.display_name && p?.weight_kg && p?.height_cm),
+        blok: bloki,
+        nawyk: (nawykiRes.data ?? []).length > 0,
+        trening: treningi,
+        push,
+        strona: strony,
+      }),
+    },
+    hasStats: treningi || noce || odhaczenia.length > 0,
     profile,
     templates: szablonyRes.data ?? [],
     activityKinds: rodzajeRes.data ?? [],
