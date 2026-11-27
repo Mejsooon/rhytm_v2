@@ -35,11 +35,13 @@ Wygląd COSS według makiet na kanwie „Rhytm Design”.
 
 ## W toku
 
+- **Pakiet 2 Kalendarz:** scalony do `main` 27.11, migracja `20261201100000_kalendarz_ustawienia.sql` na produkcji. Czeka na sprawdzenie przez Mejsona; następny: Sport i trening siłowy — na sygnał.
+
 - **Filtr tabeli jak w makiecie:** scalony do `main`.
 
 - **Porządek i captcha (2026-11-27):** `feat/martwy-kod` i `feat/captcha-w-supabase` scalone do `main`. Do zrobienia przez Mejsona po wdrożeniu: włączyć CAPTCHA (Turnstile) w panelu Supabase.
 
-- **Nowe makiety (2026-11-26):** kanwa „Rhytm Design” mocno zmieniona przez Mejsona (95 ekranów zmienionych, 79 nowych, sekcja Trener). Kopie w `docs/design/mockups` na gałęzi `docs/makiety-2026-11-26`, różnice w dzienniku 26.11. Seria „nowe makiety” w toku. **Pakiet 1 Tabele v3** scalony do `main` (`05063b0`) (spec `specs/2026-11-26-tabele-v3-design.md`, plan `plans/2026-11-26-tabele-v3.md`); migracja `20261130100000_szablony_po_polsku.sql` do uruchomienia przez Mejsona. Następny: Kalendarz (warstwy na koncie, jedna warstwa „Odnowienia”) — start po sprawdzeniu Tabel przez Mejsona.
+- **Nowe makiety (2026-11-26):** kanwa „Rhytm Design” mocno zmieniona przez Mejsona (95 ekranów zmienionych, 79 nowych, sekcja Trener). Kopie w `docs/design/mockups` na gałęzi `docs/makiety-2026-11-26`, różnice w dzienniku 26.11. Seria „nowe makiety” w toku. **Pakiet 1 Tabele v3** scalony do `main` (`05063b0`) (spec `specs/2026-11-26-tabele-v3-design.md`, plan `plans/2026-11-26-tabele-v3.md`); migracja `20261130100000_szablony_po_polsku.sql` do uruchomienia przez Mejsona.
 
 - **Seria autonomiczna (2026-11-24):** Dziś → Subscriptions → sprzątanie uwag webu → Etap 3 (telefon). Decyzje podjęte bez Mejsona: `docs/superpowers/do-decyzji-seria.md`.
 - **Projekt Dziś:** scalony (`02a36ba`) i wdrożony; spec `specs/2026-11-24-dzis-design.md`. Migracja `20261126100000_tasks_only_in_blocks.sql` wykonana 24.11 (6 zadań usuniętych).

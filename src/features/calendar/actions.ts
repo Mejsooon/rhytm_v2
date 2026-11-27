@@ -243,15 +243,9 @@ export async function changeOccurrence(input: {
   }
 
   if (plan.kind === "deleteTasksAndCancel") {
-    // Zadania tego wystąpienia są usuwane, potem odwołujemy wystąpienie
-    const { error: blad1 } = await supabase
-      .from("tasks")
-      .delete()
-      .eq("block_id", block.id)
-      .eq("occurrence_date", plan.date);
-    if (blad1) return { ok: false, message: BLAD_ZAPISU };
-
-    const { error: blad2 } = await supabase.from("block_exceptions").upsert(
+    // Najpierw odwołanie, potem zadania: gdy drugi zapis padnie, zostają ukryte zadania,
+    // a nie żywe wystąpienie z utraconą listą
+    const { error: blad1 } = await supabase.from("block_exceptions").upsert(
       {
         block_id: block.id,
         user_id: block.user_id,
@@ -260,6 +254,13 @@ export async function changeOccurrence(input: {
       },
       { onConflict: "block_id,occurrence_date" },
     );
+    if (blad1) return { ok: false, message: BLAD_ZAPISU };
+
+    const { error: blad2 } = await supabase
+      .from("tasks")
+      .delete()
+      .eq("block_id", block.id)
+      .eq("occurrence_date", plan.date);
     if (blad2) return { ok: false, message: BLAD_ZAPISU };
   }
 

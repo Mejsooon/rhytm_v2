@@ -11,11 +11,11 @@
 // Oba układy są w DOM, przełącza je CSS (800 px).
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { ChevronLeft, ChevronRight, Plus, Search } from "lucide-react";
+import { ChevronLeft, ChevronRight, PanelLeft, Plus, Search } from "lucide-react";
 
-import { Button, Segment, StatusBadge } from "@/components/controls";
+import { Button, Segment } from "@/components/controls";
 import { MIESIACE, type IsoDate } from "@/components/controls/calendar-math";
-import { CategoryFilters, CategorySheet } from "./category-filters";
+import { CategorySheet } from "./category-filters";
 import type { CategoryRow, RenewalSource } from "./load-calendar";
 import { DNI_PELNE, MIESIACE_DOP } from "./mobile/pl";
 import {
@@ -57,6 +57,8 @@ export function CalendarHeader({
   renewalSources = [],
   onToggleRenewalSource = () => {},
   onNewBlock,
+  panelOpen = true,
+  onTogglePanel,
 }: {
   view: CalendarView;
   // Widok pokazywany na telefonie, gdy różni się od webowego (bez `widok` w adresie: dzień zamiast tygodnia)
@@ -78,6 +80,9 @@ export function CalendarHeader({
   renewalSources?: RenewalSource[];
   onToggleRenewalSource?: (source: RenewalSource) => void;
   onNewBlock?: () => void;
+  // Lewy panel kalendarza (web)
+  panelOpen?: boolean;
+  onTogglePanel?: () => void;
 }) {
   const router = useRouter();
   const [rok, miesiac, numerDnia] = date.split("-").map(Number);
@@ -91,10 +96,6 @@ export function CalendarHeader({
       ? `${DNI_PELNE[weekdayOf(date)]}, ${numerDnia} ${MIESIACE_DOP[miesiac - 1]}`
       : `${miesiacWielka} ${rok}`;
   // Numer ISO tygodnia liczymy ze środka tygodnia (przy tygodniu od niedzieli niedziela należy do poprzedniego)
-  const podtytul =
-    view === "tydzien"
-      ? `tydz. ${isoWeekNumber(viewRange("tydzien", date, weekStart).days[3])}`
-      : subtitle;
 
   // Zakres dni tygodnia do nagłówka telefonu: „9–15 listopada” albo „28 listopada – 4 grudnia”
   const dniTygodnia = viewRange("tydzien", date, weekStart).days;
@@ -104,6 +105,9 @@ export function CalendarHeader({
     mPierwszy === mOstatni
       ? `${dPierwszy}–${dOstatni} ${MIESIACE_DOP[mOstatni - 1]}`
       : `${dPierwszy} ${MIESIACE_DOP[mPierwszy - 1]} – ${dOstatni} ${MIESIACE_DOP[mOstatni - 1]}`;
+
+  const podtytul =
+    view === "tydzien" ? `tydz. ${isoWeekNumber(dniTygodnia[3])} · ${zakresTygodnia}` : subtitle;
 
   const segment = (wartosc: CalendarView) => (
     <Segment
@@ -118,47 +122,32 @@ export function CalendarHeader({
     <>
       <header className="flex flex-none flex-wrap items-center gap-x-3.5 gap-y-2.5 border-b border-border px-4 py-2.5 max-[799px]:hidden">
         <div className="flex items-center gap-1.5">
-          {/* Grupa ‹ Dziś ›: przyciski sklejone, zaokrąglone tylko skrajne rogi; fokus nad sąsiadem */}
-          <div className="inline-flex">
-            <Button asChild icon className="rounded-r-none focus-visible:z-10">
-              <Link
-                href={adres(view, shiftDate(view, date, -1))}
-                aria-label={`Poprzedni ${OKRES[view]}`}
-              >
-                <ChevronLeft size={16} aria-hidden="true" />
-              </Link>
-            </Button>
-            <Button asChild className="-ml-px rounded-none focus-visible:z-10">
-              <Link href={adres(view, today)}>Dziś</Link>
-            </Button>
-            <Button
-              asChild
-              icon
-              className="-ml-px rounded-l-none focus-visible:z-10"
-            >
-              <Link
-                href={adres(view, shiftDate(view, date, 1))}
-                aria-label={`Następny ${OKRES[view]}`}
-              >
-                <ChevronRight size={16} aria-hidden="true" />
-              </Link>
-            </Button>
-          </div>
-          <h1 className="ml-2 text-base font-semibold">{tytul}</h1>
-          {podtytul && (
-            <StatusBadge tone="gray" className="tabular-nums">
-              {podtytul}
-            </StatusBadge>
-          )}
+          <Button
+            variant="ghost"
+            icon
+            aria-label="Panel kalendarza"
+            aria-pressed={panelOpen}
+            onClick={onTogglePanel}
+          >
+            <PanelLeft size={16} aria-hidden="true" />
+          </Button>
+          <Button asChild size="sm">
+            <Link href={adres(view, today)}>Dziś</Link>
+          </Button>
+          <Button asChild variant="ghost" size="sm" icon>
+            <Link href={adres(view, shiftDate(view, date, -1))} aria-label={`Poprzedni ${OKRES[view]}`}>
+              <ChevronLeft size={16} aria-hidden="true" />
+            </Link>
+          </Button>
+          <Button asChild variant="ghost" size="sm" icon>
+            <Link href={adres(view, shiftDate(view, date, 1))} aria-label={`Następny ${OKRES[view]}`}>
+              <ChevronRight size={16} aria-hidden="true" />
+            </Link>
+          </Button>
+          <h1 className="ml-2 text-lg font-semibold">{tytul}</h1>
+          {podtytul && <span className="text-xs text-muted-foreground tabular-nums">{podtytul}</span>}
         </div>
         <div className="ml-auto flex items-center gap-2">
-          <CategoryFilters
-            categories={categories}
-            onToggle={onToggleCategory}
-            onAdd={onAddCategory}
-            sources={renewalSources}
-            onToggleSource={onToggleRenewalSource}
-          />
           {segment(view)}
           <Button variant="primary" onClick={onNewBlock}>
             <Plus size={16} aria-hidden="true" />

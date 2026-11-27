@@ -18,8 +18,10 @@ const {
   createBlock,
   changeOccurrence,
   updateField,
+  saveCalendarSettings,
 } = vi.hoisted(() => ({
   updateField: vi.fn(),
+  saveCalendarSettings: vi.fn(),
   setCategoryHidden: vi.fn(),
   createCategory: vi.fn(),
   toastError: vi.fn(),
@@ -32,6 +34,7 @@ vi.mock("@/features/categories/actions", () => ({
   setCategoryHidden,
   createCategory,
 }));
+vi.mock("./settings-actions", () => ({ saveCalendarSettings }));
 vi.mock("./actions", () => ({ createBlock, changeOccurrence }));
 vi.mock("@/features/pages/actions", () => ({ updateField }));
 vi.mock("@/features/tasks/actions", () => ({
@@ -116,40 +119,27 @@ beforeEach(() => {
   vi.clearAllMocks();
 });
 
-// Przycisk „Kategorie N/M” na webie (na telefonie jest ikona o nazwie „Kategorie”).
-// `hidden`: przy otwartym menu reszta strony ma aria-hidden (menu modalne)
-const przyciskKategorii = () =>
-  screen.getByRole("button", {
-    name: /^Kategorie, widoczne \d+ z \d+$/,
-    hidden: true,
-  });
-
-// Otwiera menu „Kategorie” i zwraca pole wyboru kategorii o tej nazwie
-async function poleKategorii(nazwa: string) {
-  if (!screen.queryByRole("menu")) await userEvent.click(przyciskKategorii());
-  return screen.findByRole("menuitemcheckbox", { name: new RegExp(nazwa) });
-}
+// Kategorie na webie są w lewym panelu kalendarza
+const panelKategorii = () => within(screen.getByRole("region", { name: "Kategorie" }));
+const poleKategorii = (nazwa: string) => panelKategorii().getByRole("button", { name: nazwa });
+const warstwa = (nazwa: RegExp) => within(screen.getByRole("region", { name: "Warstwy" })).getByRole("button", { name: nazwa });
 
 describe("CalendarView", () => {
-  it("przycisk „Kategorie” liczy widoczne kategorie", () => {
+  it("lewy panel pokazuje kategorie jako włączone", () => {
     wyrenderuj();
-    expect(przyciskKategorii()).toHaveTextContent("2/2");
+    expect(poleKategorii("Dom")).toHaveAttribute("aria-pressed", "true");
+    expect(poleKategorii("Studia")).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByText("Algebra")).toBeInTheDocument();
-    // Dawny rząd chipów („POKAŻ”) zniknął
-    expect(screen.queryByText("Pokaż")).not.toBeInTheDocument();
   });
 
   it("odhaczenie kategorii w menu ukrywa ją od razu i woła setCategoryHidden", async () => {
     setCategoryHidden.mockResolvedValue({ ok: true });
     wyrenderuj();
-    await userEvent.click(await poleKategorii("Dom"));
+    await userEvent.click(poleKategorii("Dom"));
     expect(setCategoryHidden).toHaveBeenCalledWith({ id: "c2", hidden: true });
     await waitFor(() =>
-      expect(
-        screen.getByRole("menuitemcheckbox", { name: /Dom/ }),
-      ).toHaveAttribute("aria-checked", "false"),
+      expect(poleKategorii("Dom")).toHaveAttribute("aria-pressed", "false"),
     );
-    expect(przyciskKategorii()).toHaveTextContent("1/2");
     expect(screen.queryByText("Sprzątanie")).not.toBeInTheDocument();
     expect(screen.getByText("Algebra")).toBeInTheDocument();
   });
@@ -157,22 +147,20 @@ describe("CalendarView", () => {
   it("błąd akcji przywraca kategorię i blok oraz pokazuje toast", async () => {
     setCategoryHidden.mockResolvedValue({ ok: false, message: "x" });
     wyrenderuj();
-    await userEvent.click(await poleKategorii("Dom"));
+    await userEvent.click(poleKategorii("Dom"));
     await waitFor(() =>
       expect(toastError).toHaveBeenCalledWith(
         "Nie udało się zapisać. Spróbuj ponownie.",
       ),
     );
-    expect(
-      screen.getByRole("menuitemcheckbox", { name: /Dom/ }),
-    ).toHaveAttribute("aria-checked", "true");
+    expect(poleKategorii("Dom")).toHaveAttribute("aria-pressed", "true");
     expect(screen.getByText("Sprzątanie")).toBeInTheDocument();
   });
 
   it("nowe dane z serwera zastępują stan klienta", async () => {
     setCategoryHidden.mockResolvedValue({ ok: true });
     const { rerender } = wyrenderuj();
-    await userEvent.click(await poleKategorii("Dom"));
+    await userEvent.click(poleKategorii("Dom"));
     rerender(
       <CalendarView
         view="tydzien"
@@ -182,10 +170,7 @@ describe("CalendarView", () => {
         data={dane()}
       />,
     );
-    expect(
-      screen.getByRole("menuitemcheckbox", { name: /Dom/ }),
-    ).toHaveAttribute("aria-checked", "true");
-    expect(przyciskKategorii()).toHaveTextContent("2/2");
+    expect(poleKategorii("Dom")).toHaveAttribute("aria-pressed", "true");
   });
 
   it("klik w blok otwiera dymek, ponowny klik i Esc go zamykają", async () => {
@@ -206,12 +191,11 @@ describe("CalendarView", () => {
     wyrenderuj();
     await userEvent.click(screen.getByRole("button", { name: /^Algebra/ }));
     expect(screen.getByRole("dialog")).toBeInTheDocument();
-    await userEvent.click(await poleKategorii("Studia"));
+    await userEvent.click(poleKategorii("Studia"));
     await waitFor(() =>
       expect(screen.queryByRole("dialog")).not.toBeInTheDocument(),
     );
-    await userEvent.click(await poleKategorii("Studia"));
-    await userEvent.keyboard("{Escape}");
+    await userEvent.click(poleKategorii("Studia"));
     await screen.findByRole("button", { name: /^Algebra/ });
     expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
   });
@@ -288,10 +272,7 @@ describe("CalendarView", () => {
   it("„+ Kategoria” w menu otwiera okno kategorii; po dodaniu kategoria jest w menu", async () => {
     createCategory.mockResolvedValue({ ok: true, id: "c9" });
     wyrenderuj();
-    await userEvent.click(przyciskKategorii());
-    await userEvent.click(
-      await screen.findByRole("menuitem", { name: "+ Kategoria" }),
-    );
+    await userEvent.click(screen.getByRole("button", { name: "Nowa kategoria" }));
     await userEvent.type(await screen.findByLabelText("Nazwa"), "Języki");
     await userEvent.click(
       screen.getByRole("button", { name: "Dodaj kategorię" }),
@@ -302,11 +283,7 @@ describe("CalendarView", () => {
     expect(createCategory).toHaveBeenCalledWith(
       expect.objectContaining({ name: "Języki" }),
     );
-    expect(przyciskKategorii()).toHaveTextContent("3/3");
-    expect(await poleKategorii("Języki")).toHaveAttribute(
-      "aria-checked",
-      "true",
-    );
+    expect(poleKategorii("Języki")).toHaveAttribute("aria-pressed", "true");
   });
 
   it("„Edytuj” w dymku otwiera okno bloku z danymi wystąpienia", async () => {
@@ -943,7 +920,7 @@ describe("CalendarView — miesiąc", () => {
     miesiac();
     expect(screen.getByText("2 wpisy widoczne")).toBeInTheDocument();
     // Miesiąc ma ten sam cienki pasek z przyciskiem „Kategorie”
-    await userEvent.click(await poleKategorii("Dom"));
+    await userEvent.click(poleKategorii("Dom"));
     await waitFor(() =>
       expect(screen.getByText("1 wpis widoczny")).toBeInTheDocument(),
     );
@@ -1038,26 +1015,14 @@ describe("CalendarView — podgląd treningów", () => {
     expect(screen.getByText("4 wpisy widoczne")).toBeInTheDocument();
   });
 
-  it("ukryta kategoria „Sport” chowa podgląd, a odhaczenie jej w menu chowa go od razu", async () => {
-    setCategoryHidden.mockResolvedValue({ ok: true });
-    const { unmount } = wyrenderuj(zeSportem(true));
-    expect(
-      screen.queryByRole("link", { name: /Spokojny/ }),
-    ).not.toBeInTheDocument();
-    unmount();
-
-    wyrenderuj(zeSportem(false));
+  it("warstwa „Treningi” chowa podgląd od razu; ukryta kategoria „Sport” go nie rusza", async () => {
+    saveCalendarSettings.mockResolvedValue({ ok: true });
+    wyrenderuj(zeSportem(true));
     expect(screen.getByRole("link", { name: /Spokojny/ })).toBeInTheDocument();
-    await userEvent.click(await poleKategorii("Sport"));
-    await waitFor(() =>
-      expect(
-        screen.queryByRole("link", { name: /Spokojny/ }),
-      ).not.toBeInTheDocument(),
-    );
-    expect(setCategoryHidden).toHaveBeenCalledWith({
-      id: "c-sport",
-      hidden: true,
-    });
+    await userEvent.click(warstwa(/Treningi/));
+    expect(screen.queryByRole("link", { name: /Spokojny/ })).not.toBeInTheDocument();
+    expect(saveCalendarSettings).toHaveBeenCalledWith({ showSport: false });
+    expect(setCategoryHidden).not.toHaveBeenCalled();
   });
 
   it("bez kategorii „Sport” podgląd i tak jest widoczny", () => {
@@ -1239,30 +1204,21 @@ describe("CalendarView: odnowienia subskrypcji", () => {
     ).toBeNull();
   });
 
-  it("ukrycie źródła w menu chowa wpisy i woła updateField z show_in_calendar:false", async () => {
-    updateField.mockResolvedValue({ ok: true });
+  it("warstwa „Odnowienia” chowa wpisy i zapisuje się na koncie", async () => {
+    saveCalendarSettings.mockResolvedValue({ ok: true });
     wyrenderujZOdnowieniem();
-    expect(przyciskKategorii()).toHaveTextContent("3/3");
-    const pole = await poleKategorii("Subscriptions");
-    await userEvent.click(pole);
-    expect(updateField).toHaveBeenCalledWith("f-ren", {
-      config: { cycle_field_id: "f-kw", show_in_calendar: false },
-    });
-    await waitFor(() =>
-      expect(screen.queryByText("Netflix · 43,00 zł")).toBeNull(),
-    );
-    expect(przyciskKategorii()).toHaveTextContent("2/3");
+    await userEvent.click(warstwa(/Odnowienia/));
+    expect(saveCalendarSettings).toHaveBeenCalledWith({ showRenewals: false });
+    expect(screen.queryByText("Netflix · 43,00 zł")).toBeNull();
+    expect(updateField).not.toHaveBeenCalled();
   });
 
-  it("błąd zapisu źródła cofa ukrycie i pokazuje komunikat", async () => {
-    updateField.mockResolvedValue({ ok: false, message: "x" });
+  it("błąd zapisu warstwy cofa ukrycie i pokazuje komunikat", async () => {
+    saveCalendarSettings.mockResolvedValue({ ok: false, message: "x" });
     wyrenderujZOdnowieniem();
-    await userEvent.click(await poleKategorii("Subscriptions"));
+    await userEvent.click(warstwa(/Odnowienia/));
     await waitFor(() => expect(toastError).toHaveBeenCalled());
-    await userEvent.keyboard("{Escape}");
-    expect(
-      await screen.findByRole("button", { name: "Netflix · 43,00 zł" }),
-    ).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Netflix · 43,00 zł" })).toBeInTheDocument();
   });
 
   it("miesiąc: „↻ Netflix” w komórce dnia otwiera ten sam dymek", async () => {

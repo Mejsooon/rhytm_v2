@@ -448,6 +448,20 @@ describe("loadRenewals", () => {
     } as never;
   }
 
+  it("czyta wiersze stronami po 1000", async () => {
+    const pelna = Array.from({ length: 1000 }, (_, i) => ({ ...netflix, id: `w${i}` }));
+    const wynik = await loadRenewals(
+      klientOdnowien(
+        fakeTable({ data: [poleOdnowienia()] }),
+        fakeTable({ data: polaTabeli() }),
+        fakeTable({ pages: [pelna, [netflix]] }),
+      ),
+      "u1",
+      { from: "2026-11-16", to: "2026-11-22" },
+    );
+    expect(wynik.items).toHaveLength(1001);
+  });
+
   it("liczy miesięczne wystąpienia w zakresie tygodnia i miesiąca", async () => {
     const tydzien = await loadRenewals(
       klientOdnowien(

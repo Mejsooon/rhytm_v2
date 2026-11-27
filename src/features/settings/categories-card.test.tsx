@@ -66,7 +66,7 @@ describe("CategoriesCard", () => {
 
   it("pokazuje tytuł, opis i „+ Kategoria”", () => {
     render(<CategoriesCard categories={kategorie} />);
-    expect(screen.getByText("Kategorie kalendarza")).toBeInTheDocument();
+    expect(screen.getByText("Kategorie")).toBeInTheDocument();
     expect(
       screen.getByText("Kolory i kolejność kategorii w kalendarzu."),
     ).toBeInTheDocument();

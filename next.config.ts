@@ -6,6 +6,10 @@ const nextConfig: NextConfig = {
   partialPrefetching: true,
   // Import CSV wysyła do 5 000 wierszy jedną akcją serwera (plik do 1 MB, po rozbiciu na wartości więcej)
   experimental: { serverActions: { bodySizeLimit: "4mb" } },
+  // Zakładka „Kategorie kalendarza” to teraz „Kalendarz”
+  async redirects() {
+    return [{ source: "/ustawienia/kategorie", destination: "/ustawienia/kalendarz", permanent: true }];
+  },
   // Service worker powiadomień push: zawsze świeży (bez cache), żeby poprawki docierały od razu
   async headers() {
     return [

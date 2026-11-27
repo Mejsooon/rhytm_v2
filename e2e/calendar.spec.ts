@@ -7,6 +7,7 @@ import {
   poZapisie,
   SRODA,
   WTOREK,
+  wysokoscGodziny,
   zalozKontoKalendarza,
   zasiejBlok,
   zasiejOdnowienie,
@@ -20,9 +21,9 @@ const TYDZIEN = `/kalendarz?widok=tydzien&data=${WTOREK}`;
 const blok = (page: Page, tytul: string) =>
   page.getByRole("button", { name: new RegExp(tytul) });
 
-// Przycisk „Kategorie N/M” w pasku (web); menu z polami wyboru kategorii
-const przyciskKategorii = (page: Page) =>
-  page.getByRole("button", { name: /^Kategorie, widoczne \d+ z \d+$/ });
+// Przełączniki w lewym panelu kalendarza (web)
+const wPanelu = (page: Page, sekcja: "Kategorie" | "Warstwy", nazwa: RegExp) =>
+  page.getByRole("region", { name: sekcja }).getByRole("button", { name: nazwa });
 
 test.describe("kalendarz (web)", () => {
   test.use({ actionTimeout: 10_000 });
@@ -172,7 +173,7 @@ test.describe("kalendarz (web)", () => {
     ).toBeVisible();
   });
 
-  test("ukrycie kategorii w menu „Kategorie” chowa bloki i zostaje po odświeżeniu; „+ Kategoria” dodaje kategorię", async ({
+  test("ukrycie kategorii w panelu chowa bloki i zostaje po odświeżeniu; „+ Kategoria” dodaje kategorię", async ({
     page,
   }, info) => {
     const { userId, kategorie } = await zalozKontoKalendarza(
@@ -196,45 +197,29 @@ test.describe("kalendarz (web)", () => {
     await expect(blok(page, "Matematyka")).toBeVisible();
     await expect(blok(page, "Bieg")).toBeVisible();
 
-    await przyciskKategorii(page).click();
-    const nauka = page.getByRole("menuitemcheckbox", { name: /Nauka/ });
-    await expect(nauka).toHaveAttribute("aria-checked", "true");
+    const nauka = wPanelu(page, "Kategorie", /Nauka/);
+    await expect(nauka).toHaveAttribute("aria-pressed", "true");
     const zapis = poZapisie(page);
     await nauka.click();
-    await expect(nauka).toHaveAttribute("aria-checked", "false");
+    await expect(nauka).toHaveAttribute("aria-pressed", "false");
     await expect(blok(page, "Matematyka")).toHaveCount(0);
     await zapis;
-    // Esc zamyka menu
-    await page.keyboard.press("Escape");
-    await expect(page.getByRole("menu")).toBeHidden();
     await expect(blok(page, "Bieg")).toBeVisible();
 
     await page.reload();
-    await przyciskKategorii(page).click();
-    await expect(
-      page.getByRole("menuitemcheckbox", { name: /Nauka/ }),
-    ).toHaveAttribute("aria-checked", "false");
-    await page.keyboard.press("Escape");
+    await expect(wPanelu(page, "Kategorie", /Nauka/)).toHaveAttribute("aria-pressed", "false");
     await expect(blok(page, "Matematyka")).toHaveCount(0);
     await expect(blok(page, "Bieg")).toBeVisible();
 
-    // Nowa kategoria od razu jest w menu
-    await przyciskKategorii(page).click();
-    await page.getByRole("menuitem", { name: "+ Kategoria" }).click();
+    // Nowa kategoria od razu jest w panelu
+    await page.getByRole("button", { name: "Nowa kategoria" }).click();
     const okno = page.getByRole("dialog", { name: "Nowa kategoria" });
     await okno.getByLabel("Nazwa").fill("Siłownia");
     await okno.getByRole("button", { name: "Dodaj kategorię" }).click();
     await expect(okno).toBeHidden();
-    await przyciskKategorii(page).click();
-    await expect(
-      page.getByRole("menuitemcheckbox", { name: /Siłownia/ }),
-    ).toHaveAttribute("aria-checked", "true");
-    await page.keyboard.press("Escape");
+    await expect(wPanelu(page, "Kategorie", /Siłownia/)).toHaveAttribute("aria-pressed", "true");
     await page.reload();
-    await przyciskKategorii(page).click();
-    await expect(
-      page.getByRole("menuitemcheckbox", { name: /Siłownia/ }),
-    ).toBeVisible();
+    await expect(wPanelu(page, "Kategorie", /Siłownia/)).toBeVisible();
   });
 
   test("kalendarz wypełnia okno: strona się nie przewija, przewija się tylko siatka", async ({
@@ -254,7 +239,7 @@ test.describe("kalendarz (web)", () => {
     expect(Math.round(ramka.y + ramka.height)).toBe(
       page.viewportSize()!.height,
     );
-    // Siatka startuje przewinięta (06:00), a nagłówek dni zostaje u góry
+    // Nagłówek dni zostaje u góry
     const naglowek = (await page
       .getByTestId(`naglowek-${WTOREK}`)
       .boundingBox())!;
@@ -281,12 +266,13 @@ test.describe("kalendarz (web)", () => {
     const x = ramka.x + ramka.width / 2;
     const y = ramka.y + 16;
 
-    // Siatka tygodnia: godzina to 48 px, więc 48 px w dół to +60 min
+    // O wysokość godziny w dół to +60 min
+    const godzina = await wysokoscGodziny(page, WTOREK);
     const zapis = poZapisie(page);
     await page.mouse.move(x, y);
     await page.mouse.down();
-    await page.mouse.move(x, y + 24, { steps: 5 });
-    await page.mouse.move(x, y + 48, { steps: 5 });
+    await page.mouse.move(x, y + godzina / 2, { steps: 5 });
+    await page.mouse.move(x, y + godzina, { steps: 5 });
     await page.mouse.up();
     await expect(przycisk).toContainText("11:00–12:00");
     await zapis;
@@ -295,7 +281,7 @@ test.describe("kalendarz (web)", () => {
     await expect(blok(page, "Matematyka")).toContainText("11:00–12:00");
   });
 
-  test("widok miesiąca pokazuje blok, widok dnia ma mini kalendarz i „Dzień w liczbach”", async ({
+  test("widok miesiąca pokazuje blok, widok dnia ma mini kalendarz i „Plan dnia”", async ({
     page,
   }, info) => {
     const { userId } = await zalozKontoKalendarza(page, info.project.name);
@@ -324,13 +310,12 @@ test.describe("kalendarz (web)", () => {
       page.getByRole("heading", { level: 1, name: "Wtorek, 12 stycznia" }),
     ).toBeVisible();
     await expect(page.getByText("1 z 1 bloków")).toBeVisible();
-    await expect(blok(page, "Matematyka")).toBeVisible();
-    await expect(page.getByText("styczeń 2027", { exact: true })).toBeVisible();
-    await expect(page.getByText("Dzień w liczbach")).toBeVisible();
-    // exact: pasek dnia telefonu („Zaplanowane 1 h · wolne …”) też jest w DOM, ukryty na webie
-    await expect(
-      page.getByText("Zaplanowane", { exact: true }).locator(".."),
-    ).toContainText("1 h");
+    // Blok stoi w siatce i na liście „Planu dnia”, więc szukamy w siatce
+    await expect(page.getByTestId("przewijanie").getByRole("button", { name: /Matematyka/ })).toBeVisible();
+    await expect(page.getByRole("region", { name: "Styczeń 2027" })).toBeVisible();
+    const plan = page.getByRole("complementary", { name: "Plan dnia" });
+    await expect(plan.getByTestId("liczba-Bloki")).toContainText("1");
+    await expect(plan.getByTestId("liczba-Godziny")).toContainText("1");
 
     // Mini kalendarz przenosi na inny dzień
     await page.getByRole("button", { name: "13 stycznia" }).click();
@@ -360,20 +345,15 @@ test.describe("kalendarz (web)", () => {
     await dymek.getByRole("link", { name: "Otwórz w Subskrypcje" }).click();
     await expect(page).toHaveURL(new RegExp(`/strony/${idStrony}$`));
 
-    // Odznaczenie „Subskrypcje” w menu „Kategorie” chowa wpis i zapisuje się w polu
+    // Warstwa „Odnowienia” chowa wpis i zapisuje się na koncie
     await page.goto(TYDZIEN);
     await expect(wpis).toBeVisible();
-    await przyciskKategorii(page).click();
     const zapis = poZapisie(page);
-    await page.getByRole("menuitemcheckbox", { name: /Subskrypcje/ }).click();
+    await wPanelu(page, "Warstwy", /Odnowienia/).click();
     await zapis;
     await expect(wpis).toHaveCount(0);
-    await page.keyboard.press("Escape");
     await page.reload();
-    await expect(przyciskKategorii(page)).toBeVisible();
-    await expect(
-      page.getByRole("button", { name: /^Kategorie, widoczne 3 z 4$/ }),
-    ).toBeVisible();
+    await expect(wPanelu(page, "Warstwy", /Odnowienia/)).toHaveAttribute("aria-pressed", "false");
     await expect(wpis).toHaveCount(0);
   });
 });

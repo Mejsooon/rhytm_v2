@@ -70,6 +70,7 @@ describe("CalendarView na telefonie", () => {
   it("bez jawnego widoku telefon pokazuje dzień (oś), web zostaje przy tygodniu", () => {
     render(
       <CalendarView
+        panelOpen={false}
         view="tydzien"
         hasExplicitView={false}
         date="2026-11-18"
@@ -98,6 +99,7 @@ describe("CalendarView na telefonie", () => {
   it("z jawnym widokiem tygodnia telefon pokazuje listę tygodnia", () => {
     render(
       <CalendarView
+        panelOpen={false}
         view="tydzien"
         date="2026-11-18"
         today="2026-11-17"
@@ -114,6 +116,7 @@ describe("CalendarView na telefonie", () => {
   it("stuknięcie bloku na telefonie otwiera arkusz szczegółów, bez dymku z kotwicą", async () => {
     const { container } = render(
       <CalendarView
+        panelOpen={false}
         view="dzien"
         date="2026-11-18"
         today="2026-11-17"
@@ -126,7 +129,7 @@ describe("CalendarView na telefonie", () => {
       container.querySelectorAll('[data-occurrence-key="b1:2026-11-18"]'),
     ).toHaveLength(1);
     const bloki = screen.getAllByRole("button", { name: /Algebra/ });
-    const mobilny = bloki.find((b) => !b.hasAttribute("data-occurrence-key"))!;
+    const mobilny = bloki.find((b) => !b.hasAttribute("data-occurrence-key") && !b.closest("aside"))!;
     await userEvent.click(mobilny);
     const arkusz = await screen.findByRole("dialog", {
       name: "Szczegóły bloku",
@@ -137,6 +140,7 @@ describe("CalendarView na telefonie", () => {
   it("stuknięcie pustej osi o 10:00 otwiera „Nowy wpis” z 10:00; „Blok” prowadzi do arkusza nowego bloku", async () => {
     render(
       <CalendarView
+        panelOpen={false}
         view="dzien"
         date="2026-11-18"
         today="2026-11-17"
@@ -165,6 +169,7 @@ describe("CalendarView na telefonie", () => {
   it("„Nowy wpis” na telefonie: Bieg i Trening siłowy to linki do Sportu z datą i godziną", async () => {
     render(
       <CalendarView
+        panelOpen={false}
         view="dzien"
         date="2026-11-18"
         today="2026-11-17"
@@ -194,6 +199,7 @@ describe("CalendarView na telefonie", () => {
   it("pływający „Dodaj blok” otwiera „Nowy wpis” na dziś i najbliższą pełną godzinę", async () => {
     render(
       <CalendarView
+        panelOpen={false}
         view="dzien"
         date="2026-11-18"
         today="2026-11-18"
@@ -210,6 +216,7 @@ describe("CalendarView na telefonie", () => {
   it("tydzień: „Nowy wpis” (+) w nagłówku telefonu otwiera „Nowy wpis”", async () => {
     render(
       <CalendarView
+        panelOpen={false}
         view="tydzien"
         date="2026-11-18"
         today="2026-11-17"
@@ -228,6 +235,7 @@ describe("CalendarView na telefonie", () => {
   it("szczegóły bloku na telefonie mają jeden ✕; stuknięcie bloku w tygodniu i miesiącu też je otwiera", async () => {
     const { unmount } = render(
       <CalendarView
+        panelOpen={false}
         view="dzien"
         date="2026-11-18"
         today="2026-11-17"
@@ -237,7 +245,7 @@ describe("CalendarView na telefonie", () => {
     );
     const mobilny = screen
       .getAllByRole("button", { name: /Algebra/ })
-      .find((b) => !b.hasAttribute("data-occurrence-key"))!;
+      .find((b) => !b.hasAttribute("data-occurrence-key") && !b.closest("aside"))!;
     await userEvent.click(mobilny);
     const arkusz = await screen.findByRole("dialog", {
       name: "Szczegóły bloku",
@@ -250,6 +258,7 @@ describe("CalendarView na telefonie", () => {
 
     render(
       <CalendarView
+        panelOpen={false}
         view="tydzien"
         date="2026-11-18"
         today="2026-11-17"
@@ -259,7 +268,7 @@ describe("CalendarView na telefonie", () => {
     );
     const wTygodniu = screen
       .getAllByRole("button", { name: /Algebra/ })
-      .find((b) => !b.hasAttribute("data-occurrence-key"))!;
+      .find((b) => !b.hasAttribute("data-occurrence-key") && !b.closest("aside"))!;
     await userEvent.click(wTygodniu);
     expect(
       await screen.findByRole("dialog", { name: "Szczegóły bloku" }),
@@ -271,6 +280,7 @@ describe("CalendarView na telefonie", () => {
     cykliczne.blocks[0].recurrence = { freq: "weekly" };
     const { unmount } = render(
       <CalendarView
+        panelOpen={false}
         view="dzien"
         date="2026-11-18"
         today="2026-11-17"
@@ -291,6 +301,7 @@ describe("CalendarView na telefonie", () => {
 
     render(
       <CalendarView
+        panelOpen={false}
         view="dzien"
         date="2026-11-18"
         today="2026-11-17"
@@ -315,6 +326,7 @@ describe("CalendarView na telefonie", () => {
     setCategoryHidden.mockResolvedValue({ ok: true });
     render(
       <CalendarView
+        panelOpen={false}
         view="dzien"
         date="2026-11-18"
         today="2026-11-17"
@@ -336,6 +348,7 @@ describe("CalendarView na telefonie", () => {
   it("„Kategoria” w arkuszu otwiera okno nowej kategorii", async () => {
     render(
       <CalendarView
+        panelOpen={false}
         view="dzien"
         date="2026-11-18"
         today="2026-11-17"
@@ -362,6 +375,7 @@ describe("CalendarView na telefonie", () => {
   it("nagłówek telefonu bez „+”; dzień wypełnia ekran nad dolnym paskiem", () => {
     const { container } = render(
       <CalendarView
+        panelOpen={false}
         view="dzien"
         date="2026-11-18"
         today="2026-11-17"
@@ -384,6 +398,7 @@ describe("CalendarView na telefonie", () => {
   it("miesiąc na telefonie: „Brak bloków — dodaj” w pustym dniu otwiera „Nowy wpis” na ten dzień", async () => {
     render(
       <CalendarView
+        panelOpen={false}
         view="miesiac"
         date="2026-11-18"
         today="2026-11-17"
@@ -407,6 +422,7 @@ describe("CalendarView na telefonie", () => {
   it("telefon: „Edytuj” w szczegółach bloku otwiera arkusz edycji", async () => {
     render(
       <CalendarView
+        panelOpen={false}
         view="dzien"
         date="2026-11-18"
         today="2026-11-17"
@@ -416,7 +432,7 @@ describe("CalendarView na telefonie", () => {
     );
     const mobilny = screen
       .getAllByRole("button", { name: /Algebra/ })
-      .find((b) => !b.hasAttribute("data-occurrence-key"))!;
+      .find((b) => !b.hasAttribute("data-occurrence-key") && !b.closest("aside"))!;
     await userEvent.click(mobilny);
     await userEvent.click(
       await screen.findByRole("button", { name: "Edytuj" }),
@@ -440,6 +456,7 @@ describe("CalendarView na telefonie", () => {
     try {
       render(
         <CalendarView
+          panelOpen={false}
           view="tydzien"
           hasExplicitView={false}
           date="2026-11-18"
@@ -503,6 +520,7 @@ describe("CalendarView na telefonie", () => {
     function widok(view: "dzien" | "tydzien" | "miesiac", shown = true) {
       return render(
         <CalendarView
+          panelOpen={false}
           view={view}
           date="2026-11-21"
           today="2026-11-17"

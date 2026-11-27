@@ -20,7 +20,11 @@ import { changeOccurrence } from "./actions";
 import { BlockDialog, type BlockDialogInitial } from "./block-dialog";
 import { BlockPopover } from "./block-popover";
 import { CalendarHeader } from "./calendar-header";
+import { toast } from "sonner";
+import { CalendarPanel } from "./calendar-panel";
 import { DaySide } from "./day-side";
+import { DOMYSLNE_USTAWIENIA, type CalendarSettings } from "./settings";
+import { saveCalendarSettings } from "./settings-actions";
 import { DeleteBlockDialog } from "./delete-block-dialog";
 import type { DragResult } from "./drag";
 import {
@@ -91,6 +95,8 @@ export function CalendarView({
   hasExplicitView = true,
   newBlock = null,
   renewals: odnowieniaSerwera = BEZ_ODNOWIEN,
+  settings = DOMYSLNE_USTAWIENIA,
+  panelOpen = true,
 }: {
   view: CalendarView;
   // Czy adres ma `widok`; bez niego web pokazuje domyślny tydzień, a telefon dzień
@@ -104,8 +110,36 @@ export function CalendarView({
   newBlock?: { date: IsoDate; startMin: number; title: string } | null;
   // Odnowienia subskrypcji z loadRenewals (te same dane dla webu i telefonu: dzień, tydzień, miesiąc)
   renewals?: RenewalsData;
+  // Ustawienia i warstwy z profilu
+  settings?: CalendarSettings;
+  // Lewy panel kalendarza (ciasteczko rhytm_cal_panel)
+  panelOpen?: boolean;
 }) {
   const router = useRouter();
+  // Warstwy przełączają się od razu; nowe dane z serwera (Activity trzyma stan trasy) je zastępują
+  const [warstwy, setWarstwy] = useState(settings);
+  const [warstwyDla, setWarstwyDla] = useState(settings);
+  if (warstwyDla !== settings) {
+    setWarstwyDla(settings);
+    setWarstwy(settings);
+  }
+  async function przelaczWarstwe(pole: "showSport" | "showRenewals") {
+    const wartosc = !warstwy[pole];
+    setWarstwy((w) => ({ ...w, [pole]: wartosc }));
+    let udane = false;
+    try {
+      udane = (await saveCalendarSettings({ [pole]: wartosc })).ok;
+    } catch {}
+    if (!udane) {
+      setWarstwy((w) => ({ ...w, [pole]: !wartosc }));
+      toast.error("Nie udało się zapisać. Spróbuj ponownie.");
+    }
+  }
+  const [panel, setPanel] = useState(panelOpen);
+  function przelaczPanel() {
+    setPanel(!panel);
+    document.cookie = `rhytm_cal_panel=${panel ? "closed" : "open"}; path=/; max-age=31536000; samesite=lax`;
+  }
   // Odnowienia siedzą w danych magazynu, żeby przełączanie źródła było optymistyczne jak kategorie
   const wejscie = useMemo(
     () => ({ ...daneSerwera, renewals: odnowieniaSerwera }),
@@ -212,19 +246,16 @@ export function CalendarView({
   const widoczneTel = wystapieniaTel.filter(
     (o) => !o.categoryId || !ukryte.has(o.categoryId),
   );
-  // Podgląd treningów: ukrycie systemowej kategorii „Sport” chowa go; bez tej kategorii jest widoczny
-  const kategoriaSport = data.categories.find(
-    (k) => k.is_system && k.name === "Sport",
-  );
-  const treningi = kategoriaSport?.hidden ? [] : data.sport;
+  // Warstwa „Treningi” chowa tylko wpisy z modułu Sport, nie bloki
+  const treningi = warstwy.showSport ? data.sport : [];
 
   // Odnowienia widocznych źródeł (ukrycie źródła chowa je bez ponownego wczytania)
   const zrodla = data.renewals?.sources ?? [];
   const pokazaneZrodla = new Set(
     zrodla.filter((z) => z.shown).map((z) => z.fieldId),
   );
-  const odnowienia = (data.renewals?.items ?? []).filter((i) =>
-    pokazaneZrodla.has(i.fieldId),
+  const odnowienia = (data.renewals?.items ?? []).filter(
+    (i) => warstwy.showRenewals && pokazaneZrodla.has(i.fieldId),
   );
   const otwarteOdnowienie = odnowienie
     ? odnowienia.find((i) => i.key === odnowienie.key)
@@ -524,13 +555,13 @@ export function CalendarView({
         date: nowyData,
         startMin: nowyStart,
         // Blok nie przechodzi przez północ
-        durationMin: Math.min(60, 1440 - nowyStart),
+        durationMin: Math.min(warstwy.blockMin, 1440 - nowyStart),
         recurrence: null,
         note: "",
         remind: true,
       },
     });
-  }, [nowyData, nowyStart, nowyTytul]);
+  }, [nowyData, nowyStart, nowyTytul, warstwy.blockMin]);
 
   // Zamknięcie okna bloku (zapis albo anulowanie). Gdy adres ma ?nowy=blok, znikają z niego
   // nowy, godzina i tytul; widok i data zostają (kalendarz zostaje na dniu nowego bloku).
@@ -578,6 +609,10 @@ export function CalendarView({
       today={today}
       nowMinutes={nowMinutes}
       variant={view === "dzien" ? "day" : "week"}
+      fromHour={warstwy.fromHour}
+      toHour={warstwy.toHour}
+      blockMin={warstwy.blockMin}
+      timeZone={data.profile.timezone}
       totalCount={view === "dzien" ? wystapienia.length : undefined}
       selectedKey={wybrany}
       // Ponowny klik w ten sam blok zamyka dymek; blok zamyka dymek odnowienia
@@ -630,6 +665,8 @@ export function CalendarView({
           categories={data.categories}
           onToggleCategory={przelaczKategorie}
           onAddCategory={() => setOkno({ typ: "kategoria" })}
+          panelOpen={panel}
+          onTogglePanel={przelaczPanel}
           onAddCategoryPhone={() => setOkno({ typ: "kategoria", tel: true })}
           renewalSources={zrodla}
           onToggleRenewalSource={przelaczZrodlo}
@@ -654,7 +691,7 @@ export function CalendarView({
                   (Math.floor(nowMinutes / 60) + 1) * 60,
                   23 * 60,
                 ),
-                durationMin: 60,
+                durationMin: Math.min(warstwy.blockMin, 1440 - Math.min((Math.floor(nowMinutes / 60) + 1) * 60, 23 * 60)),
                 recurrence: null,
                 note: "",
                 remind: true,
@@ -662,6 +699,28 @@ export function CalendarView({
             });
           }}
         />
+        <div className="flex min-h-0 flex-1 max-[799px]:hidden">
+        {panel && (
+          <CalendarPanel
+            view={view}
+            date={date}
+            today={today}
+            weekStart={weekStart}
+            weekNumbers={warstwy.weekNumbers}
+            categories={data.categories}
+            onToggleCategory={przelaczKategorie}
+            onAddCategory={() => setOkno({ typ: "kategoria" })}
+            showSport={warstwy.showSport}
+            showRenewals={warstwy.showRenewals}
+            onToggleSport={() => void przelaczWarstwe("showSport")}
+            onToggleRenewals={() => void przelaczWarstwe("showRenewals")}
+            plannedMin={widoczne
+              .filter((o) => view !== "miesiac" || o.date.slice(0, 7) === date.slice(0, 7))
+              .reduce((suma, o) => suma + o.durationMin, 0)}
+            onPick={(dzien) => router.push(`/kalendarz?widok=${view}&data=${dzien}`)}
+          />
+        )}
+        <div className="flex min-h-0 min-w-0 flex-1 flex-col">
         {view === "tydzien" && (
           <div className="flex min-h-0 flex-1 flex-col max-[799px]:hidden">
             {siatka}
@@ -671,14 +730,14 @@ export function CalendarView({
           <div className="flex min-h-0 flex-1 max-[799px]:hidden">
             {siatka}
             <DaySide
-              date={date}
-              today={today}
-              weekStart={weekStart}
               occurrences={widoczne.filter((o) => o.date === date)}
               tasks={data.tasks}
-              onPick={(dzien) =>
-                router.push(`/kalendarz?widok=dzien&data=${dzien}`)
-              }
+              categories={data.categories}
+              clock={data.profile.clock}
+              onBlockClick={(key) => {
+                setOdnowienie(null);
+                setWybrany((w) => (w === key ? null : key));
+              }}
             />
           </div>
         )}
@@ -696,6 +755,7 @@ export function CalendarView({
                 activeEntryKey={wybrany}
                 activeDay={okno?.typ === "wpis" ? okno.date : null}
                 // Ponowny klik w ten sam wpis zamyka dymek; wpis zamyka też „Nowy wpis”
+                weekNumbers={warstwy.weekNumbers}
                 onEntryClick={(key) => {
                   setOdnowienie(null);
                   setOkno((o) => (o?.typ === "wpis" ? null : o));
@@ -725,6 +785,8 @@ export function CalendarView({
             </div>
           </>
         )}
+        </div>
+        </div>
         {/* Telefon: dzień wypełnia ekran (przewija się oś), tydzień i miesiąc przewijają stronę */}
         <div className="flex min-h-0 flex-1 flex-col min-[800px]:hidden">
           {widokTel === "dzien" && (
@@ -846,7 +908,7 @@ export function CalendarView({
                 date: okno.date,
                 startMin: okno.startMin,
                 // Blok nie przechodzi przez północ
-                durationMin: Math.min(60, 1440 - okno.startMin),
+                durationMin: Math.min(warstwy.blockMin, 1440 - okno.startMin),
                 recurrence: null,
                 note: "",
                 remind: true,
@@ -873,7 +935,7 @@ export function CalendarView({
                 date: okno.date,
                 startMin: okno.startMin,
                 // Blok nie przechodzi przez północ
-                durationMin: Math.min(60, 1440 - okno.startMin),
+                durationMin: Math.min(warstwy.blockMin, 1440 - okno.startMin),
                 recurrence: null,
                 note: "",
                 remind: true,

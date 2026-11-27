@@ -1,4 +1,5 @@
 import { Suspense } from "react";
+import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import { connection } from "next/server";
 
@@ -11,6 +12,7 @@ import {
   loadRenewals,
   minutesNow,
 } from "@/features/calendar/load-calendar";
+import { loadCalendarSettings } from "@/features/calendar/settings";
 import { parseCalendarParams, viewRange } from "@/features/calendar/view-range";
 import { createClient } from "@/lib/supabase/server";
 
@@ -34,14 +36,20 @@ async function Kalendarz({ searchParams }: { searchParams: Parametry }) {
   if (!user) redirect("/logowanie");
 
   // Profil najpierw: dzisiejsza data i początek tygodnia wyznaczają zakres zapytań
-  const profil = await loadCalendarProfile(supabase, user.id);
+  const [profil, ustawienia] = await Promise.all([
+    loadCalendarProfile(supabase, user.id),
+    loadCalendarSettings(supabase, user.id),
+  ]);
   const dzis = todayIso(profil.timezone);
   const parametry = await searchParams;
-  const { view, date } = parseCalendarParams(parametry, dzis);
+  const { view: widokZAdresu, date } = parseCalendarParams(parametry, dzis);
   const jawnyWidok =
     parametry.widok === "dzien" ||
     parametry.widok === "tydzien" ||
     parametry.widok === "miesiac";
+  // Bez `widok` w adresie web otwiera widok z ustawień (telefon zostaje przy dniu)
+  const view = jawnyWidok ? widokZAdresu : ustawienia.view;
+  const panelOtwarty = (await cookies()).get("rhytm_cal_panel")?.value !== "closed";
   // Dzień na telefonie pokazuje pasek tygodnia z kropkami, więc dane obejmują cały tydzień
   const zakres = viewRange(
     view === "dzien" ? "tydzien" : view,
@@ -81,6 +89,8 @@ async function Kalendarz({ searchParams }: { searchParams: Parametry }) {
       data={dane}
       renewals={odnowienia}
       newBlock={nowyBlok}
+      settings={ustawienia}
+      panelOpen={panelOtwarty}
     />
   );
 }

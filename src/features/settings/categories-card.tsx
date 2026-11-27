@@ -1,6 +1,6 @@
 "use client";
 
-// Karta „Kategorie kalendarza” (Ustawienia → Kategorie kalendarza): kolejność, ukrywanie,
+// Karta „Kategorie” (Ustawienia → Kalendarz): kolejność, ukrywanie,
 // edycja nazwy i koloru oraz usuwanie. Makiety karty nie ma, więc styl jak karty Profil i Cele
 // z CSettings.dc.html (.card, wiersze z separatorem, stopka .foot).
 import * as React from "react";
@@ -154,7 +154,7 @@ export function CategoriesCard({
     <Card data-testid="karta-kategorie">
       <CardHeader>
         <div>
-          <CardTitle as="h2">Kategorie kalendarza</CardTitle>
+          <CardTitle as="h2">Kategorie</CardTitle>
           <CardDescription>
             Kolory i kolejność kategorii w kalendarzu.
           </CardDescription>

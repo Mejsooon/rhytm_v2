@@ -40,7 +40,7 @@ describe("MSettingsIndex", () => {
       "/ustawienia/konto",
       "/ustawienia/sejf",
       "/ustawienia/powiadomienia",
-      "/ustawienia/kategorie",
+      "/ustawienia/kalendarz",
     ]);
     expect(nav.getByRole("link", { name: /Sejf/ })).toHaveClass("m-row", "min-h-14");
   });

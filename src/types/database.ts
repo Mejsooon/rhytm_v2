@@ -572,6 +572,13 @@ export type Database = {
       profiles: {
         Row: {
           avatar_path: string | null;
+          calendar_block_min: number;
+          calendar_from_hour: number;
+          calendar_show_renewals: boolean;
+          calendar_show_sport: boolean;
+          calendar_to_hour: number;
+          calendar_view: string;
+          calendar_week_numbers: boolean;
           clock: string | null;
           created_at: string | null;
           currency: string | null;
@@ -598,6 +605,13 @@ export type Database = {
         };
         Insert: {
           avatar_path?: string | null;
+          calendar_block_min?: number;
+          calendar_from_hour?: number;
+          calendar_show_renewals?: boolean;
+          calendar_show_sport?: boolean;
+          calendar_to_hour?: number;
+          calendar_view?: string;
+          calendar_week_numbers?: boolean;
           clock?: string | null;
           created_at?: string | null;
           currency?: string | null;
@@ -624,6 +638,13 @@ export type Database = {
         };
         Update: {
           avatar_path?: string | null;
+          calendar_block_min?: number;
+          calendar_from_hour?: number;
+          calendar_show_renewals?: boolean;
+          calendar_show_sport?: boolean;
+          calendar_to_hour?: number;
+          calendar_view?: string;
+          calendar_week_numbers?: boolean;
           clock?: string | null;
           created_at?: string | null;
           currency?: string | null;
