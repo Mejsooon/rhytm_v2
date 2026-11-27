@@ -267,7 +267,43 @@ export async function countPageRows(pageId: string): Promise<{ ok: true; count: 
   return { ok: true, count: count ?? 0 };
 }
 
-export async function restorePage(id: string): Promise<{ ok: true } | Blad> {
+// `naKoniec` (przywrócenie z kosza): strona wraca na koniec listy w pasku bocznym; „Cofnij” zostawia stare miejsce
+export async function restorePage(id: string, naKoniec = false): Promise<{ ok: true } | Blad> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/logowanie");
+
+  const idOk = idSchema.safeParse(id);
+  if (!idOk.success) return { ok: false, message: idOk.error.issues[0].message };
+
+  let position: number | undefined;
+  if (naKoniec) {
+    const { data: ostatnia, error: bladPozycji } = await supabase
+      .from("pages")
+      .select("position")
+      .eq("user_id", user.id)
+      .is("deleted_at", null)
+      .order("position", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (bladPozycji) return { ok: false, message: BLAD_ZAPISU };
+    position = (ostatnia?.position ?? -1) + 1;
+  }
+
+  const { error } = await supabase
+    .from("pages")
+    .update(position === undefined ? { deleted_at: null } : { deleted_at: null, position })
+    .eq("id", id)
+    .eq("user_id", user.id);
+  if (error) return { ok: false, message: BLAD_ZAPISU };
+  revalidatePath("/", "layout");
+  return { ok: true };
+}
+
+// „Usuń na zawsze” z kosza: tylko to, co już leży w koszu (strona kaskadą zabiera bloki, pola i wiersze)
+export async function deletePageForever(id: string): Promise<{ ok: true } | Blad> {
   const supabase = await createClient();
   const {
     data: { user },
@@ -279,9 +315,31 @@ export async function restorePage(id: string): Promise<{ ok: true } | Blad> {
 
   const { error } = await supabase
     .from("pages")
-    .update({ deleted_at: null })
+    .delete()
     .eq("id", id)
-    .eq("user_id", user.id);
+    .eq("user_id", user.id)
+    .not("deleted_at", "is", null);
+  if (error) return { ok: false, message: BLAD_ZAPISU };
+  revalidatePath("/", "layout");
+  return { ok: true };
+}
+
+export async function deleteRowForever(id: string): Promise<{ ok: true } | Blad> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/logowanie");
+
+  const idOk = idSchema.safeParse(id);
+  if (!idOk.success) return { ok: false, message: idOk.error.issues[0].message };
+
+  const { error } = await supabase
+    .from("page_rows")
+    .delete()
+    .eq("id", id)
+    .eq("user_id", user.id)
+    .not("deleted_at", "is", null);
   if (error) return { ok: false, message: BLAD_ZAPISU };
   revalidatePath("/", "layout");
   return { ok: true };

@@ -699,6 +699,9 @@ export type Database = {
           sleep_goal_min: number | null;
           study_field: string | null;
           sleep_bedtime: string;
+          vault_ask_on_reveal: boolean;
+          vault_clear_clipboard: boolean;
+          vault_lock_min: number;
           timezone: string | null;
           user_id: string;
           week_start: string | null;
@@ -735,6 +738,9 @@ export type Database = {
           sleep_goal_min?: number | null;
           study_field?: string | null;
           sleep_bedtime?: string;
+          vault_ask_on_reveal?: boolean;
+          vault_clear_clipboard?: boolean;
+          vault_lock_min?: number;
           timezone?: string | null;
           user_id: string;
           week_start?: string | null;
@@ -771,6 +777,9 @@ export type Database = {
           sleep_goal_min?: number | null;
           study_field?: string | null;
           sleep_bedtime?: string;
+          vault_ask_on_reveal?: boolean;
+          vault_clear_clipboard?: boolean;
+          vault_lock_min?: number;
           timezone?: string | null;
           user_id?: string;
           week_start?: string | null;

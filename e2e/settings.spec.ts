@@ -136,7 +136,7 @@ test.describe("ustawienia ogólne", () => {
       profil2.getByRole("button", { name: "Zapisz" }),
     ).toBeDisabled();
   });
-  test("karta Konto: zmiana e-maila przez linki na oba adresy", async ({
+  test("karta E-mail: zmiana adresu przez linki na oba adresy", async ({
     page,
   }, info) => {
     const stary = uniqueEmail(info.project.name);
@@ -146,19 +146,15 @@ test.describe("ustawienia ogólne", () => {
     await logInViaForm(page, stary, haslo);
     await expect(page).toHaveURL(/\/dzis$/);
 
-    await page.goto("/ustawienia/ogolne");
-    const konto = page.getByTestId("karta-konto").filter({ visible: true });
+    await page.goto("/ustawienia/konto");
+    const karta = page.getByTestId("karta-email").filter({ visible: true });
+    await expect(karta.getByText(stary.toLowerCase())).toBeVisible();
+    await karta.getByRole("button", { name: "Zmień e-mail" }).click();
+    await karta.getByPlaceholder("nowy@adres.pl").fill(nowy);
+    await karta.getByRole("button", { name: "Wyślij link" }).click();
+    await expect(karta.getByText(/Link potwierdzający wysłany na/)).toBeVisible();
     await expect(
-      konto.getByText(`${stary.toLowerCase()} · potwierdzony`),
-    ).toBeVisible();
-    await konto.getByRole("button", { name: "Zmień" }).click();
-    await konto.getByPlaceholder("nowy@adres.pl").fill(nowy);
-    await konto.getByRole("button", { name: "Wyślij link" }).click();
-    await expect(
-      konto.getByText(/link potwierdzający wysłany na/),
-    ).toBeVisible();
-    await expect(
-      konto.getByText(
+      karta.getByText(
         "Kliknij link w obu wiadomościach: na obecnym i na nowym adresie.",
       ),
     ).toBeVisible();
@@ -167,38 +163,19 @@ test.describe("ustawienia ogólne", () => {
     const linkStary = await latestLinkFor(stary);
     const linkNowy = await latestLinkFor(nowy);
     await page.goto(linkStary);
-    await expect(page).toHaveURL(/\/ustawienia\/ogolne\?email=potwierdzono$/);
+    await expect(page).toHaveURL(/\/ustawienia\/konto\?email=potwierdzono$/);
     await expect(
       page
-        .getByTestId("karta-konto").filter({ visible: true })
+        .getByTestId("karta-email").filter({ visible: true })
         .getByText(
           "Link potwierdzony. Kliknij jeszcze link na drugim adresie.",
         ),
     ).toBeVisible();
     await page.goto(linkNowy);
-    await expect(page).toHaveURL(/\/ustawienia\/ogolne\?email=potwierdzono$/);
+    await expect(page).toHaveURL(/\/ustawienia\/konto\?email=potwierdzono$/);
     await expect(
-      page
-        .getByTestId("karta-konto").filter({ visible: true })
-        .getByText(`${nowy.toLowerCase()} · potwierdzony`),
+      page.getByTestId("karta-email").filter({ visible: true }).getByText(nowy.toLowerCase()),
     ).toBeVisible();
-  });
-
-  test("karta Konto: wiersz Sesja i „Wyloguj” prowadzi na logowanie", async ({
-    page,
-  }, info) => {
-    const email = uniqueEmail(info.project.name);
-    const haslo = randomPassword();
-    await createConfirmedUser(email, haslo);
-    await logInViaForm(page, email, haslo);
-    await expect(page).toHaveURL(/\/dzis$/);
-
-    await page.goto("/ustawienia/ogolne");
-    const konto = page.getByTestId("karta-konto").filter({ visible: true });
-    await expect(konto.getByText("Aktywna")).toBeVisible();
-    await expect(konto.getByText(/· teraz$/)).toBeVisible();
-    await konto.getByRole("button", { name: "Wyloguj" }).click();
-    await expect(page).toHaveURL(/\/logowanie/);
   });
 
   test("Usuń konto: wpisanie USUŃ → wylogowanie z komunikatem, logowanie → /konto-usuniete → „Przywróć konto”", async ({
@@ -210,10 +187,10 @@ test.describe("ustawienia ogólne", () => {
     await logInViaForm(page, email, haslo);
     await expect(page).toHaveURL(/\/dzis$/);
 
-    await page.goto("/ustawienia/ogolne");
-    const karta = page.getByTestId("karta-usun-konto");
+    await page.goto("/ustawienia/konto");
+    const karta = page.getByTestId("karta-usun-konto").filter({ visible: true });
     await expect(
-      karta.getByText(/Konto zostanie usunięte po 30 dniach/),
+      karta.getByText(/usunięte na stałe po 30 dniach/),
     ).toBeVisible();
     await karta.getByRole("button", { name: "Usuń konto" }).click();
     const potwierdz = karta.getByRole("button", { name: "Usuń konto" });
@@ -250,8 +227,9 @@ test.describe("ustawienia ogólne", () => {
     await expect(page.getByLabel("Wyświetlana nazwa")).toHaveValue(
       "Mejson E2E",
     );
+    await page.goto("/ustawienia/konto");
     await expect(
-      page.getByTestId("karta-konto").filter({ visible: true }).getByText(`${email.toLowerCase()} · potwierdzony`),
+      page.getByTestId("karta-email").filter({ visible: true }).getByText(email.toLowerCase()),
     ).toBeVisible();
     await page.goto("/konto-usuniete");
     await expect(page).toHaveURL(/\/dzis$/);
@@ -312,22 +290,11 @@ test.describe("ustawienia: konto i bezpieczeństwo", () => {
     ).toBeVisible();
     await expect(karta.getByLabel("Obecne hasło")).toHaveValue("");
 
-    // Podpis w Ogólnych: „zmienione DD.MM.RRRR”
-    await page.goto("/ustawienia/ogolne");
-    await expect(
-      page
-        .getByTestId("karta-konto").filter({ visible: true })
-        .getByText(/^zmienione \d{2}\.\d{2}\.\d{4}$/),
-    ).toBeVisible();
-
-    // Wylogowanie i logowanie nowym hasłem
-    await page
-      .getByTestId("karta-konto").filter({ visible: true })
-      .getByRole("button", { name: "Wyloguj" })
-      .click();
-    await expect(page).toHaveURL(/\/logowanie/);
-    await logInViaForm(page, email, nowe);
-    await expect(page).toHaveURL(/\/dzis$/);
+    // Logowanie nowym hasłem w czystym kontekście
+    const swiezy = await drugaPrzegladarka(browser, baseURL);
+    await logInViaForm(swiezy.strona, email, nowe);
+    await expect(swiezy.strona).toHaveURL(/\/dzis$/);
+    await swiezy.kontekst.close();
 
     // Stare hasło już nie działa (czysty kontekst)
     const { kontekst, strona } = await drugaPrzegladarka(browser, baseURL);

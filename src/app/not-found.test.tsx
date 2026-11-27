@@ -70,11 +70,11 @@ describe("404", () => {
     expect(kbd).not.toHaveClass("font-mono");
   });
 
-  it("link do kosza zostaje (/ustawienia/ogolne#kosz)", () => {
+  it("link do kosza zostaje (/ustawienia/kosz)", () => {
     render(<NotFound />);
     expect(screen.getByRole("link", { name: "kosza" })).toHaveAttribute(
       "href",
-      "/ustawienia/ogolne#kosz",
+      "/ustawienia/kosz",
     );
   });
 

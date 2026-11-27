@@ -35,7 +35,7 @@ export default function NotFound() {
             Mogła zostać usunięta albo link jest niepełny. Strony usunięte w
             ciągu 30 dni możesz przywrócić z{" "}
             <Link
-              href="/ustawienia/ogolne#kosz"
+              href="/ustawienia/kosz"
               className="text-foreground underline underline-offset-2"
             >
               kosza

@@ -8,7 +8,7 @@ import { Button, StatusBadge } from "@/components/controls";
 import { EmptyModule, ModuleHeader } from "@/components/shell/module-header";
 import type { LoadedPage } from "@/features/pages/load-page";
 import { PageTable } from "@/features/pages/table/page-table";
-import { BLOKADA_MS } from "@/features/vault/lock-timeout";
+import { czasBlokady, DOMYSLNE_USTAWIENIA } from "@/features/vault/settings";
 import { VaultBanner } from "@/features/vault/vault-banner";
 import { useVault } from "@/features/vault/vault-provider";
 import { VaultSetup } from "@/features/vault/vault-setup";
@@ -74,7 +74,7 @@ export function PasswordsView({ data }: { data: LoadedPage }) {
     document.addEventListener("keydown", naKlawisz);
     return () => document.removeEventListener("keydown", naKlawisz);
   }, [ustawianie]);
-  const minuty = BLOKADA_MS / 60_000;
+  const poIlu = czasBlokady((vault.settings ?? DOMYSLNE_USTAWIENIA).lockMin);
 
   return (
     <div className="relative flex min-w-0 flex-1 flex-col">
@@ -152,7 +152,7 @@ export function PasswordsView({ data }: { data: LoadedPage }) {
                   {odblokowany && (
                     <StatusBadge tone="green">
                       <LockOpen aria-hidden="true" className="size-3" />
-                      Odblokowany · blokada po {minuty} min
+                      Odblokowany · blokada po {poIlu}
                     </StatusBadge>
                   )}
                 </div>

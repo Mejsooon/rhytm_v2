@@ -16,7 +16,7 @@ const CEL: Record<TypLinku, string> = {
   signup: "/potwierdzono",
   email: "/potwierdzono",
   recovery: "/nowe-haslo",
-  email_change: "/ustawienia/ogolne?email=potwierdzono",
+  email_change: "/ustawienia/konto?email=potwierdzono",
 };
 
 // Link z maila (szablony w supabase/templates): wymiana token_hash na sesję.

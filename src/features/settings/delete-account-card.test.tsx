@@ -25,7 +25,7 @@ describe("DeleteAccountCard", () => {
     ).toBeInTheDocument();
     expect(
       screen.getByText(
-        "Konto zostanie usunięte po 30 dniach razem ze stronami, sejfem i danymi modułów. Do tego czasu możesz je przywrócić, logując się. Zdjęcie profilowe usuwamy od razu.",
+        "Konto zostanie wyłączone od razu i usunięte na stałe po 30 dniach — razem ze stronami, sejfem i danymi modułów. Do tego czasu możesz je przywrócić, logując się. Przed usunięciem pobierz eksport. Zdjęcie profilowe usuwamy od razu.",
       ),
     ).toBeInTheDocument();
     expect(screen.getByRole("button", { name: "Usuń konto" })).toBeEnabled();

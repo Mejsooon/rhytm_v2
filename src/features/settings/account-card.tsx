@@ -1,45 +1,33 @@
 "use client";
 
-// Karta „Konto” (Ustawienia → Ogólne, S2Settings.dc.html): e-mail ze zmianą przez link, hasło do konta, sesja z „Wyloguj”
+// Karta „E-mail” (Ustawienia → Konto i bezpieczeństwo, S2SettingsAccount): adres i zmiana przez link
 import * as React from "react";
-import Link from "next/link";
-import { LogOut } from "lucide-react";
 
 import {
   Button,
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
   StatusBadge,
   TextField,
 } from "@/components/controls";
-import { SignOutForm } from "@/features/auth/sign-out-form";
 import { requestEmailChange } from "./account-actions";
 
 // Ten sam wzorzec co w makiecie; dokładną walidację robi serwer
 const WZORZEC_EMAIL = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
 
-// Wiersz karty (.row): 14 px w pionie, linia między wierszami
-const WIERSZ =
-  "flex flex-wrap items-center justify-between gap-2.5 border-b border-black/[.08] py-3.5 last:border-b-0";
-
 export function AccountCard({
   email,
   newEmail,
   hasPassword,
-  passwordChangedAt,
-  sessionLabel,
   emailConfirmed,
-  timeZone,
 }: {
   email: string;
   newEmail: string | null;
   hasPassword: boolean;
-  passwordChangedAt: string | null;
-  sessionLabel: string;
   emailConfirmed: boolean;
-  timeZone: string;
 }) {
   const [edytuje, setEdytuje] = React.useState(false);
   const [adres, setAdres] = React.useState("");
@@ -56,25 +44,9 @@ export function AccountCard({
       : null;
   const blad = bladFormatu ?? bladSerwera ?? undefined;
 
-  // Podpis e-maila: konto Google, link czeka na potwierdzenie albo zwykły potwierdzony adres
-  let podpisEmail = `${email} · potwierdzony`;
-  if (!hasPassword) podpisEmail = `${email} · konto Google`;
-  if (oczekujacy)
-    podpisEmail = `${email} · link potwierdzający wysłany na ${oczekujacy}`;
-
-  // Data zmiany hasła w strefie z profilu (DD.MM.RRRR)
-  let podpisHasla = "ustawione przy rejestracji";
-  if (!hasPassword) podpisHasla = "brak — logujesz się przez Google";
-  else if (passwordChangedAt) {
-    const data = new Date(passwordChangedAt);
-    if (!Number.isNaN(data.getTime()))
-      podpisHasla = `zmienione ${new Intl.DateTimeFormat("pl-PL", {
-        day: "2-digit",
-        month: "2-digit",
-        year: "numeric",
-        timeZone,
-      }).format(data)}`;
-  }
+  let podpis = "Zmiana wymaga potwierdzenia na nowym adresie";
+  if (!hasPassword) podpis = "Konto Google — adres zmienisz w Google";
+  if (oczekujacy) podpis = `Link potwierdzający wysłany na ${oczekujacy}`;
 
   async function wyslij() {
     setProbowal(true);
@@ -106,17 +78,23 @@ export function AccountCard({
   }
 
   return (
-    <Card data-testid="karta-konto">
+    <Card data-testid="karta-email">
       <CardHeader>
         <div>
-          <CardTitle as="h2">Konto</CardTitle>
+          <CardTitle as="h2">E-mail</CardTitle>
+          <CardDescription>
+            Na ten adres logujesz się i dostajesz przypomnienia.
+          </CardDescription>
         </div>
       </CardHeader>
-      <CardContent className="py-1.5">
-        <div className={WIERSZ}>
-          <div>
-            <div className="font-medium">E-mail</div>
-            <div className="text-xs text-muted-foreground">{podpisEmail}</div>
+      <CardContent className="max-[799px]:px-4">
+        <div className="flex flex-wrap items-center justify-between gap-2.5">
+          <div className="min-w-0">
+            <div className="flex flex-wrap items-center gap-2 font-medium">
+              <span className="break-all">{email}</span>
+              <StatusBadge tone="green">Potwierdzony</StatusBadge>
+            </div>
+            <div className="text-xs text-muted-foreground">{podpis}</div>
             {emailConfirmed && (
               <div role="status" className="text-xs text-success">
                 {newEmail
@@ -127,12 +105,12 @@ export function AccountCard({
           </div>
           {hasPassword && !edytuje && (
             <Button variant="secondary" onClick={() => setEdytuje(true)}>
-              Zmień
+              Zmień e-mail
             </Button>
           )}
           {edytuje && (
-            <div className="flex basis-full flex-wrap items-start gap-2">
-              <div className="min-w-[240px] flex-[1_1_240px] [&_label]:sr-only">
+            <div className="flex basis-full flex-wrap items-end gap-2">
+              <div className="min-w-[240px] flex-[1_1_240px]">
                 <TextField
                   label="Nowy e-mail"
                   type="email"
@@ -159,35 +137,6 @@ export function AccountCard({
               Kliknij link w obu wiadomościach: na obecnym i na nowym adresie.
             </div>
           )}
-        </div>
-
-        <div className={WIERSZ}>
-          <div>
-            <div className="font-medium">Hasło do konta</div>
-            <div className="text-xs text-muted-foreground">{podpisHasla}</div>
-          </div>
-          <Button variant="secondary" asChild>
-            <Link href="/ustawienia/konto">
-              {hasPassword ? "Zmień hasło" : "Ustaw hasło"}
-            </Link>
-          </Button>
-        </div>
-
-        <div className={WIERSZ}>
-          <div>
-            <div className="flex items-center gap-2 font-medium">
-              Sesja <StatusBadge tone="green">Aktywna</StatusBadge>
-            </div>
-            <div className="text-xs text-muted-foreground">
-              {sessionLabel} · teraz
-            </div>
-          </div>
-          <SignOutForm>
-            <Button type="submit" variant="secondary">
-              <LogOut size={16} aria-hidden="true" />
-              Wyloguj
-            </Button>
-          </SignOutForm>
         </div>
       </CardContent>
     </Card>

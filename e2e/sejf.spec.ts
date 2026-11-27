@@ -317,7 +317,7 @@ test.describe("sejf", () => {
     // „Sejf” jest nagłówkiem w topbarze, zakładce i karcie — czekamy na stan karty
     await expect(page.getByText("Zablokowany", { exact: true })).toBeVisible();
     await page
-      .getByRole("button", { name: "Zresetuj sejf", exact: true })
+      .getByRole("button", { name: "Zresetuj sejf…", exact: true })
       .click();
     const reset = page.getByRole("dialog", { name: "Zresetować sejf?" });
     await expect(reset).toBeVisible();

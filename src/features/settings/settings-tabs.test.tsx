@@ -8,9 +8,9 @@ describe("SettingsTabs", () => {
     expect(SETTINGS_TABS.map((t) => t.slug)).toEqual([
       "ogolne",
       "konto",
-      "sejf",
       "powiadomienia",
       "kalendarz",
+      "sejf",
     ]);
     render(<SettingsTabs active="ogolne" />);
     const nav = screen.getByRole("navigation", { name: "Sekcje ustawień" });
@@ -31,8 +31,11 @@ describe("SettingsTabs", () => {
     );
   });
 
-  it("SETTINGS_TABS: Ogólne i Kalendarz mają podtytuły z makiet", () => {
-    expect(SETTINGS_TABS.filter((t) => t.description).map((t) => t.slug)).toEqual(["ogolne", "kalendarz"]);
+  it("grupy „Konto” i „Moduły” oraz podtytuł każdej zakładki", () => {
+    render(<SettingsTabs active="ogolne" />);
+    expect(screen.getByText("Konto", { exact: true })).toBeInTheDocument();
+    expect(screen.getByText("Moduły", { exact: true })).toBeInTheDocument();
+    for (const t of SETTINGS_TABS) expect(t.description.length).toBeGreaterThan(0);
   });
 
   it("zakładka: wysokość 32 px, zaokrąglenie 8 px, aktywna z tłem i aria-current", () => {

@@ -131,7 +131,7 @@ function SzczegolyHasla({
                     });
                     return;
                   }
-                  if (!isSecretValue(surowa)) return;
+                  if (!isSecretValue(surowa) || !(await vault.confirmReveal())) return;
                   // Odszyfrowanie lokalne dopiero teraz; tekst trafia tylko do stanu tego komponentu
                   const t = await decrypt(surowa);
                   if (statusRef.current !== "odblokowany" || !zamontowany.current) return;
@@ -151,7 +151,7 @@ function SzczegolyHasla({
                   aria-label="Kopiuj hasło"
                   disabled={!isSecretValue(surowa) || !odblokowany}
                   onClick={async () => {
-                    if (!isSecretValue(surowa)) return;
+                    if (!isSecretValue(surowa) || !(await vault.confirmReveal())) return;
                     // Odszyfrowanie lokalne; tekst jawny żyje tylko w tej funkcji (nie trafia do stanu)
                     const t = await decrypt(surowa);
                     // Blokada w trakcie odszyfrowywania: nic nie trafia do schowka

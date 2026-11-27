@@ -506,6 +506,11 @@ export function PageTable({
   // w trakcie zapisu do schowka (czyścimy od razu).
   function zaplanujSchowek(): boolean {
     if (schowekRef.current) clearTimeout(schowekRef.current.timer);
+    // „Czyść schowek” wyłączone: nic nie planujemy (po blokadzie w trakcie kopiowania czyścimy mimo to)
+    if (vault.settings?.clearClipboard === false && statusRef.current === "odblokowany" && zamontowana.current) {
+      schowekRef.current = null;
+      return true;
+    }
     const plan = {
       timer: setTimeout(() => plan.wyczysc(), SCHOWEK_MS),
       wyczysc: () => {

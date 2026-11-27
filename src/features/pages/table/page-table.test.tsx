@@ -1173,6 +1173,7 @@ describe("PageTable", () => {
       vault.state = {
         status,
         decrypt: vi.fn(async (v: { ct: string }) => JAWNE[v.ct] ?? null),
+        confirmReveal: async () => true,
         encrypt: vi.fn(async () => NOWY),
         onStaleGeneration: vi.fn(),
       };
@@ -1344,7 +1345,10 @@ describe("PageTable", () => {
       let rozwiaz!: (t: string) => void;
       vault.state.decrypt = vi.fn(() => new Promise<string>((r) => (rozwiaz = r)));
       const { rerender } = render(<PageTable block={blokHasel()} today={TODAY} module="passwords" />);
-      fireEvent.click(within(wiersz("GitHub")).getByRole("button", { name: "Kopiuj hasło" }));
+      // Klik czeka na ewentualne pytanie o hasło, dopiero potem odszyfrowuje
+      await act(async () => {
+        fireEvent.click(within(wiersz("GitHub")).getByRole("button", { name: "Kopiuj hasło" }));
+      });
       stanSejfu("zablokowany");
       rerender(<PageTable block={blokHasel()} today={TODAY} module="passwords" />);
       await act(async () => rozwiaz("jawne-haslo-A"));

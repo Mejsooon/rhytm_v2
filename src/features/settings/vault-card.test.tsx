@@ -1,5 +1,5 @@
 import * as React from "react";
-import { act, render, screen, waitFor } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import {
   afterEach,
@@ -14,8 +14,9 @@ import {
 // Okno resetu sejfu odświeża dane strony routerem
 vi.mock("next/navigation", () => ({ useRouter: () => ({ refresh: vi.fn(), push: vi.fn(), replace: vi.fn() }), usePathname: () => "/hasla" }));
 
-const { getVault, createVault, rewrapVaultAction, resetVault, countSecrets } =
+const { getVault, createVault, rewrapVaultAction, resetVault, countSecrets, saveVaultSettings } =
   vi.hoisted(() => ({
+    saveVaultSettings: vi.fn(),
     getVault: vi.fn(),
     createVault: vi.fn(),
     rewrapVaultAction: vi.fn(),
@@ -30,6 +31,7 @@ vi.mock("@/features/vault/actions", () => ({
   rewrapVault: rewrapVaultAction,
   resetVault,
   countSecrets,
+  saveVaultSettings,
 }));
 
 // webCryptoAvailable owinięte w vi.fn, żeby w jednym teście wymusić „nieobsługiwany”
@@ -122,7 +124,51 @@ afterEach(() => {
   vi.mocked(webCryptoAvailable).mockRestore();
 });
 
+// Pyta o hasło jak podgląd sekretu i pokazuje odpowiedź
+function Podglad() {
+  const { confirmReveal } = useVault();
+  const [wynik, setWynik] = React.useState("");
+  return (
+    <>
+      <button onClick={() => void confirmReveal().then((ok) => setWynik(ok ? "tak" : "nie"))}>test-podglad</button>
+      <span data-testid="podglad">{wynik}</span>
+    </>
+  );
+}
+
 describe("VaultCard", () => {
+  it("blokada i schowek: zapis od razu, błąd cofa wybór; pytanie o hasło przy podglądzie", async () => {
+    const user = userEvent.setup();
+    zSejfem();
+    saveVaultSettings.mockResolvedValueOnce({ ok: false, message: "Nie zapisano" }).mockResolvedValue({ ok: true });
+    render(
+      <VaultProvider>
+        <Odblokuj haslo={STARE} etykieta="test-odblokuj" />
+        <Podglad />
+        <VaultCard liczbaHasel={2} />
+      </VaultProvider>,
+    );
+    expect(await screen.findByText("2 hasła · szyfrowanie AES-256 na Twoim urządzeniu")).toBeInTheDocument();
+
+    const schowek = screen.getByRole("switch", { name: "Czyść schowek" });
+    await user.click(schowek);
+    expect(await screen.findByText("Nie zapisano")).toBeInTheDocument();
+    expect(schowek).toHaveAttribute("aria-checked", "true");
+
+    await user.click(screen.getByRole("switch", { name: "Pytaj o hasło przy podglądzie" }));
+    expect(saveVaultSettings).toHaveBeenLastCalledWith({ askOnReveal: true });
+    await user.click(screen.getByRole("button", { name: "test-odblokuj" }));
+    await screen.findByText("Odblokowany");
+
+    await user.click(screen.getByRole("button", { name: "test-podglad" }));
+    await user.type(within(screen.getByRole("dialog")).getByLabelText("Hasło główne"), "zle-haslo");
+    await user.click(screen.getByRole("button", { name: "Potwierdź" }));
+    expect(await within(screen.getByRole("dialog")).findByText("Nieprawidłowe hasło główne.")).toBeInTheDocument();
+    await user.type(within(screen.getByRole("dialog")).getByLabelText("Hasło główne"), STARE);
+    await user.click(screen.getByRole("button", { name: "Potwierdź" }));
+    await waitFor(() => expect(screen.getByTestId("podglad")).toHaveTextContent("tak"), { timeout: 5000 });
+  }, 30000);
+
   it("bez sejfu: Ustaw sejf", async () => {
     const user = userEvent.setup();
     getVault.mockResolvedValue({ ok: true, vault: null });
@@ -145,7 +191,7 @@ describe("VaultCard", () => {
   it("stan: Ustawiony z datą dd.mm.rrrr, pola hasła z właściwym autoComplete", async () => {
     zSejfem();
     await zamontuj();
-    expect(screen.getByText("Ustawiony 21.11.2026")).toBeInTheDocument();
+    expect(screen.getByText("Zablokowany")).toBeInTheDocument();
     for (const [nazwa, ac] of [
       ["Obecne hasło główne", "current-password"],
       ["Nowe hasło główne", "new-password"],
@@ -191,7 +237,7 @@ describe("VaultCard", () => {
     });
     await zamontuj();
 
-    const przycisk = screen.getByRole("button", { name: "Zmień hasło" });
+    const przycisk = screen.getByRole("button", { name: "Zmień hasło główne" });
     // Nieaktywny, dopóki nowe jest za słabe lub powtórzenie się różni
     expect(przycisk).toBeDisabled();
     await user.type(
@@ -225,7 +271,7 @@ describe("VaultCard", () => {
     await user.type(screen.getByLabelText("Obecne hasło główne"), STARE);
     await user.type(screen.getByLabelText("Nowe hasło główne"), NOWE);
     await user.type(screen.getByLabelText("Powtórz nowe hasło"), NOWE);
-    await user.click(screen.getByRole("button", { name: "Zmień hasło" }));
+    await user.click(screen.getByRole("button", { name: "Zmień hasło główne" }));
     expect(
       await screen.findByText(
         "Hasło główne zmienione. Odblokuj sejf nowym hasłem.",
@@ -250,7 +296,7 @@ describe("VaultCard", () => {
     resetVault.mockResolvedValue({ ok: true, cleared: 3 });
     await zamontuj();
 
-    await user.click(screen.getByRole("button", { name: "Zresetuj sejf" }));
+    await user.click(screen.getByRole("button", { name: "Zresetuj sejf…" }));
     expect(await screen.findByText("Zresetować sejf?")).toBeInTheDocument();
     const dialog = screen.getByRole("dialog");
     const zresetuj = Array.from(dialog.querySelectorAll("button")).find(
@@ -293,10 +339,10 @@ describe("VaultCard", () => {
     await user.click(screen.getByRole("checkbox"));
     await user.click(screen.getByRole("button", { name: "Utwórz sejf" }));
     expect(
-      await screen.findByText(/^Ustawiony \d{2}\.\d{2}\.\d{4}$/),
+      await screen.findByText("Odblokowany"),
     ).toBeInTheDocument();
 
-    await user.click(screen.getByRole("button", { name: "Zresetuj sejf" }));
+    await user.click(screen.getByRole("button", { name: "Zresetuj sejf…" }));
     await screen.findByText("Zresetować sejf?");
     await user.type(
       screen.getByLabelText("Wpisz RESETUJ, żeby potwierdzić"),
@@ -342,7 +388,7 @@ describe("VaultCard", () => {
       await user.type(screen.getByLabelText("Obecne hasło główne"), stare);
       await user.type(screen.getByLabelText("Nowe hasło główne"), nowe);
       await user.type(screen.getByLabelText("Powtórz nowe hasło"), nowe);
-      await user.click(screen.getByRole("button", { name: "Zmień hasło" }));
+      await user.click(screen.getByRole("button", { name: "Zmień hasło główne" }));
     }
 
     await zmien(STARE, NOWE);
@@ -385,7 +431,7 @@ describe("VaultCard", () => {
     );
     await user.type(screen.getByLabelText("Nowe hasło główne"), NOWE);
     await user.type(screen.getByLabelText("Powtórz nowe hasło"), NOWE);
-    await user.click(screen.getByRole("button", { name: "Zmień hasło" }));
+    await user.click(screen.getByRole("button", { name: "Zmień hasło główne" }));
     expect(
       await screen.findByText("Nieprawidłowe hasło główne."),
     ).toBeInTheDocument();
@@ -405,7 +451,7 @@ describe("VaultCard", () => {
     await user.type(screen.getByLabelText("Nowe hasło główne"), NOWE);
     await user.type(screen.getByLabelText("Powtórz nowe hasło"), NOWE);
 
-    await user.click(screen.getByRole("button", { name: "Zresetuj sejf" }));
+    await user.click(screen.getByRole("button", { name: "Zresetuj sejf…" }));
     await screen.findByText("Zresetować sejf?");
     await user.type(
       screen.getByLabelText("Wpisz RESETUJ, żeby potwierdzić"),

@@ -1010,9 +1010,10 @@ test.describe("ekrany z sesją", () => {
       ).toBeVisible();
     await zrzut(page, "strony-lista", projekt);
 
-    // Karta Kosz w Ustawieniach → Ogólne
-    await page.goto("/ustawienia/ogolne#kosz");
-    await expect(page.getByRole("heading", { name: "Kosz" })).toBeVisible();
+    // Strona Kosza (S2Trash)
+    await page.goto("/ustawienia/kosz");
+    // Dwa nagłówki „Kosz” (pasek górny i tytuł strony)
+    await expect(page.getByRole("heading", { name: "Kosz" }).filter({ visible: true }).first()).toBeVisible();
     await zrzut(page, "ustawienia-kosz", projekt);
   });
 
