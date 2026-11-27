@@ -9,6 +9,7 @@ const pusty: ProfileRow = {
   avatar_path: null,
   first_steps: {},
   first_steps_hidden: false,
+  sleep_bedtime: "23:00:00",
   calendar_block_min: 60,
   calendar_from_hour: 7,
   calendar_show_renewals: true,

@@ -21,7 +21,7 @@ import type { IsoDate } from "@/components/controls/calendar-math";
 import type { ActionResult } from "@/lib/action-result";
 import { formatClockTime } from "@/lib/time/timezones";
 import { createHabit, updateHabit } from "../actions";
-import { scheduleOn, type Habit, type ScheduleType } from "../model";
+import { activeVersion, type Habit, type ScheduleType } from "../model";
 
 const TRYBY: { value: ScheduleType; label: string }[] = [
   { value: "daily", label: "Codziennie" },
@@ -62,7 +62,7 @@ export function MHabitSheet({
 }) {
   // Edycja: wartości z wersji obowiązującej dziś (gdy wszystkie są z przyszłości — pierwsza)
   const wersja = habit
-    ? (scheduleOn(habit, today) ?? habit.schedules[0] ?? null)
+    ? (activeVersion(habit, today) ?? habit.schedules[0] ?? null)
     : null;
 
   const [name, setName] = useState(habit?.name ?? "");

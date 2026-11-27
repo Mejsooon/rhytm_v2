@@ -18,6 +18,7 @@ const TABELE: [string, string[], string][] = [
   ["habits", ["id"], "*"],
   ["habit_schedules", ["habit_id", "valid_from"], "*"],
   ["habit_checks", ["habit_id", "date"], "*"],
+  ["habit_progress", ["habit_id", "date"], "*"],
   ["habit_notes", ["id"], "*"],
   ["sleep_logs", ["user_id", "date"], "*"],
   ["workout_templates", ["id"], "*"],

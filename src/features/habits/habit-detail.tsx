@@ -2,13 +2,14 @@
 
 // Szczegóły nawyku na komputerze (CHabitDetail.dc.html): okruszki, kafelki, kalendarz, historia harmonogramu, notatki.
 import { useState } from "react";
+import { toast } from "sonner";
 import Link from "next/link";
 import {
   BellIcon,
   CalendarIcon,
   InfoIcon,
   PenLineIcon,
-  TrashIcon,
+  EllipsisIcon,
 } from "lucide-react";
 
 import {
@@ -18,6 +19,9 @@ import {
   CardHeader,
   CardTitle,
   StatusBadge,
+  ActionPopover,
+  MENU_ITEM,
+  MENU_ITEM_DANGER,
 } from "@/components/controls";
 import { formatDatePl } from "@/components/controls/calendar-math";
 import { addDays } from "@/features/calendar/view-range";
@@ -29,6 +33,7 @@ import { HabitNotes } from "./habit-notes";
 import type { HabitDetailData } from "./load-habits";
 import { MHabitDetail } from "./mobile/m-habit-detail";
 import {
+  archivedSince,
   currentStreak,
   longestStreak,
   scheduleOn,
@@ -36,6 +41,8 @@ import {
   totalChecks,
   type Checks,
 } from "./model";
+import { cn } from "@/lib/utils";
+import { setHabitArchived } from "./actions";
 import { describeSchedule, streakLabel } from "./text";
 
 // „12 dni” → wartość „12” i jednostka „dni” (jednostka mniejszą czcionką jak „razy” w makiecie)
@@ -48,6 +55,20 @@ export function HabitDetail({ data }: { data: HabitDetailData }) {
   const habit = data.habits[0];
   const [edycja, setEdycja] = useState(false);
   const [usuwanie, setUsuwanie] = useState(false);
+  const [menu, setMenu] = useState(false);
+  const zArchiwum = archivedSince(habit, data.today) !== null;
+
+  async function archiwizuj(czy: boolean) {
+    const wynik = await setHabitArchived(habit.id, czy).catch(() => null);
+    if (!wynik?.ok) {
+      toast.error(wynik?.message ?? "Nie udało się zapisać. Spróbuj ponownie.");
+      return;
+    }
+    setUsuwanie(false);
+    toast.success(czy ? "Nawyk zarchiwizowany. Historia zostaje." : "Nawyk przywrócony.", {
+      action: { label: "Cofnij", onClick: () => void setHabitArchived(habit.id, !czy) },
+    });
+  }
 
   const dniOdhaczone = new Set(
     data.checks.filter((c) => c.habitId === habit.id).map((c) => c.date),
@@ -76,14 +97,14 @@ export function HabitDetail({ data }: { data: HabitDetailData }) {
   }
 
   const kafelki = [
-    { etykieta: "Seria", wartosc: seria.wartosc, jednostka: seria.jednostka },
+    { etykieta: "Obecna seria", wartosc: seria.wartosc, jednostka: seria.jednostka },
     {
       etykieta: "Najdłuższa seria",
       wartosc: najdluzsza.wartosc,
       jednostka: najdluzsza.jednostka,
     },
     {
-      etykieta: "30 dni",
+      etykieta: "Skuteczność · 30 dni",
       wartosc: skutecznosc === null ? "—" : `${skutecznosc}%`,
       jednostka: "",
     },
@@ -133,17 +154,43 @@ export function HabitDetail({ data }: { data: HabitDetailData }) {
           </div>
           <div className="flex flex-wrap items-center gap-2">
             {/* .btndo i .btnp z ikonami jak w makiecie */}
-            <Button
-              variant="destructive-outline"
-              onClick={() => setUsuwanie(true)}
-            >
-              <TrashIcon aria-hidden="true" className="size-4" />
-              Usuń
-            </Button>
-            <Button variant="primary" onClick={() => setEdycja(true)}>
+            <Button onClick={() => setEdycja(true)}>
               <PenLineIcon aria-hidden="true" className="size-4" />
               Edytuj
             </Button>
+            <ActionPopover
+              open={menu}
+              onOpenChange={setMenu}
+              align="end"
+              width={200}
+              className="p-1"
+              trigger={
+                <Button icon aria-label="Więcej akcji">
+                  <EllipsisIcon aria-hidden="true" className="size-4" />
+                </Button>
+              }
+            >
+              <button
+                type="button"
+                className={MENU_ITEM}
+                onClick={() => {
+                  setMenu(false);
+                  void archiwizuj(!zArchiwum);
+                }}
+              >
+                {zArchiwum ? "Przywróć" : "Archiwizuj"}
+              </button>
+              <button
+                type="button"
+                className={cn(MENU_ITEM, MENU_ITEM_DANGER)}
+                onClick={() => {
+                  setMenu(false);
+                  setUsuwanie(true);
+                }}
+              >
+                Usuń nawyk…
+              </button>
+            </ActionPopover>
           </div>
         </header>
 
@@ -258,6 +305,8 @@ export function HabitDetail({ data }: { data: HabitDetailData }) {
         <DeleteHabitDialog
           habitId={habit.id}
           name={habit.name}
+          history={{ checks: lacznie, notes: data.notes.length }}
+          onArchive={zArchiwum ? undefined : () => archiwizuj(true)}
           open={usuwanie}
           onOpenChange={setUsuwanie}
         />

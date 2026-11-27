@@ -18,6 +18,20 @@ const godzina = z
   .regex(/^([01]\d|2[0-3]):[0-5]\d$/, "Podaj godzinę w formacie GG:MM.");
 
 export const habitInputSchema = z.object({
+  // Cel ilościowy; brak = „Zrobione / nie”
+  goal: z
+    .object({
+      qty: z
+        .number({ error: "Podaj ilość." })
+        .positive("Ilość musi być większa od 0.")
+        .max(100000, "Za duża ilość."),
+      unit: z
+        .string()
+        .trim()
+        .min(1, "Podaj jednostkę.")
+        .max(12, "Jednostka może mieć maksymalnie 12 znaków."),
+    })
+    .nullish(),
   name: z
     .string()
     .trim()

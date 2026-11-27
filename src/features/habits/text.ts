@@ -6,6 +6,7 @@ const SKROTY_DNI = ["pn", "wt", "śr", "cz", "pt", "sb", "nd"];
 
 // „codziennie”, „pn, śr, pt, nd”, „4× w tygodniu”
 export function describeSchedule(v: ScheduleVersion): string {
+  if (v.type === "paused") return "w archiwum";
   if (v.type === "daily") return "codziennie";
   if (v.type === "times_per_week") return `${v.timesPerWeek ?? 0}× w tygodniu`;
   // weekdays: zawsze w kolejności od poniedziałku

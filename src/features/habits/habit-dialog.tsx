@@ -18,7 +18,7 @@ import type { IsoDate } from "@/components/controls/calendar-math";
 import type { ActionResult } from "@/lib/action-result";
 import { cn } from "@/lib/utils";
 import { createHabit, updateHabit } from "./actions";
-import { scheduleOn, type Habit, type ScheduleType } from "./model";
+import { activeVersion, type Habit, type ScheduleType } from "./model";
 import { describeSchedule } from "./text";
 
 const TRYBY: { value: ScheduleType; label: string }[] = [
@@ -85,7 +85,7 @@ function HabitForm({
 }) {
   // Edycja: wartości z wersji obowiązującej dziś (gdy wszystkie są z przyszłości — pierwsza)
   const wersja = habit
-    ? (scheduleOn(habit, today) ?? habit.schedules[0] ?? null)
+    ? (activeVersion(habit, today) ?? habit.schedules[0] ?? null)
     : null;
 
   const [name, setName] = useState(habit?.name ?? "");
@@ -99,6 +99,9 @@ function HabitForm({
   );
   const [godzina, setGodzina] = useState(habit?.remindAt ?? "20:30");
   const [naDzis, setNaDzis] = useState(habit?.showOnToday ?? true);
+  const [cel, setCel] = useState<"zrobione" | "ilosc">(habit?.goalQty ? "ilosc" : "zrobione");
+  const [ilosc, setIlosc] = useState(habit?.goalQty ? String(habit.goalQty).replace(".", ",") : "");
+  const [jednostka, setJednostka] = useState(habit?.goalUnit ?? "");
   const [pending, setPending] = useState(false);
   const [blad, setBlad] = useState("");
   // Blokada podwójnego zapisu (dwa szybkie kliknięcia, zanim stan pending się odświeży)
@@ -109,8 +112,10 @@ function HabitForm({
     weekStart === "mon" ? [1, 2, 3, 4, 5, 6, 7] : [7, 1, 2, 3, 4, 5, 6];
 
   const nazwa = name.trim();
+  const liczba = Number(ilosc.replace(",", "."));
+  const celPoprawny = cel === "zrobione" || (liczba > 0 && jednostka.trim() !== "");
   const mozeZapisac =
-    nazwa !== "" && !(tryb === "weekdays" && dni.length === 0) && !pending;
+    nazwa !== "" && celPoprawny && !(tryb === "weekdays" && dni.length === 0) && !pending;
 
   // Zdanie pod harmonogramem (teksty z makiety)
   let podsumowanie = "Codziennie. Seria liczona w dniach.";
@@ -152,6 +157,8 @@ function HabitForm({
       },
       remindAt: przypomnienie ? godzina : null,
       showOnToday: naDzis,
+      // Przy nowym zwykłym nawyku nie wysyłamy celu; przy edycji null go czyści
+      goal: cel === "ilosc" ? { qty: liczba, unit: jednostka.trim() } : habit?.goalQty ? null : undefined,
     };
 
     let wynik: ActionResult;
@@ -201,6 +208,30 @@ function HabitForm({
         autoFocus
         onChange={(e) => setName(e.target.value)}
       />
+
+      <div className="flex flex-col gap-1.5 text-[13px] font-medium">
+        Cel na dzień
+        <Segment
+          ariaLabel="Typ celu"
+          value={cel}
+          onChange={setCel}
+          options={[
+            { value: "zrobione", label: "Zrobione / nie" },
+            { value: "ilosc", label: "Ilość" },
+          ]}
+        />
+        {cel === "ilosc" && (
+          <div className="flex gap-2 font-normal [&_label>span]:sr-only">
+            <TextField label="Ilość" inputMode="decimal" value={ilosc} maxLength={8} onChange={(e) => setIlosc(e.target.value)} />
+            <TextField label="Jednostka" placeholder="np. l, min, str." value={jednostka} maxLength={12} onChange={(e) => setJednostka(e.target.value)} />
+          </div>
+        )}
+        <span className="text-xs font-normal text-muted-foreground">
+          {cel === "ilosc"
+            ? `Odhaczysz częściowo, np. ${Math.max(1, Math.round(liczba / 2) || 1)} z ${ilosc || "?"} ${jednostka}. Dzień liczy się po osiągnięciu celu.`
+            : "Jedno kliknięcie na liście odhacza dzień."}
+        </span>
+      </div>
 
       <div className="flex flex-col gap-1.5 text-[13px] font-medium">
         Harmonogram
@@ -281,7 +312,6 @@ function HabitForm({
         </div>
       </div>
 
-      {/* Makieta nie ma tego pola — dodane pod przypomnieniem w tym samym stylu */}
       <div className="flex items-center gap-2.5 text-[13px]">
         <Switch
           checked={naDzis}

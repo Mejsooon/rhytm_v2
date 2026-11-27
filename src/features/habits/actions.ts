@@ -6,12 +6,19 @@ import { redirect } from "next/navigation";
 
 import type { IsoDate } from "@/components/controls/calendar-math";
 import { todayIso } from "@/components/controls/calendar-math";
+import { addDays } from "@/features/calendar/view-range";
 import type { ActionResult } from "@/lib/action-result";
 import { createClient } from "@/lib/supabase/server";
 import { safeTimezone } from "@/lib/time/timezones";
 import type { Database } from "@/types/database";
 import { mapHabits } from "./load-habits";
-import { canCheck, type ScheduleType } from "./model";
+import {
+  activeVersion,
+  archivedSince,
+  canCheck,
+  type Habit,
+  type ScheduleType,
+} from "./model";
 import {
   checkInputSchema,
   habitInputSchema,
@@ -32,6 +39,7 @@ export type HabitInput = {
   };
   remindAt: string | null;
   showOnToday: boolean;
+  goal?: { qty: number; unit: string } | null;
 };
 
 export type SleepInput = {
@@ -92,6 +100,8 @@ export async function createHabit(
       name: dane.name,
       remind_at: dane.remindAt,
       show_on_today: dane.showOnToday,
+      // Kolumny tylko przy celu ilościowym, żeby zwykły nawyk zapisał się także przed migracją
+      ...(dane.goal ? { goal_qty: dane.goal.qty, goal_unit: dane.goal.unit } : {}),
     })
     .select("id")
     .single();
@@ -156,6 +166,10 @@ export async function updateHabit(
       name: dane.name,
       remind_at: dane.remindAt,
       show_on_today: dane.showOnToday,
+      // undefined = nie ruszaj celu (formularz telefonu go nie zna)
+      ...(dane.goal === undefined
+        ? {}
+        : { goal_qty: dane.goal?.qty ?? null, goal_unit: dane.goal?.unit ?? null }),
     })
     .eq("id", id)
     .eq("user_id", user.id)
@@ -179,6 +193,11 @@ export async function updateHabit(
   const lista = wersje ?? [];
   const obowiazujaca =
     [...lista].reverse().find((w) => w.valid_from <= dzis) ?? lista[0];
+  // Nawyk w archiwum: edycja nie może go po cichu przywrócić
+  if (obowiazujaca?.schedule_type === "paused") {
+    revalidateHabits();
+    return { ok: true };
+  }
   const zmienilSie =
     !obowiazujaca ||
     obowiazujaca.schedule_type !== dane.schedule.type ||
@@ -319,7 +338,161 @@ export async function setHabitCheck(
     if (bladUsuniecia) return { ok: false, message: BLAD_ZAPISU };
   }
 
+  // Ręczne przełączenie dnia kasuje częściowy postęp (tabela pojawia się z migracją nawyków v2)
+  if (nawyk.goal_qty) {
+    const { error: bladPostepu } = await supabase
+      .from("habit_progress")
+      .delete()
+      .eq("habit_id", habitId)
+      .eq("date", date)
+      .eq("user_id", user.id);
+    if (bladPostepu) return { ok: false, message: BLAD_ZAPISU };
+  }
+
   revalidateHabits();
+  return { ok: true };
+}
+
+// Cel ilościowy: pełny cel = odhaczenie, mniej = sam postęp, 0 = nic
+export async function setHabitProgress(
+  habitId: string,
+  date: IsoDate,
+  qty: number,
+): Promise<ActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/logowanie");
+
+  const parsed = checkInputSchema.safeParse({ habitId, date, done: true });
+  if (!parsed.success || !Number.isFinite(qty) || qty < 0 || qty > 100000)
+    return { ok: false, message: BLAD_ZAPISU };
+
+  const znalezione = await ownHabit(supabase, user.id, habitId);
+  if (!znalezione.ok) return znalezione;
+  const { habit, goalQty, dzis } = znalezione;
+  if (goalQty === null || !canCheck(habit, date, dzis))
+    return { ok: false, message: "Tego dnia nie można odhaczyć." };
+
+  const klucz = { habit_id: habitId, user_id: user.id, date };
+  const usun = (tabela: "habit_checks" | "habit_progress") =>
+    supabase
+      .from(tabela)
+      .delete()
+      .eq("habit_id", habitId)
+      .eq("date", date)
+      .eq("user_id", user.id);
+
+  const zapisy =
+    qty >= goalQty
+      ? [
+          supabase
+            .from("habit_checks")
+            .upsert(klucz, { onConflict: "habit_id,date", ignoreDuplicates: true }),
+          usun("habit_progress"),
+        ]
+      : [
+          usun("habit_checks"),
+          qty === 0
+            ? usun("habit_progress")
+            : supabase
+                .from("habit_progress")
+                .upsert({ ...klucz, qty }, { onConflict: "habit_id,date" }),
+        ];
+  for (const zapis of zapisy) {
+    const { error } = await zapis;
+    if (error) return { ok: false, message: BLAD_ZAPISU };
+  }
+
+  revalidateHabits();
+  return { ok: true };
+}
+
+// Własny nawyk z harmonogramami i „dziś” użytkownika
+async function ownHabit(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+  habitId: string,
+): Promise<
+  | { ok: true; habit: Habit; goalQty: number | null; dzis: IsoDate }
+  | { ok: false; message: string }
+> {
+  if (!idSchema.safeParse(habitId).success)
+    return { ok: false, message: BLAD_ZAPISU };
+  const { data: nawyk, error } = await supabase
+    .from("habits")
+    .select("*")
+    .eq("id", habitId)
+    .eq("user_id", userId)
+    .maybeSingle();
+  if (error) return { ok: false, message: BLAD_ZAPISU };
+  if (!nawyk) return { ok: false, message: BRAK_NAWYKU };
+  const { data: wersje, error: bladWersji } = await supabase
+    .from("habit_schedules")
+    .select("*")
+    .eq("habit_id", habitId);
+  if (bladWersji) return { ok: false, message: BLAD_ZAPISU };
+  const dzis = await todayFor(supabase, userId);
+  if (!dzis) return { ok: false, message: BLAD_ZAPISU };
+  const [habit] = mapHabits([nawyk], wersje ?? []);
+  return { ok: true, habit, goalQty: habit.goalQty ?? null, dzis };
+}
+
+// Archiwum = wersja „paused” od dziś. Przywrócenie wraca do harmonogramu sprzed przerwy.
+export async function setHabitArchived(
+  habitId: string,
+  archived: boolean,
+): Promise<ActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/logowanie");
+
+  const znalezione = await ownHabit(supabase, user.id, habitId);
+  if (!znalezione.ok) return znalezione;
+  const { habit, dzis } = znalezione;
+  if ((archivedSince(habit, dzis) !== null) === archived) return { ok: true };
+  const poprzednia = activeVersion(habit, dzis) ?? habit.schedules[0];
+  if (!poprzednia) return { ok: false, message: BLAD_ZAPISU };
+
+  const wersja = (validFrom: IsoDate, type: ScheduleType) => ({
+    habit_id: habitId,
+    user_id: user.id,
+    valid_from: validFrom,
+    schedule_type: type,
+    weekdays: type === "paused" ? [] : poprzednia.weekdays,
+    times_per_week: type === "paused" ? null : poprzednia.timesPerWeek,
+  });
+  const zapisz = (wiersz: ReturnType<typeof wersja>) =>
+    supabase
+      .from("habit_schedules")
+      .upsert(wiersz, { onConflict: "habit_id,valid_from" });
+
+  if (archived) {
+    // Harmonogram z dzisiejszą datą przenosimy na wczoraj, inaczej „paused” by go nadpisało
+    if (poprzednia.validFrom >= dzis) {
+      const { error } = await zapisz(wersja(addDays(dzis, -1), poprzednia.type));
+      if (error) return { ok: false, message: BLAD_ZAPISU };
+    }
+    const { error } = await zapisz(wersja(dzis, "paused"));
+    if (error) return { ok: false, message: BLAD_ZAPISU };
+  } else if (archivedSince(habit, dzis) === dzis) {
+    // Cofnięcie tego samego dnia: bez śladu przerwy
+    const { error } = await supabase
+      .from("habit_schedules")
+      .delete()
+      .eq("habit_id", habitId)
+      .eq("valid_from", dzis);
+    if (error) return { ok: false, message: BLAD_ZAPISU };
+  } else {
+    const { error } = await zapisz(wersja(dzis, poprzednia.type));
+    if (error) return { ok: false, message: BLAD_ZAPISU };
+  }
+
+  revalidateHabits();
+  revalidatePath("/nawyki/archiwum");
   return { ok: true };
 }
 

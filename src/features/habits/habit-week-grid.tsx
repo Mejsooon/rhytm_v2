@@ -1,11 +1,15 @@
 "use client";
 
 // Karta „Nawyki”: wiersze nawyków z siatką bieżącego tygodnia i przyciskiem ✓ na dziś (CHabits.dc.html)
+import { useState } from "react";
 import Link from "next/link";
-import { Check, Flame, Plus } from "lucide-react";
+import { Check, Ellipsis, Flame, Plus } from "lucide-react";
 
 import {
+  ActionPopover,
   Button,
+  MENU_ITEM,
+  MENU_ITEM_DANGER,
   CardHeader,
   CardTitle,
   StatusBadge,
@@ -22,6 +26,7 @@ import {
   type Checks,
   type Habit,
 } from "./model";
+import { formatQty, HabitQtyPopover } from "./habit-qty-popover";
 import { describeSchedule, streakLabel } from "./text";
 
 // Skróty dni: indeks 0 = pn … 6 = nd
@@ -29,6 +34,8 @@ const SKROTY_DNI = ["pn", "wt", "śr", "cz", "pt", "sb", "nd"];
 
 // Komórka dnia z makiety: 24 px, promień 6 px
 const KOMORKA = "size-6 rounded-sm box-border";
+// Tyle wierszy widać przed „Pokaż wszystkie”
+const LIMIT = 6;
 
 export function HabitWeekGrid({
   habits,
@@ -37,6 +44,10 @@ export function HabitWeekGrid({
   weekStart,
   onToggle,
   onNewHabit,
+  progress = [],
+  onEdit,
+  onArchive,
+  onDelete,
 }: {
   habits: Habit[];
   checks: Checks;
@@ -44,7 +55,15 @@ export function HabitWeekGrid({
   weekStart: "mon" | "sun";
   onToggle: (habitId: string, date: IsoDate) => void;
   onNewHabit: () => void;
+  // Dzisiejszy częściowy postęp nawyków ilościowych
+  progress?: Array<{ habitId: string; qty: number }>;
+  onEdit?: (habitId: string) => void;
+  onArchive?: (habit: Habit) => void;
+  onDelete?: (habit: Habit) => void;
 }) {
+  const [wszystkie, setWszystkie] = useState(false);
+  const [menu, setMenu] = useState<string | null>(null);
+  const zrobione = habits.filter((h) => checks.get(h.id)?.has(today)).length;
   // Bieżący tydzień od dnia z profilu, bez nawigacji
   const dni = viewRange("tydzien", today, weekStart).days;
 
@@ -52,10 +71,20 @@ export function HabitWeekGrid({
     // .card jako <section> (te same klasy co Card)
     <section className="relative flex min-w-0 flex-col rounded-xl border border-border bg-white bg-clip-padding shadow-card">
       <CardHeader className="flex-wrap items-center pb-3">
-        <CardTitle as="h2">Nawyki</CardTitle>
+        <div className="flex items-center gap-3">
+          <CardTitle as="h2">Nawyki</CardTitle>
+          {habits.length > 0 && (
+            <>
+              <span aria-hidden="true" className="h-1.5 w-20 overflow-hidden rounded-full bg-black/[.06]">
+                <span className="block h-full rounded-full bg-success" style={{ width: `${Math.round((zrobione / habits.length) * 100)}%` }} />
+              </span>
+              <span className="text-xs text-muted-foreground tabular-nums">{`${zrobione}/${habits.length} dziś`}</span>
+            </>
+          )}
+        </div>
         {habits.length > 0 && (
           // Nagłówki kolumn nad siatką; margines = przycisk ✓ (32 px) + odstęp 14 px
-          <div className="mr-[46px] grid grid-cols-[repeat(7,24px)] gap-1.5 text-center text-[11px] font-medium text-muted-foreground">
+          <div className="mr-[92px] grid grid-cols-[repeat(7,24px)] gap-1.5 text-center text-[11px] font-medium text-muted-foreground">
             {dni.map((d) => (
               <span key={d}>{SKROTY_DNI[weekdayOf(d) - 1]}</span>
             ))}
@@ -75,7 +104,7 @@ export function HabitWeekGrid({
         </div>
       ) : (
         <ul className="m-0 list-none border-t border-border p-0">
-          {habits.map((habit) => {
+          {(wszystkie ? habits : habits.slice(0, LIMIT)).map((habit) => {
             // Opis harmonogramu: wersja na dziś, a gdy nawyk rusza dopiero później — pierwsza wersja
             const wersja = scheduleOn(habit, today) ?? habit.schedules[0];
             const postep = weekProgress(habit, checks, today, weekStart);
@@ -85,6 +114,12 @@ export function HabitWeekGrid({
             const odhaczoneDzis = checks.get(habit.id)?.has(today) ?? false;
             // Odznaczyć wolno każdy dzień ≤ dziś, także osierocone odhaczenie
             const dzisAktywny = canCheck(habit, today, today) || odhaczoneDzis;
+
+            const ilosc =
+              habit.goalQty && habit.goalUnit
+                ? { id: habit.id, name: habit.name, goalQty: habit.goalQty, goalUnit: habit.goalUnit }
+                : null;
+            const postepDzis = progress.find((p) => p.habitId === habit.id)?.qty ?? 0;
 
             return (
               <li
@@ -173,25 +208,72 @@ export function HabitWeekGrid({
                   })}
                 </div>
 
-                <button
-                  type="button"
-                  aria-label={
-                    odhaczoneDzis
-                      ? `Cofnij odhaczenie: ${habit.name}`
-                      : `Odhacz dziś: ${habit.name}`
+                {(() => {
+                  const przycisk = (
+                    <button
+                      type="button"
+                      aria-label={
+                        ilosc
+                          ? `${habit.name}: ${formatQty(odhaczoneDzis ? ilosc.goalQty : postepDzis)} z ${formatQty(ilosc.goalQty)} ${ilosc.goalUnit}`
+                          : odhaczoneDzis
+                            ? `Cofnij odhaczenie: ${habit.name}`
+                            : `Odhacz dziś: ${habit.name}`
+                      }
+                      aria-pressed={odhaczoneDzis}
+                      disabled={!dzisAktywny}
+                      onClick={ilosc ? undefined : () => onToggle(habit.id, today)}
+                      className={cn(
+                        "grid size-8 flex-none cursor-pointer place-items-center rounded-md border p-0 transition-colors duration-[120ms] outline-none focus-visible:shadow-focus disabled:cursor-not-allowed disabled:opacity-[.64]",
+                        odhaczoneDzis
+                          ? "border-success bg-success text-white shadow-[inset_0_1px_0_rgba(255,255,255,.2),0_1px_2px_rgba(21,128,61,.3)]"
+                          : "border-input bg-white text-faint-foreground shadow-xs hover:text-muted-foreground",
+                      )}
+                    >
+                      <Check size={16} aria-hidden="true" />
+                    </button>
+                  );
+                  // Cel ilościowy: klik otwiera okienko z ilością
+                  return ilosc ? (
+                    <HabitQtyPopover habit={ilosc} date={today} qty={postepDzis} done={odhaczoneDzis} trigger={przycisk} />
+                  ) : (
+                    przycisk
+                  );
+                })()}
+                <ActionPopover
+                  open={menu === habit.id}
+                  onOpenChange={(o) => setMenu(o ? habit.id : null)}
+                  align="end"
+                  width={200}
+                  className="p-1"
+                  trigger={
+                    <Button variant="ghost" size="sm" icon aria-label={`Więcej: ${habit.name}`}>
+                      <Ellipsis size={16} aria-hidden="true" />
+                    </Button>
                   }
-                  aria-pressed={odhaczoneDzis}
-                  disabled={!dzisAktywny}
-                  onClick={() => onToggle(habit.id, today)}
-                  className={cn(
-                    "grid size-8 flex-none cursor-pointer place-items-center rounded-md border p-0 transition-colors duration-[120ms] outline-none focus-visible:shadow-focus disabled:cursor-not-allowed disabled:opacity-[.64]",
-                    odhaczoneDzis
-                      ? "border-success bg-success text-white shadow-[inset_0_1px_0_rgba(255,255,255,.2),0_1px_2px_rgba(21,128,61,.3)]"
-                      : "border-input bg-white text-faint-foreground shadow-xs hover:text-muted-foreground",
-                  )}
                 >
-                  <Check size={16} aria-hidden="true" />
-                </button>
+                  <Link href={`/nawyki/${habit.id}`} className={MENU_ITEM}>
+                    Szczegóły i historia
+                  </Link>
+                  {(
+                    [
+                      ["Edytuj", () => onEdit?.(habit.id), ""],
+                      ["Archiwizuj", () => onArchive?.(habit), ""],
+                      ["Usuń nawyk", () => onDelete?.(habit), MENU_ITEM_DANGER],
+                    ] as const
+                  ).map(([nazwa, akcja, klasa]) => (
+                    <button
+                      key={nazwa}
+                      type="button"
+                      className={cn(MENU_ITEM, klasa)}
+                      onClick={() => {
+                        setMenu(null);
+                        akcja();
+                      }}
+                    >
+                      {nazwa}
+                    </button>
+                  ))}
+                </ActionPopover>
               </li>
             );
           })}
@@ -200,7 +282,7 @@ export function HabitWeekGrid({
 
       <div className="flex-1" />
       {/* .btng sm w stopce karty, tekst szary */}
-      <div className="px-4 py-2.5">
+      <div className="flex items-center justify-between px-4 py-2.5">
         <Button
           variant="ghost"
           size="sm"
@@ -212,6 +294,11 @@ export function HabitWeekGrid({
           <Plus size={16} aria-hidden="true" />
           Nowy nawyk
         </Button>
+        {habits.length > LIMIT && (
+          <Button variant="ghost" size="sm" onClick={() => setWszystkie((w) => !w)}>
+            {wszystkie ? "Zwiń" : `Pokaż wszystkie (${habits.length})`}
+          </Button>
+        )}
       </div>
     </section>
   );

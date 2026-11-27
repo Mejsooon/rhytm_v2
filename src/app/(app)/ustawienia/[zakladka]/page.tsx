@@ -25,7 +25,7 @@ import {
 } from "@/features/settings/settings-tabs";
 import { getAvatarUrl } from "@/features/profile/avatar-url";
 import { mapHabits } from "@/features/habits/load-habits";
-import { scheduleOn } from "@/features/habits/model";
+import { scheduleOn, archivedSince } from "@/features/habits/model";
 import { describeSchedule } from "@/features/habits/text";
 import { NotificationsTab } from "@/features/notifications/notifications-card";
 import { describeUserAgent } from "@/lib/user-agent";
@@ -50,7 +50,7 @@ async function Ogolne({
   const { data: profil } = await supabase
     .from("profiles")
     .select(
-      "display_name, avatar_path, timezone, weight_kg, height_cm, sleep_goal_min, workouts_goal_on, km_goal_on, weekly_workouts_goal, weekly_km_goal, currency, week_start",
+      "display_name, avatar_path, timezone, weight_kg, height_cm, sleep_goal_min, workouts_goal_on, km_goal_on, weekly_workouts_goal, weekly_km_goal, currency, week_start, sleep_bedtime",
     )
     .eq("user_id", user.id)
     .maybeSingle();
@@ -87,6 +87,7 @@ async function Ogolne({
       <GoalsCard
         saved={{
           sleep: profil?.sleep_goal_min ?? 480,
+          bed: (profil?.sleep_bedtime ?? "23:00").slice(0, 5),
           // Brak liczby treningów (konta sprzed celu treningowego) = 3
           trOn: profil?.workouts_goal_on ?? true,
           kmOn: profil?.km_goal_on ?? true,
@@ -228,8 +229,10 @@ async function Powiadomienia() {
   const dzis = todayIso(strefa);
   // Brak wiersza ustawień = wartości domyślne kolumn (nawyki wył., blok 5 min, odnowienia wł., cisza 23:00–07:00)
   const u = ustawieniaRes.data;
-  const nawyki = mapHabits(nawykiRes.data ?? [], wersjeRes.data ?? []).map(
-    (h) => {
+  // Zarchiwizowane nawyki nie przypominają, więc nie ma ich na liście godzin
+  const nawyki = mapHabits(nawykiRes.data ?? [], wersjeRes.data ?? [])
+    .filter((h) => archivedSince(h, dzis) === null)
+    .map((h) => {
       // Obowiązująca dziś wersja; gdy wszystkie są w przyszłości — pierwsza
       const wersja = scheduleOn(h, dzis) ?? h.schedules[0];
       return {
@@ -238,8 +241,7 @@ async function Powiadomienia() {
         schedule: wersja ? describeSchedule(wersja) : "",
         remindAt: h.remindAt,
       };
-    },
-  );
+    });
   // Stara baza bez tabeli push_subscriptions → komunikat w karcie „Urządzenia”, reszta działa
   const urzadzenia = (urzadzeniaRes.data ?? []).map((d) => ({
     id: d.id,

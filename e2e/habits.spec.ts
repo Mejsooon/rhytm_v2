@@ -39,7 +39,8 @@ test.describe("nawyki i sen (web)", () => {
     await page.goto("/nawyki");
     const web = page.getByTestId("web-nawyki");
 
-    await web.getByRole("button", { name: "Nowy nawyk", exact: true }).click();
+    // Na nowym koncie przycisk jest w nagłówku i w pustym stanie
+    await web.getByRole("button", { name: "Nowy nawyk", exact: true }).first().click();
     const okno = page.getByRole("dialog", { name: "Nowy nawyk" });
     await okno.getByLabel("Nazwa").fill("Woda 2 l");
     // Domyślny harmonogram to „Codziennie”
@@ -55,14 +56,14 @@ test.describe("nawyki i sen (web)", () => {
     await expect(
       web.getByRole("button", { name: "Cofnij odhaczenie: Woda 2 l" }),
     ).toBeVisible();
-    await expect(web.getByText("1/1", { exact: true })).toBeVisible();
+    await expect(web.getByText("1/1 dziś", { exact: true })).toBeVisible();
     await zapis;
 
     await page.reload();
     await expect(
       web.getByRole("button", { name: "Cofnij odhaczenie: Woda 2 l" }),
     ).toBeVisible();
-    await expect(web.getByText("1/1", { exact: true })).toBeVisible();
+    await expect(web.getByText("1/1 dziś", { exact: true })).toBeVisible();
   });
 
   test("zmiana na „Wybrane dni” dodaje drugą pozycję w historii harmonogramu", async ({
@@ -115,7 +116,7 @@ test.describe("nawyki i sen (web)", () => {
     await expect(okno.getByText("7:30", { exact: true })).toBeVisible();
     await okno.getByRole("button", { name: "Zapisz", exact: true }).click();
     await expect(okno).toBeHidden();
-    await expect(kartaSnu.getByText("7:30", { exact: true })).toBeVisible();
+    await expect(kartaSnu.locator("b").getByText("7:30", { exact: true })).toBeVisible();
 
     // Drugi wpis na dziś: okno startuje z zapisanymi godzinami i zapisuje zmianę w tym samym wpisie
     await web.getByRole("button", { name: "+ Wpis snu" }).click();
@@ -127,7 +128,7 @@ test.describe("nawyki i sen (web)", () => {
     await drugie.getByRole("button", { name: "Zapisz", exact: true }).click();
     // Błąd zapisu zostawiłby okno otwarte z komunikatem, więc zamknięcie oznacza brak błędu
     await expect(drugie).toBeHidden();
-    await expect(kartaSnu.getByText("8:00", { exact: true })).toBeVisible();
+    await expect(kartaSnu.locator("b").getByText("8:00", { exact: true })).toBeVisible();
 
     // Nadal jeden wpis (jeden na dzień), z nową godziną
     const wpisy = await wpisySnu(userId);
@@ -151,26 +152,82 @@ test.describe("nawyki i sen (web)", () => {
     await page.goto(`/nawyki/${id}`);
     await page
       .getByTestId("web-nawyk")
-      .getByRole("button", { name: "Usuń" })
+      .getByRole("button", { name: "Więcej akcji" })
       .click();
+    await page.getByRole("button", { name: "Usuń nawyk…" }).click();
     const okno = page.getByRole("alertdialog", {
       name: "Usunąć nawyk „Do usunięcia”?",
     });
-    await okno.getByRole("button", { name: "Usuń", exact: true }).click();
+    await okno.getByRole("button", { name: "Usuń na zawsze" }).click();
 
     await expect(page).toHaveURL(/\/nawyki$/);
     const web = page.getByTestId("web-nawyki");
-    await expect(web.getByText("Nie masz jeszcze nawyków.")).toBeVisible();
+    await expect(web.getByText("Dodaj pierwszy nawyk albo wpis snu")).toBeVisible();
     await expect(web.getByRole("link", { name: "Do usunięcia" })).toHaveCount(
       0,
     );
 
     await page.reload();
-    await expect(web.getByText("Nie masz jeszcze nawyków.")).toBeVisible();
+    await expect(web.getByText("Dodaj pierwszy nawyk albo wpis snu")).toBeVisible();
     await expect(web.getByRole("link", { name: "Do usunięcia" })).toHaveCount(
       0,
     );
     expect(await policzNawyki(userId, "Do usunięcia")).toBe(0);
+  });
+});
+
+test.describe("nawyki: archiwum i ilość (web)", () => {
+  test.use({ actionTimeout: 10_000 });
+  test.skip(!process.env.E2E_SUPABASE, "wymaga lokalnego Supabase");
+
+  test.beforeEach(({}, info) => {
+    test.skip(info.project.name !== "web", "układ webowy");
+  });
+
+  test("archiwizacja z menu → archiwum → przywrócenie", async ({ page }, info) => {
+    const userId = await zalozKontoNawykow(page, info.project.name);
+    await zasiejNawyk(userId, { name: "Medytacja" });
+    await page.goto("/nawyki");
+    const web = page.getByTestId("web-nawyki");
+
+    await web.getByRole("button", { name: "Więcej: Medytacja" }).click();
+    await page.getByRole("button", { name: "Archiwizuj" }).click();
+    await expect(web.getByRole("link", { name: "Archiwum (1)" })).toBeVisible();
+    await expect(web.getByRole("link", { name: "Medytacja" })).toHaveCount(0);
+
+    await web.getByRole("link", { name: "Archiwum (1)" }).click();
+    await expect(page).toHaveURL(/\/nawyki\/archiwum$/);
+    await page.getByRole("button", { name: "Przywróć" }).filter({ visible: true }).click();
+    await expect(page.getByText("Archiwum jest puste.")).toBeVisible();
+    await page.goto("/nawyki");
+    await expect(web.getByRole("link", { name: "Medytacja" })).toBeVisible();
+  });
+
+  test("nawyk „Ilość”: połowa celu nie odhacza, „Cały cel” odhacza", async ({
+    page,
+  }, info) => {
+    await zalozKontoNawykow(page, info.project.name);
+    await page.goto("/nawyki");
+    const web = page.getByTestId("web-nawyki");
+    await web.getByRole("button", { name: "Nowy nawyk", exact: true }).first().click();
+    const okno = page.getByRole("dialog", { name: "Nowy nawyk" });
+    await okno.getByLabel("Nazwa").fill("Woda");
+    await okno.getByRole("radio", { name: "Ilość" }).click();
+    await okno.getByLabel("Ilość", { exact: true }).fill("2");
+    await okno.getByLabel("Jednostka").fill("l");
+    await okno.getByRole("button", { name: "Dodaj nawyk" }).click();
+    await expect(okno).toBeHidden();
+
+    await web.getByRole("button", { name: "Woda: 0 z 2 l" }).click();
+    const dymek = page.getByRole("dialog", { name: "Ilość: Woda" });
+    await dymek.getByLabel("Zrobiona ilość").fill("1");
+    await dymek.getByRole("button", { name: "Zapisz" }).click();
+    await expect(web.getByText("0/1 dziś")).toBeVisible();
+
+    await web.getByRole("button", { name: "Woda: 1 z 2 l" }).click();
+    await dymek.getByRole("button", { name: "Cały cel" }).click();
+    await expect(web.getByRole("button", { name: "Woda: 2 z 2 l" })).toBeVisible();
+    await expect(web.getByText("1/1 dziś")).toBeVisible();
   });
 });
 

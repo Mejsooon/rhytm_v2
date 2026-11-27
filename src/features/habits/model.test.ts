@@ -530,3 +530,42 @@ describe("heatmapy", () => {
     expect(nd[12][0].date).toBe("2026-11-15");
   });
 });
+
+describe("przerwa w harmonogramie (archiwum)", () => {
+  const wersja = (validFrom: string, type: "daily" | "paused" | "times_per_week", timesPerWeek: number | null = null) => ({
+    validFrom,
+    type,
+    weekdays: [],
+    timesPerWeek,
+  });
+  const nawyk = (schedules: ReturnType<typeof wersja>[]) => ({
+    id: "h",
+    name: "N",
+    remindAt: null,
+    showOnToday: true,
+    createdAt: "",
+    schedules,
+  });
+  const odhaczone = (...dni: string[]) => new Map([["h", new Set(dni)]]);
+
+  it("seria dzienna liczy się dalej po przywróceniu, a nawyk z archiwum ma serię sprzed przerwy", () => {
+    const h = nawyk([wersja("2026-11-01", "daily"), wersja("2026-11-04", "paused"), wersja("2026-11-10", "daily")]);
+    const checks = odhaczone("2026-11-02", "2026-11-03", "2026-11-10");
+    expect(currentStreak(h, checks, "2026-11-10", "mon")).toEqual({ value: 3, unit: "days" });
+    const wArchiwum = nawyk(h.schedules.slice(0, 2));
+    expect(longestStreak(wArchiwum, checks, "2026-11-08", "mon").value).toBe(2);
+    expect(currentStreak(wArchiwum, checks, "2026-11-08", "mon").value).toBe(2);
+  });
+
+  it("seria tygodniowa: tygodnie z przerwą jej nie przerywają", () => {
+    // Tydzień 2–8.11 spełniony, 9–22.11 przerwa (z końcówką), od 18.11 znów aktywny, 23–29.11 spełniony
+    const h = nawyk([
+      wersja("2026-11-02", "times_per_week", 1),
+      wersja("2026-11-10", "paused"),
+      wersja("2026-11-18", "times_per_week", 1),
+    ]);
+    const checks = odhaczone("2026-11-03", "2026-11-24");
+    expect(currentStreak(h, checks, "2026-11-24", "mon")).toEqual({ value: 2, unit: "weeks" });
+    expect(longestStreak(h, checks, "2026-11-24", "mon").value).toBe(2);
+  });
+});
