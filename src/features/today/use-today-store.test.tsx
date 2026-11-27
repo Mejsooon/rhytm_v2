@@ -36,6 +36,8 @@ function dane(tasks: TaskRow[]): TodayData {
       weeklyKmGoal: 25,
       workoutsGoalOn: false,
       weeklyWorkoutsGoal: 3,
+      fromHour: 7,
+      toHour: 23,
     },
     today: "2026-11-17",
     nowMin: 600,

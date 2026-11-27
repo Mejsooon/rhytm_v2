@@ -1,13 +1,12 @@
 "use client";
 
-// „Plan dnia” na Dziś (web, S2Today): lista na całą dobę — wiersze bloków i treningów
-// poprzedzielane przerwami „N h wolne”, na końcu pusty wiersz 23:00. Klik w blok otwiera
+// „Plan dnia” na Dziś (web, S2Today): lista w godzinach aktywnych — wiersze bloków i treningów
+// poprzedzielane przerwami „N h wolne”, ostatnia przerwa „… do 23:00”. Klik w blok otwiera
 // dymek z zadaniami (ten sam co w kalendarzu), klik w przerwę — „Nowy blok” od jej początku.
 // Trening jest tylko do odczytu i prowadzi do /sport.
 import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { Plus } from "lucide-react";
 
 import { Button, StatusBadge } from "@/components/controls";
 import {
@@ -21,7 +20,13 @@ import { sportItemHref } from "@/features/sport/model";
 import type { ActionResult } from "@/lib/action-result";
 import { formatClockTime } from "@/lib/time/timezones";
 import type { TodayData } from "./load-today";
-import { blocksCountLabel, dayPlan, dayPlanRows, nowItem } from "./model";
+import {
+  blocksCountLabel,
+  dayPlan,
+  dayPlanRange,
+  dayPlanRows,
+  nowItem,
+} from "./model";
 import type { TodayChange } from "./use-today-store";
 
 type Okno =
@@ -55,7 +60,8 @@ export function DayPlan({
     data.sportItems,
     today,
   );
-  const wiersze = dayPlanRows(plan);
+  const zakres = dayPlanRange(plan, profile.fromHour, profile.toHour);
+  const wiersze = dayPlanRows(plan, zakres.from, zakres.to);
   const trwajacy = nowItem(plan, teraz);
 
   // Wybrany blok (klucz wystąpienia) z otwartym dymkiem
@@ -108,11 +114,25 @@ export function DayPlan({
         </h2>
         {/* Liczba wpisów jak w makiecie („4 bloki” liczy też trening) */}
         <span className="text-xs text-muted-foreground">
-          {`00:00–24:00 · ${blocksCountLabel(plan.length)}`}
+          {`godziny aktywne ${godz(profile.fromHour * 60)}–${godz(profile.toHour * 60)} · ${blocksCountLabel(plan.length)} · `}
+          <Link href="/ustawienia/kalendarz" className="underline">
+            zmień
+          </Link>
         </span>
       </div>
       {/* .frame > .inner: ramka 1,5 px rgba(0,0,0,.14), promień 12 px, padding 10/12/4;
           interlinia „normal” jak w makiecie (wiersz z blokiem mieści się w ~48 px) */}
+      {plan.length === 0 ? (
+        <div className="flex flex-col items-start gap-2.5 rounded-lg border border-dashed border-black/[.14] p-5">
+          <div>
+            <b className="font-medium">Brak bloków na dziś</b>
+            <p className="m-0 mt-1 text-muted-foreground">
+              Blok to czas na zadania, np. „Matematyka 8:00–9:30” z listą rzeczy do zrobienia.
+            </p>
+          </div>
+          <Button onClick={onNewBlock}>Dodaj pierwszy blok</Button>
+        </div>
+      ) : (
       <div
         data-testid="plan-dnia-lista"
         className="overflow-hidden rounded-lg border-[1.5px] border-black/[.14] bg-white px-3 pt-2.5 pb-1 leading-[normal]"
@@ -158,7 +178,9 @@ export function DayPlan({
                   // Tekst przerwy między przerywanymi liniami rgba(0,0,0,.14)
                   className="flex w-full cursor-pointer items-center gap-2 self-center text-xs text-muted-foreground tabular-nums outline-none before:flex-1 before:border-t before:border-dashed before:border-black/[.14] before:content-[''] after:flex-1 after:border-t after:border-dashed after:border-black/[.14] after:content-[''] hover:text-foreground focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring focus-visible:outline-solid"
                 >
-                  {w.label}
+                  {w.endMin === zakres.to
+                    ? `${w.label} do ${godz(w.endMin)}`
+                    : w.label}
                 </button>
               </div>
             );
@@ -254,35 +276,8 @@ export function DayPlan({
           );
         })}
 
-        {/* Pusty dzień: zachęta pod przerwą „24 h wolne” */}
-        {plan.length === 0 && (
-          <div className="grid grid-cols-[56px_1fr] pb-5">
-            <span />
-            <div className="flex flex-col items-center gap-2.5">
-              <span className="text-xs text-muted-foreground">
-                Nie masz jeszcze bloków na dziś.
-              </span>
-              <Button onClick={onNewBlock}>
-                <Plus size={16} aria-hidden="true" />
-                Dodaj pierwszy blok
-              </Button>
-            </div>
-          </div>
-        )}
-
-        {/* Ostatni, pusty wiersz 23:00 (min. 40 px) — pomijany, gdy jakiś wiersz (przerwa albo wpis)
-            startuje o 23:00 lub później (inaczej byłyby dwa wiersze z godziną 23:00 albo 23:00 po 23:30) */}
-        {!wiersze.some(
-          (w) => (w.type === "gap" ? w.startMin : w.item.startMin) >= 23 * 60,
-        ) && (
-          <div aria-hidden="true" className={`${wiersz} min-h-10`}>
-            <span className="pt-2 text-xs text-muted-foreground tabular-nums">
-              {godz(23 * 60)}
-            </span>
-            <div />
-          </div>
-        )}
       </div>
+      )}
 
       {wybraneWystapienie && (
         <BlockPopover

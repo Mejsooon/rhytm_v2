@@ -45,6 +45,9 @@ export type TodayData = {
     weeklyKmGoal: number;
     workoutsGoalOn: boolean;
     weeklyWorkoutsGoal: number;
+    // Godziny aktywne planu dnia (Ustawienia → Kalendarz)
+    fromHour: number;
+    toHour: number;
   };
   today: IsoDate;
   nowMin: number;
@@ -57,7 +60,7 @@ export type TodayData = {
   tasks: TaskRow[];
   habits: Habit[];
   checks: Checks;
-  // Tydzień (zawiera dziś)
+  // Poprzedni i bieżący tydzień
   sleepLogs: SleepLog[];
   // Treningi tygodnia — wszystkie, także ukryte w kalendarzu
   sportItems: SportItem[];
@@ -72,7 +75,7 @@ export async function loadToday(
   const { data: p, error: blad } = await supabase
     .from("profiles")
     .select(
-      "timezone, week_start, clock, display_name, avatar_path, sleep_goal_min, km_goal_on, weekly_km_goal, workouts_goal_on, weekly_workouts_goal",
+      "timezone, week_start, clock, display_name, avatar_path, sleep_goal_min, km_goal_on, weekly_km_goal, workouts_goal_on, weekly_workouts_goal, calendar_from_hour, calendar_to_hour",
     )
     .eq("user_id", userId)
     .maybeSingle();
@@ -91,12 +94,16 @@ export async function loadToday(
     weeklyKmGoal: p?.weekly_km_goal ?? DOMYSLNY_CEL_KM,
     workoutsGoalOn: p?.workouts_goal_on ?? false,
     weeklyWorkoutsGoal: p?.weekly_workouts_goal ?? DOMYSLNY_CEL_TRENINGOW,
+    fromHour: p?.calendar_from_hour ?? 7,
+    toHour: p?.calendar_to_hour ?? 23,
   };
 
   const today = todayIso(timezone, now);
   const nowMin = minutesNow(timezone, now);
   const weekStartDate = weekStart(today, startTygodnia);
   const koniecTygodnia = addDays(weekStartDate, 6);
+  // Treningi i sen także z poprzedniego tygodnia (porównanie w karcie „Ten tydzień”)
+  const odPoprzedniego = addDays(weekStartDate, -7);
 
   const [
     kalendarz,
@@ -109,7 +116,7 @@ export async function loadToday(
     loadCalendar(
       supabase,
       userId,
-      { from: weekStartDate, to: koniecTygodnia },
+      { from: odPoprzedniego, to: koniecTygodnia },
       {
         timezone,
         weekStart: startTygodnia,
@@ -135,7 +142,7 @@ export async function loadToday(
       .from("sleep_logs")
       .select("*")
       .eq("user_id", userId)
-      .gte("date", weekStartDate)
+      .gte("date", odPoprzedniego)
       .lte("date", koniecTygodnia)
       .order("date", { ascending: true }),
   ]);

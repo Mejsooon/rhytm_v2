@@ -59,6 +59,8 @@ function dane(): TodayData {
       weeklyKmGoal: 25,
       workoutsGoalOn: false,
       weeklyWorkoutsGoal: 3,
+      fromHour: 7,
+      toHour: 23,
     },
     today: "2026-11-17",
     nowMin: 10 * 60 + 20,
@@ -188,8 +190,8 @@ describe("TodayView", () => {
     expect(
       web.getAllByTestId("wiersz-tygodnia").map((w) => w.textContent),
     ).toEqual([
-      "Treningi0—",
-      "Bieg0 / 25 kmjeszcze 25 km",
+      "Treningi0bez zmian—",
+      "Bieg0 / 25 kmbez zmianjeszcze 25 km",
       "Nawyki0 % dni z celem—",
       "Sen— / 8:00 śr.brak wpisów",
     ]);
@@ -207,7 +209,7 @@ describe("TodayView", () => {
     expect(
       web.getByRole("button", { name: "Utwórz nowy nawyk" }),
     ).toBeInTheDocument();
-    expect(web.getByText("24 h wolne")).toBeInTheDocument();
+    expect(web.getByText("Brak bloków na dziś")).toBeInTheDocument();
     expect(
       web.getByRole("button", { name: "Dodaj pierwszy blok" }),
     ).toBeInTheDocument();

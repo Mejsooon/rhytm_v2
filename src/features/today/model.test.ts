@@ -792,14 +792,14 @@ describe("weekBars", () => {
       "Nawyki",
       "Sen",
     ]);
-    expect(wynik[0]).toEqual({
+    expect(wynik[0]).toMatchObject({
       label: "Treningi",
       value: "2",
       unit: "/ 4",
       percent: 50,
       right: "jeszcze 2",
     });
-    expect(wynik[1]).toEqual({
+    expect(wynik[1]).toMatchObject({
       label: "Bieg",
       value: "10",
       unit: "/ 25 km",
@@ -807,7 +807,7 @@ describe("weekBars", () => {
       right: "jeszcze 15 km",
     });
     // brak dni z planem → „0 %”
-    expect(wynik[2]).toEqual({
+    expect(wynik[2]).toMatchObject({
       label: "Nawyki",
       value: "0 %",
       unit: "dni z celem",
@@ -815,13 +815,31 @@ describe("weekBars", () => {
       right: "—",
     });
     // średnia (510 + 410) / 2 = 460 min = 7:40, cel 8:00 → 96 %
-    expect(wynik[3]).toEqual({
+    expect(wynik[3]).toMatchObject({
       label: "Sen",
       value: "7:40",
       unit: "/ 8:00 śr.",
       percent: 96,
       right: "1 z 2 nocy ≥ cel",
     });
+  });
+
+  it("porównuje te same dni poprzedniego tygodnia", () => {
+    const wynik = weekBars(
+      wejscie({
+        sportItems: [
+          trening("teraz", { distanceKm: 6, durationS: 1800, date: "2026-11-16" }),
+          trening("wtedy", { distanceKm: 10, durationS: 3600, date: "2026-11-09" }),
+          // Piątek poprzedniego tygodnia jest „później” niż dziś, więc się nie liczy
+          trening("pozniej", { distanceKm: 20, durationS: 7200, date: "2026-11-13" }),
+        ],
+        sleepLogs: [sen("2026-11-16", "23:00", "06:00")],
+      }),
+    );
+    expect(wynik[0].delta).toEqual({ text: "bez zmian", dir: "same" });
+    expect(wynik[1].delta).toEqual({ text: "−4 km vs tydz. 46", dir: "down" });
+    // Brak snu w poprzednim tygodniu → nie ma czego porównać
+    expect(wynik[3].delta).toBeNull();
   });
 
   it("cel osiągnięty, km z przecinkiem, pasek ograniczony do 100", () => {
@@ -903,7 +921,7 @@ describe("weekBars", () => {
       percent: 0,
       right: "—",
     });
-    expect(wynik[3]).toEqual({
+    expect(wynik[3]).toMatchObject({
       label: "Sen",
       value: "—",
       unit: "/ 8:00 śr.",
