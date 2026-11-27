@@ -719,7 +719,8 @@ test.describe("strony", () => {
     await page.goto("/strony/nowa");
     await expect(wSidebarze).toBeVisible();
 
-    // Ponownie do kosza i „Usuń na zawsze”
+    // Ponownie do kosza i „Usuń na zawsze” (/strony/nowa trzyma otwarte okno, więc najpierw inny ekran)
+    await page.goto("/dzis");
     await page.getByRole("button", { name: "Menu strony Książki", exact: true }).click();
     await page.getByRole("menuitem", { name: "Usuń stronę" }).click();
     await potwierdzenie.getByRole("button", { name: "Usuń", exact: true }).click();

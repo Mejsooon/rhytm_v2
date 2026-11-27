@@ -1012,7 +1012,8 @@ test.describe("ekrany z sesją", () => {
 
     // Strona Kosza (S2Trash)
     await page.goto("/ustawienia/kosz");
-    await expect(page.getByRole("heading", { name: "Kosz" })).toBeVisible();
+    // Dwa nagłówki „Kosz” (pasek górny i tytuł strony)
+    await expect(page.getByRole("heading", { name: "Kosz" }).filter({ visible: true }).first()).toBeVisible();
     await zrzut(page, "ustawienia-kosz", projekt);
   });
 
