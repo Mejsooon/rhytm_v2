@@ -105,24 +105,22 @@ export async function zasiejZadanie(
   if (error) throw new Error(`Nie udało się zasiać zadania: ${error.message}`);
 }
 
-// Czeka, aż siatka tygodnia przewinie się do 06:00. Efekt montażu robi to po hydratacji, a tygodnie testów
-// (2027) nie mają trwającego bloku, więc przewinięcie zawsze kończy się na 6 * 48 px. Klik przed tym
+// Czeka, aż siatka zmierzy wysokość godziny (ustawienie 07–23 rozciągnięte na ekran). Klik przed tym
 // trafiłby w inną godzinę, a pomiar ramek bloków byłby przesunięty.
 export async function czekajNaSiatke(page: Page) {
-  await expect
-    .poll(
-      () => page.getByTestId("przewijanie").evaluate((el) => el.scrollTop),
-      { timeout: 10_000 },
-    )
-    .toBe(6 * 48);
+  await expect(page.getByTestId("przewijanie")).toHaveAttribute("data-gotowa", "true", { timeout: 10_000 });
 }
 
-// Klik w pusty slot kolumny dnia o danej minucie od północy (godzina ma 48 px, +10 px = środek 30 minut)
-export async function kliknijSlot(page: Page, dzien: string, minuta: number) {
+// Wysokość godziny w px: kolumna dnia ma zawsze pełne 24 godziny
+export async function wysokoscGodziny(page: Page, dzien: string) {
   await czekajNaSiatke(page);
-  await page
-    .getByTestId(`kolumna-${dzien}`)
-    .click({ position: { x: 40, y: (minuta / 60) * 48 + 10 } });
+  return (await page.getByTestId(`kolumna-${dzien}`).boundingBox())!.height / 24;
+}
+
+// Klik w pusty slot kolumny dnia o danej minucie od północy (ćwierć godziny w dół = środek pierwszej półgodziny)
+export async function kliknijSlot(page: Page, dzien: string, minuta: number) {
+  const godzina = await wysokoscGodziny(page, dzien);
+  await page.getByTestId(`kolumna-${dzien}`).click({ position: { x: 40, y: (minuta / 60) * godzina + godzina / 4 } });
 }
 
 // Czeka na zakończenie zapisu (akcja serwera to POST na adres strony), żeby odświeżenie go nie ucięło

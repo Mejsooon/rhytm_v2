@@ -402,10 +402,7 @@ test.describe("ekrany z sesją", () => {
       await zrzut(page, "kalendarz-okno-nowy-blok", projekt);
       await page.getByRole("button", { name: "Anuluj" }).click();
 
-      await page
-        .getByRole("button", { name: /^Kategorie, widoczne \d+ z \d+$/ })
-        .click();
-      await page.getByRole("menuitem", { name: "+ Kategoria" }).click();
+      await page.getByRole("button", { name: "Nowa kategoria" }).click();
       await expect(
         page.getByRole("dialog", { name: "Nowa kategoria" }),
       ).toBeVisible();
@@ -413,7 +410,7 @@ test.describe("ekrany z sesją", () => {
       await page.getByRole("button", { name: "Anuluj" }).click();
 
       await page.goto(`/kalendarz?widok=dzien&data=${WTOREK}`);
-      await expect(page.getByText("Dzień w liczbach")).toBeVisible();
+      await expect(page.getByRole("complementary", { name: "Plan dnia" })).toBeVisible();
       await zrzut(page, "kalendarz-dzien", projekt);
 
       await page.goto(`/kalendarz?widok=miesiac&data=${WTOREK}`);

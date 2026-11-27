@@ -3,6 +3,9 @@
 // Siatka godzin dla widoku tygodnia i dnia (web) wg CCalendar.dc.html i CCalendarDay.dc.html.
 // Siatka sama jest przewijanym elementem i wypełnia wysokość rodzica; nagłówek dni i „cały dzień”
 // są przyklejone u góry. Cała doba 00–24, przewinięta przy montażu do 06:00 albo do trwającego bloku.
+// Z `fromHour`/`toHour` (ustawienia kalendarza) widać tylko ten zakres, rozciągnięty na wysokość ekranu;
+// blok spoza zakresu go rozszerza. Kolumny zostają pełne (24 h) i są przycięte, więc matematyka kliknięć
+// i przeciągania liczy minuty od północy.
 // Pozycje bloków to czas ścienny (startMin), więc nie zależą od stref.
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
@@ -29,6 +32,17 @@ import { weekdayOf } from "./view-range";
 const GODZINA = { week: 48, day: 52 };
 // Blok bez kategorii
 const KOLOR_BRAK = "#a3a3a3";
+// Niżej niż tyle px na godzinę siatka się przewija zamiast ściskać
+const MIN_GODZINA = 28;
+
+// „GMT+1” dla strefy w pokazanym dniu
+function przesuniecie(strefa: string, dzien: IsoDate): string {
+  return (
+    new Intl.DateTimeFormat("en-GB", { timeZone: strefa, timeZoneName: "shortOffset" })
+      .formatToParts(new Date(`${dzien}T12:00:00Z`))
+      .find((c) => c.type === "timeZoneName")?.value ?? ""
+  );
+}
 
 const DNI_KROTKO = ["", "pon", "wt", "śr", "czw", "pt", "sob", "nd"];
 
@@ -53,6 +67,10 @@ export function TimeGrid({
   renewals = [],
   openRenewalKey = null,
   onRenewalClick,
+  fromHour = 0,
+  toHour = 24,
+  timeZone,
+  blockMin = 60,
 }: {
   days: IsoDate[];
   // Wystąpienia widocznych kategorii w zakresie dni
@@ -83,12 +101,37 @@ export function TimeGrid({
   renewals?: RenewalItem[];
   openRenewalKey?: string | null;
   onRenewalClick?: (item: RenewalItem, anchorEl: HTMLElement) => void;
+  fromHour?: number;
+  toHour?: number;
+  // Strefa profilu do etykiety „GMT+1” w rogu siatki
+  timeZone?: string;
+  // Domyślna długość nowego bloku (duch pod kursorem)
+  blockMin?: number;
 }) {
-  const wysokoscGodziny = GODZINA[variant];
+  const wpisy = [...occurrences, ...sport].filter((w) => days.includes(w.date));
+  const od = Math.min(fromHour, ...wpisy.map((w) => Math.floor(w.startMin / 60)));
+  const doGodziny = Math.max(toHour, ...wpisy.map((w) => Math.ceil(Math.min(w.startMin + w.durationMin, 1440) / 60)));
+  const przewijanie = useRef<HTMLDivElement>(null);
+  const naglowek = useRef<HTMLDivElement>(null);
+  // Zmierzona wysokość godziny; 0 = brak pomiaru (serwer, testy) albo cała doba bez rozciągania
+  const [zmierzona, setZmierzona] = useState(0);
+  const rozciagaj = od > 0 || doGodziny < 24;
+  useEffect(() => {
+    const kontener = przewijanie.current;
+    if (!rozciagaj || !kontener || typeof ResizeObserver === "undefined") return;
+    const mierz = () => {
+      const wolne = kontener.clientHeight - (naglowek.current?.offsetHeight ?? 0);
+      setZmierzona(wolne > 0 ? Math.max(wolne / (doGodziny - od), MIN_GODZINA) : 0);
+    };
+    mierz();
+    const obserwator = new ResizeObserver(mierz);
+    obserwator.observe(kontener);
+    return () => obserwator.disconnect();
+  }, [rozciagaj, od, doGodziny]);
+  const wysokoscGodziny = (rozciagaj && zmierzona) || GODZINA[variant];
   const wysokoscSiatki = 24 * wysokoscGodziny;
   const szerokoscEtykiet = variant === "week" ? 56 : 64;
   const kolumny = `${szerokoscEtykiet}px repeat(${days.length}, minmax(0, 1fr))`;
-  const przewijanie = useRef<HTMLDivElement>(null);
   // Półgodzina pod kursorem (duch „+ 10:00–11:00”)
   const [duchMyszy, setDuchMyszy] = useState<{
     date: IsoDate;
@@ -113,7 +156,7 @@ export function TimeGrid({
     const odMinuty =
       trwajacy && days.includes(today) ? trwajacy.startMin : 6 * 60;
     if (przewijanie.current) {
-      przewijanie.current.scrollTop = (odMinuty / 60) * wysokoscGodziny;
+      przewijanie.current.scrollTop = Math.max(0, (odMinuty / 60 - od) * wysokoscGodziny);
     }
     // Tylko przy montażu i zmianie dni/wariantu — nie przewijamy na każdy upływ minuty
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -170,6 +213,8 @@ export function TimeGrid({
     <div
       ref={przewijanie}
       data-testid="przewijanie"
+      // Testy e2e czekają, aż wysokość godziny będzie zmierzona
+      data-gotowa={!rozciagaj || zmierzona > 0}
       className={`min-h-0 min-w-0 flex-1 overflow-auto${podglad ? " select-none" : ""}`}
       // Kursor całej siatki podczas gestu
       style={
@@ -186,12 +231,14 @@ export function TimeGrid({
       }
     >
       <div className={variant === "week" ? "min-w-[760px]" : ""}>
-        <div className="sticky top-0 z-20 border-b border-border bg-background">
+        <div ref={naglowek} className="sticky top-0 z-20 border-b border-border bg-background">
           {variant === "week" ? (
             <>
               {/* Nagłówki dni; dziś: numer w ciemnym kółku */}
               <div className="grid" style={{ gridTemplateColumns: kolumny }}>
-                <div />
+                <div className="self-end px-1.5 pb-1.5 text-right text-[11px] text-muted-foreground">
+                  {timeZone && przesuniecie(timeZone, days[0])}
+                </div>
                 {days.map((dzien) => {
                   const jestDzis = dzien === today;
                   return (
@@ -278,7 +325,8 @@ export function TimeGrid({
           )}
         </div>
 
-        <div className="grid" style={{ gridTemplateColumns: kolumny }}>
+        <div className="flow-root overflow-clip" style={{ height: (doGodziny - od) * wysokoscGodziny }}>
+        <div className="grid" style={{ gridTemplateColumns: kolumny, marginTop: -od * wysokoscGodziny }}>
           <div>
             {godziny.map((h) => (
               <div
@@ -322,10 +370,15 @@ export function TimeGrid({
                 style={{
                   height: wysokoscSiatki,
                   backgroundImage: tloLinii,
+                  // Weekend w tygodniu szary (S2Calendar), dziś ledwo widoczne tło
                   backgroundColor:
-                    variant === "week" && dzien === today
-                      ? "rgba(0,0,0,.015)"
-                      : undefined,
+                    variant !== "week"
+                      ? undefined
+                      : weekdayOf(dzien) >= 6
+                        ? "#fafafa"
+                        : dzien === today
+                          ? "rgba(0,0,0,.015)"
+                          : undefined,
                 }}
                 // Klik zaraz po przeciągnięciu nie otwiera dymku ani nie wybiera slotu
                 onClickCapture={tlumKlik}
@@ -379,10 +432,10 @@ export function TimeGrid({
                       top:
                         (duch.startMin / 60) * wysokoscGodziny +
                         (variant === "week" ? 1 : 2),
-                      height: wysokoscGodziny - (variant === "week" ? 3 : 4),
+                      height: (blockMin / 60) * wysokoscGodziny - (variant === "week" ? 3 : 4),
                     }}
                   >
-                    {`+ ${formatClockTime(Math.floor(duch.startMin / 60), duch.startMin % 60, clock)}–${formatClockTime(Math.floor(Math.min(duch.startMin + 60, 1440) / 60), Math.min(duch.startMin + 60, 1440) % 60, clock)}`}
+                    {`+ ${formatClockTime(Math.floor(duch.startMin / 60), duch.startMin % 60, clock)}–${formatClockTime(Math.floor(Math.min(duch.startMin + blockMin, 1440) / 60), Math.min(duch.startMin + blockMin, 1440) % 60, clock)}`}
                   </div>
                 )}
 
@@ -652,6 +705,7 @@ export function TimeGrid({
               </div>
             );
           })}
+        </div>
         </div>
       </div>
     </div>

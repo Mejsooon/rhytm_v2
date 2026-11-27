@@ -1,195 +1,80 @@
 "use client";
 
-// Prawa kolumna widoku dnia wg CCalendarDay.dc.html: szary panel (288 px treści) z dwiema kartami (.card) —
-// mini kalendarz i „Dzień w liczbach” z paskiem postępu zadań.
-// Stoi w miejscu obok siatki i przewija się sama, gdy brakuje wysokości.
-import { useState } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
-
-import {
-  buildMonthGrid,
-  monthTitlePl,
-  type IsoDate,
-} from "@/components/controls/calendar-math";
-import {
-  Button,
-  Card,
-  CardHeader,
-  CardTitle,
-  Progress,
-} from "@/components/controls";
-import { cn } from "@/lib/utils";
-import type { TaskRow } from "@/features/tasks/model";
-import { dayNumbers } from "./day-layout";
+// Prawa kolumna widoku dnia (S2Calendar, „Plan dnia”): trzy liczby i lista bloków dnia.
+// Klik w pozycję otwiera ten sam dymek co blok w siatce.
+import { Card } from "@/components/controls";
+import { formatClockTime } from "@/lib/time/timezones";
+import { occurrenceProgress, type TaskRow } from "@/features/tasks/model";
+import type { CategoryRow } from "./load-calendar";
 import type { Occurrence } from "./occurrences";
 
-const MIESIACE_DOPELNIACZ = [
-  "stycznia",
-  "lutego",
-  "marca",
-  "kwietnia",
-  "maja",
-  "czerwca",
-  "lipca",
-  "sierpnia",
-  "września",
-  "października",
-  "listopada",
-  "grudnia",
-];
-const DNI_PN = ["pn", "wt", "śr", "cz", "pt", "sb", "nd"];
-
 export function DaySide({
-  date,
-  today,
-  weekStart = "mon",
   occurrences,
   tasks,
-  onPick,
+  categories,
+  clock,
+  onBlockClick,
 }: {
-  date: IsoDate;
-  today: IsoDate;
-  weekStart?: "mon" | "sun";
-  // Wystąpienia pokazanego dnia
+  // Widoczne wystąpienia pokazanego dnia
   occurrences: Occurrence[];
   tasks: TaskRow[];
-  onPick: (date: IsoDate) => void;
+  categories: CategoryRow[];
+  clock: "24" | "12";
+  onBlockClick: (key: string, anchor: HTMLElement) => void;
 }) {
-  // Miesiąc mini kalendarza podąża za wybranym dniem, ale strzałki mogą go przesunąć
-  const [rok, miesiac] = date.split("-").map(Number);
-  const [pokazany, setPokazany] = useState({
-    rok,
-    miesiac0: miesiac - 1,
-    dla: date,
-  });
-  if (pokazany.dla !== date) {
-    setPokazany({ rok, miesiac0: miesiac - 1, dla: date });
-  }
-
-  function przesun(o: number) {
-    const d = new Date(Date.UTC(pokazany.rok, pokazany.miesiac0 + o, 1));
-    setPokazany({
-      rok: d.getUTCFullYear(),
-      miesiac0: d.getUTCMonth(),
-      dla: date,
-    });
-  }
-
-  const komorki = buildMonthGrid(pokazany.rok, pokazany.miesiac0, weekStart);
-  const naglowki =
-    weekStart === "mon" ? DNI_PN : [DNI_PN[6], ...DNI_PN.slice(0, 6)];
-
-  // Zadania przypięte do wystąpień tego dnia (po oryginalnej dacie z klucza)
-  const zadaniaDnia = tasks.filter((t) =>
-    occurrences.some(
-      (o) =>
-        o.blockId === t.block_id &&
-        o.key.slice(o.blockId.length + 1) === t.occurrence_date,
-    ),
-  );
-  const liczby = dayNumbers(occurrences, zadaniaDnia);
-
-  // 150 -> „2 h 30 min”, 240 -> „4 h”, 45 -> „45 min”
-  const czas = (min: number) => {
-    const h = Math.floor(min / 60);
-    const m = min % 60;
-    if (h === 0 && m > 0) return `${m} min`;
-    return m > 0 ? `${h} h ${m} min` : `${h} h`;
-  };
+  const pozycje = [...occurrences]
+    .sort((a, b) => a.startMin - b.startMin)
+    // Zadania wiszą na oryginalnej dacie wystąpienia z klucza (blok mógł zostać przesunięty)
+    .map((o) => ({ o, postep: occurrenceProgress(tasks, o.blockId, o.key.slice(o.blockId.length + 1)) }));
+  const minuty = pozycje.reduce((s, p) => s + p.o.durationMin, 0);
+  const zrobione = pozycje.reduce((s, p) => s + p.postep.done, 0);
+  const wszystkie = pozycje.reduce((s, p) => s + p.postep.total, 0);
+  const liczby = [
+    ["Bloki", String(pozycje.length)],
+    ["Godziny", (minuty / 60).toLocaleString("pl-PL", { maximumFractionDigits: 1 })],
+    ["Zadania", `${zrobione}/${wszystkie}`],
+  ];
 
   return (
-    <aside className="flex w-[321px] flex-none flex-col gap-4 overflow-y-auto border-l border-border bg-panel p-4">
-      <Card className="p-3">
-        <div className="mb-2 flex items-center justify-between">
-          {/* Wielka litera tylko w wyglądzie („Listopad 2026”), tekst zostaje z monthTitlePl */}
-          <span className="pl-1 font-semibold first-letter:uppercase">
-            {monthTitlePl(pokazany.rok, pokazany.miesiac0)}
-          </span>
-          <span className="flex gap-0.5">
-            <Button
-              variant="ghost"
-              size="sm"
-              icon
-              aria-label="Poprzedni miesiąc"
-              onClick={() => przesun(-1)}
-            >
-              <ChevronLeft size={16} aria-hidden="true" />
-            </Button>
-            <Button
-              variant="ghost"
-              size="sm"
-              icon
-              aria-label="Następny miesiąc"
-              onClick={() => przesun(1)}
-            >
-              <ChevronRight size={16} aria-hidden="true" />
-            </Button>
-          </span>
-        </div>
-        <div className="mb-1 grid grid-cols-7 text-center text-xs font-medium text-muted-foreground">
-          {naglowki.map((n) => (
-            <span key={n}>{n}</span>
-          ))}
-        </div>
-        <div className="grid grid-cols-7 gap-0.5">
-          {komorki.map((k) => {
-            const [, m, d] = k.date.split("-").map(Number);
-            const wybrany = k.date === date;
-            return (
-              <button
-                key={k.date}
-                type="button"
-                aria-label={`${d} ${MIESIACE_DOPELNIACZ[m - 1]}`}
-                onClick={() => onPick(k.date)}
-                className={cn(
-                  "h-[30px] cursor-pointer rounded-[8px] border border-transparent bg-transparent p-0 text-[13px] tabular-nums outline-none hover:bg-muted focus-visible:shadow-focus",
-                  k.inMonth ? "text-foreground" : "text-faint-foreground",
-                  wybrany &&
-                    "border-primary bg-primary font-semibold text-primary-foreground shadow-[inset_0_1px_0_rgba(255,255,255,.16)] hover:bg-primary",
-                  // Dziś: czerwony kwadrat (wygrywa z wybranym, jak na makiecie)
-                  k.date === today &&
-                    "border-destructive-strong bg-destructive-strong font-semibold text-white shadow-[inset_0_1px_0_rgba(255,255,255,.16)] hover:bg-destructive-strong",
-                )}
-              >
-                {d}
-              </button>
-            );
-          })}
-        </div>
-      </Card>
-
-      <Card>
-        <CardHeader className="px-4 pt-3.5">
-          <CardTitle as="h2" className="text-sm">
-            Dzień w liczbach
-          </CardTitle>
-        </CardHeader>
-        {/* Wysokość linii „normal” jak w makiecie (wiersze co 25 px) */}
-        <div className="flex flex-col gap-2 px-4 pt-2.5 pb-3.5 leading-[normal]">
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Zaplanowane</span>
-            <span className="font-medium tabular-nums">
-              {czas(liczby.plannedMin)}
+    <aside
+      aria-label="Plan dnia"
+      className="box-border flex w-[300px] flex-none flex-col gap-4 overflow-y-auto border-l border-border p-4"
+    >
+      <h2 className="m-0 text-base font-semibold">Plan dnia</h2>
+      <div className="grid grid-cols-3 gap-2">
+        {liczby.map(([nazwa, wartosc]) => (
+          <Card key={nazwa} data-testid={`liczba-${nazwa}`} className="px-3 py-2.5">
+            <div className="text-xs text-muted-foreground">{nazwa}</div>
+            <b className="text-lg font-semibold tabular-nums">{wartosc}</b>
+          </Card>
+        ))}
+      </div>
+      <div className="flex flex-col gap-0.5">
+        {pozycje.map(({ o, postep }) => (
+          <button
+            key={o.key}
+            type="button"
+            onClick={(e) => onBlockClick(o.key, e.currentTarget)}
+            className="flex min-w-0 cursor-pointer items-center gap-2.5 rounded-md border-0 bg-transparent px-2.5 py-2 text-left text-sm text-foreground outline-none hover:bg-muted focus-visible:shadow-focus"
+          >
+            <span
+              aria-hidden="true"
+              className="size-2 flex-none rounded-full"
+              style={{ background: categories.find((k) => k.id === o.categoryId)?.color ?? "#a3a3a3" }}
+            />
+            <span className="flex-none text-xs text-muted-foreground tabular-nums">
+              {formatClockTime(Math.floor(o.startMin / 60), o.startMin % 60, clock)}
             </span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Wolne (8–20)</span>
-            <span className="font-medium tabular-nums">
-              {czas(liczby.freeMin)}
-            </span>
-          </div>
-          <div className="flex justify-between">
-            <span className="text-muted-foreground">Zadania</span>
-            <span className="font-medium tabular-nums">{`${liczby.tasksDone} / ${liczby.tasksTotal}`}</span>
-          </div>
-          <Progress
-            value={liczby.tasksDone}
-            max={liczby.tasksTotal}
-            ariaLabel="Zadania wykonane"
-            className="mt-0.5"
-          />
-        </div>
-      </Card>
+            <span className="min-w-0 flex-1 truncate font-medium">{o.title}</span>
+            {postep.total > 0 && (
+              <span className="text-xs text-muted-foreground tabular-nums">{`${postep.done}/${postep.total}`}</span>
+            )}
+          </button>
+        ))}
+        {pozycje.length === 0 && (
+          <p className="m-0 px-2.5 py-2 text-xs text-muted-foreground">Brak bloków. Kliknij w siatkę, żeby dodać pierwszy.</p>
+        )}
+      </div>
     </aside>
   );
 }

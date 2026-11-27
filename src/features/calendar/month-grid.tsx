@@ -4,6 +4,7 @@
 // (tytuł na tle koloru kategorii), reszta jako link „+N więcej” do widoku dnia.
 import { Plus } from "lucide-react";
 import Link from "next/link";
+import { Fragment } from "react";
 
 import type { IsoDate } from "@/components/controls/calendar-math";
 import {
@@ -14,7 +15,7 @@ import {
 import { formatClockTime } from "@/lib/time/timezones";
 import type { CategoryRow, RenewalItem } from "./load-calendar";
 import type { Occurrence } from "./occurrences";
-import { weekdayOf } from "./view-range";
+import { isoWeekNumber, weekdayOf } from "./view-range";
 
 const DNI_KROTKO = ["", "pon", "wt", "śr", "czw", "pt", "sob", "nd"];
 const MAX_WPISOW = 3;
@@ -37,6 +38,7 @@ export function MonthGrid({
   renewals = [],
   openRenewalKey = null,
   onRenewalClick,
+  weekNumbers = false,
 }: {
   // 42 dni siatki (6 tygodni), od pierwszego dnia tygodnia
   days: IsoDate[];
@@ -55,6 +57,8 @@ export function MonthGrid({
   onEntryClick: (key: string, anchor: HTMLElement) => void;
   // Klik w „+N więcej” (przejście do widoku dnia)
   onMoreClick?: () => void;
+  // Wąska pierwsza kolumna z numerem tygodnia ISO (ustawienie „Numery tygodni”)
+  weekNumbers?: boolean;
   // Odnowienia subskrypcji (tylko podgląd): w komórce przed blokami i treningami (S2CalendarMonth)
   renewals?: RenewalItem[];
   openRenewalKey?: string | null;
@@ -85,23 +89,25 @@ export function MonthGrid({
     lista.sort((a, b) => a.startMin - b.startMin);
   }
   const koloryKategorii = new Map(categories.map((k) => [k.id, k.color]));
+  const kolumny = weekNumbers ? { gridTemplateColumns: "32px repeat(7, minmax(0, 1fr))" } : undefined;
 
   return (
     <div className="overflow-x-auto">
       {/* Ramka jak .frame w coss.css: 1,5 px rgba(0,0,0,.14), promień 12 px, białe tło */}
       <div className="min-w-[760px] rounded-lg border-[1.5px] border-black/[.14] bg-background">
-        <div className="grid grid-cols-7 border-b border-border text-xs font-medium text-muted-foreground">
+        <div className="grid grid-cols-7 border-b border-border text-xs font-medium text-muted-foreground" style={kolumny}>
+          {weekNumbers && <span />}
           {days.slice(0, 7).map((dzien, i) => (
             <span
               key={dzien}
               data-testid="nazwa-dnia"
-              className={`px-2.5 py-2 ${i > 0 ? "border-l border-border-soft" : ""}`}
+              className={`px-2.5 py-2 ${i > 0 || weekNumbers ? "border-l border-border-soft" : ""}`}
             >
               {DNI_KROTKO[weekdayOf(dzien)]}
             </span>
           ))}
         </div>
-        <div className="grid grid-cols-7">
+        <div className="grid grid-cols-7" style={kolumny}>
           {days.map((dzien, i) => {
             const [, m, d] = dzien.split("-").map(Number);
             const wMiesiacu = m - 1 === month0;
@@ -116,8 +122,16 @@ export function MonthGrid({
                 : "font-medium text-foreground";
 
             return (
+              <Fragment key={dzien}>
+              {weekNumbers && i % 7 === 0 && (
+                <span
+                  data-testid={`tydzien-${dzien}`}
+                  className={`pt-2.5 text-center text-[11px] text-muted-foreground tabular-nums ${i >= 7 ? "border-t border-border-soft" : ""}`}
+                >
+                  {isoWeekNumber(days[i + 3])}
+                </span>
+              )}
               <div
-                key={dzien}
                 data-testid={`komorka-${dzien}`}
                 data-day={dzien}
                 // Klik w pustą część komórki (wpisy i linki obsługują się same)
@@ -129,7 +143,7 @@ export function MonthGrid({
                     return;
                   onDayClick(dzien, e.currentTarget);
                 }}
-                className={`group relative min-h-[124px] cursor-pointer p-1.5 ${i >= 7 ? "border-t border-border-soft" : ""} ${i % 7 > 0 ? "border-l border-border-soft" : ""} ${!wMiesiacu || weekend ? "bg-panel" : ""} ${i === 35 ? "rounded-bl-lg" : ""} ${i === 41 ? "rounded-br-lg" : ""} ${activeDay === dzien ? "ring-2 ring-ring ring-inset" : ""}`}
+                className={`group relative min-h-[124px] cursor-pointer p-1.5 ${i >= 7 ? "border-t border-border-soft" : ""} ${i % 7 > 0 || weekNumbers ? "border-l border-border-soft" : ""} ${!wMiesiacu || weekend ? "bg-panel" : ""} ${i === 35 && !weekNumbers ? "rounded-bl-lg" : ""} ${i === 41 ? "rounded-br-lg" : ""} ${activeDay === dzien ? "ring-2 ring-ring ring-inset" : ""}`}
               >
                 <span
                   data-testid={`numer-${dzien}`}
@@ -239,6 +253,7 @@ export function MonthGrid({
                   </Link>
                 )}
               </div>
+              </Fragment>
             );
           })}
         </div>

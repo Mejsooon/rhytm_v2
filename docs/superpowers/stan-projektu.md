@@ -35,6 +35,8 @@ Wygląd COSS według makiet na kanwie „Rhytm Design”.
 
 ## W toku
 
+- **Pakiet 2 Kalendarz:** gałąź `feat/kalendarz-v2` (spec `specs/2026-11-27-kalendarz-v2-design.md`). Czeka na migrację `20261201100000_kalendarz_ustawienia.sql` (Mejson) i „scal do main”. Migracja `20261130100000_szablony_po_polsku.sql` potwierdzona na produkcji 27.11.
+
 - **Filtr tabeli jak w makiecie:** scalony do `main`.
 
 - **Porządek i captcha (2026-11-27):** `feat/martwy-kod` i `feat/captcha-w-supabase` scalone do `main`. Do zrobienia przez Mejsona po wdrożeniu: włączyć CAPTCHA (Turnstile) w panelu Supabase.
