@@ -676,7 +676,8 @@ test.describe("ekrany z sesją", () => {
       ).toBeVisible();
       await zrzut(page, "sport", projekt);
 
-      await web.getByRole("button", { name: "Nowy bieg", exact: true }).click();
+      await web.getByRole("button", { name: "Dodaj aktywność" }).click();
+      await page.getByRole("button", { name: "Bieg", exact: true }).click();
       await expect(
         page.getByRole("dialog", { name: "Nowy bieg" }),
       ).toBeVisible();

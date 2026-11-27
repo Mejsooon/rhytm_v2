@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
@@ -37,12 +37,23 @@ import { SportView } from "./sport-view";
 beforeEach(() => vi.clearAllMocks());
 
 const kalendarz = () => screen.getByTestId("kalendarz-sportu");
-const tabela = () => screen.getByRole("table");
+
+// Kalendarz i dymki są w zakładce „Kalendarz”
+function renderuj(ui: Parameters<typeof render>[0]) {
+  const wynik = render(ui);
+  fireEvent.click(screen.getByRole("tab", { name: "Kalendarz", hidden: true }));
+  return wynik;
+}
+// „Bieg” z menu „Dodaj aktywność”
+async function nowyBieg() {
+  await userEvent.click(screen.getByRole("button", { name: "Dodaj aktywność" }));
+  await userEvent.click(screen.getByRole("button", { name: "Bieg" }));
+}
 
 describe("SportView", () => {
   it("nagłówek: ‹ Dziś ›, tytuł z miesiącem, filtr i przyciski", () => {
-    render(<SportView data={daneSportu()} selectedKey={null} newGym={null} />);
-    expect(screen.getByRole("heading", { name: "Sport" })).toBeInTheDocument();
+    renderuj(<SportView data={daneSportu()} selectedKey={null} newGym={null} />);
+    expect(screen.getByRole("tab", { name: "Przegląd" })).toBeInTheDocument();
     expect(screen.getByText("listopad 2026")).toBeInTheDocument();
     expect(screen.getByRole("link", { name: "Poprzedni" })).toHaveAttribute(
       "href",
@@ -56,12 +67,12 @@ describe("SportView", () => {
       "href",
       "/sport?miesiac=2026-11",
     );
-    // „Szablony” przed „+ Trening siłowy”
+    // „Szablony” przed „Dodaj aktywność”
     const szablony = screen.getByRole("link", { name: "Szablony" });
     expect(szablony).toHaveAttribute("href", "/sport/szablony");
     expect(
       szablony.compareDocumentPosition(
-        screen.getByRole("button", { name: "+ Trening siłowy" }),
+        screen.getByRole("button", { name: "Dodaj aktywność" }),
       ) & Node.DOCUMENT_POSITION_FOLLOWING,
     ).toBeTruthy();
     expect(
@@ -70,34 +81,29 @@ describe("SportView", () => {
     expect(screen.getByText("Zaplanowany, bez danych")).toBeInTheDocument();
   });
 
-  it("filtr „Bieg” chowa treningi siłowe w kalendarzu i tabeli", async () => {
-    render(<SportView data={daneSportu()} selectedKey={null} newGym={null} />);
-    expect(
-      within(kalendarz()).getByRole("button", { name: "Push, czw 12.11" }),
-    ).toBeInTheDocument();
-    expect(within(tabela()).getByText("Push")).toBeInTheDocument();
+  it("filtr „Bieg” chowa treningi siłowe w kalendarzu", async () => {
+    renderuj(<SportView data={daneSportu()} selectedKey={null} newGym={null} />);
+    expect(within(kalendarz()).getByRole("button", { name: "Push, czw 12.11" })).toBeInTheDocument();
 
     await userEvent.click(screen.getByRole("radio", { name: "Bieg" }));
-    expect(
-      within(kalendarz()).queryByRole("button", { name: "Push, czw 12.11" }),
-    ).not.toBeInTheDocument();
-    expect(
-      within(kalendarz()).queryByRole("button", { name: "Push, czw 19.11" }),
-    ).not.toBeInTheDocument();
-    expect(within(tabela()).queryByText("Push")).not.toBeInTheDocument();
-    expect(within(tabela()).queryByText("Pull")).not.toBeInTheDocument();
-    expect(within(tabela()).getByText("Długi bieg")).toBeInTheDocument();
+    expect(within(kalendarz()).queryByRole("button", { name: "Push, czw 12.11" })).not.toBeInTheDocument();
+    expect(within(kalendarz()).queryByRole("button", { name: "Push, czw 19.11" })).not.toBeInTheDocument();
     // Σ tydz. liczy tylko widoczne treningi
     expect(screen.getByTestId("suma-2026-11-09")).toHaveTextContent("2 tr.");
-    expect(screen.getByText("listopad · 3 wykonanych")).toBeInTheDocument();
+  });
 
-    await userEvent.click(screen.getByRole("radio", { name: "Siłownia" }));
-    expect(within(tabela()).queryByText("Długi bieg")).not.toBeInTheDocument();
-    expect(within(tabela()).getByText("Push")).toBeInTheDocument();
+  it("przegląd: lista tygodniami, filtr i klik w bieg", async () => {
+    render(<SportView data={daneSportu()} selectedKey={null} newGym={null} />);
+    const lista = () => screen.getByRole("region", { name: "Aktywności" });
+    expect(within(lista()).getAllByText("Push").length).toBeGreaterThan(0);
+    await userEvent.click(screen.getByRole("radio", { name: "Bieg" }));
+    expect(within(lista()).queryByText("Push")).not.toBeInTheDocument();
+    await userEvent.click(within(lista()).getAllByRole("button", { name: /Długi bieg/ })[0]);
+    expect(push).toHaveBeenLastCalledWith(expect.stringContaining("&bieg="), { scroll: false });
   });
 
   it("`?wybrany=` otwiera dymek", () => {
-    render(
+    renderuj(
       <SportView
         data={daneSportu()}
         selectedKey="s:a1000000-0000-4000-8000-000000000015"
@@ -110,7 +116,7 @@ describe("SportView", () => {
   });
 
   it("klik w trening otwiera dymek, drugi klik i Esc zamykają", async () => {
-    render(<SportView data={daneSportu()} selectedKey={null} newGym={null} />);
+    renderuj(<SportView data={daneSportu()} selectedKey={null} newGym={null} />);
     const chip = screen.getByRole("button", { name: "Długi bieg, nd 15.11" });
     await userEvent.click(chip);
     expect(
@@ -130,7 +136,7 @@ describe("SportView", () => {
 
   it("„Usuń” → „Usunąć trening?” → akcja", async () => {
     deleteSession.mockResolvedValue({ ok: true });
-    render(
+    renderuj(
       <SportView
         data={daneSportu()}
         selectedKey={`s:${SESJA_PUSH}`}
@@ -153,7 +159,7 @@ describe("SportView", () => {
 
   it("„Rozpocznij” z szablonu tworzy trening i przechodzi do niego", async () => {
     createGymSession.mockResolvedValue({ ok: true, id: "nowa-sesja" });
-    render(
+    renderuj(
       <SportView
         data={daneSportu()}
         selectedKey={`t:${SZABLON_PUSH}:2026-11-19`}
@@ -176,7 +182,7 @@ describe("SportView", () => {
       ok: false,
       message: "Nie znaleziono szablonu.",
     });
-    render(
+    renderuj(
       <SportView
         data={daneSportu()}
         selectedKey={`t:${SZABLON_PUSH}:2026-11-19`}
@@ -190,12 +196,10 @@ describe("SportView", () => {
     expect(push).not.toHaveBeenCalled();
   });
 
-  it("„+ Trening siłowy”: Pusty trening, szablony i link do listy szablonów", async () => {
+  it("„Dodaj aktywność”: Pusty trening, szablony i link do listy szablonów", async () => {
     createGymSession.mockResolvedValue({ ok: true, id: "pusta" });
-    render(<SportView data={daneSportu()} selectedKey={null} newGym={null} />);
-    await userEvent.click(
-      screen.getByRole("button", { name: "+ Trening siłowy" }),
-    );
+    renderuj(<SportView data={daneSportu()} selectedKey={null} newGym={null} />);
+    await userEvent.click(screen.getByRole("button", { name: "Dodaj aktywność" }));
     expect(
       screen.getByRole("link", { name: "Szablony treningów…" }),
     ).toHaveAttribute("href", "/sport/szablony");
@@ -213,7 +217,7 @@ describe("SportView", () => {
   });
 
   it("„Nowy bieg” i „Edytuj” ustawiają stan okna biegu w adresie", async () => {
-    render(
+    renderuj(
       <SportView
         data={daneSportu()}
         selectedKey="s:a1000000-0000-4000-8000-000000000015"
@@ -225,7 +229,7 @@ describe("SportView", () => {
       "/sport?miesiac=2026-11&bieg=a1000000-0000-4000-8000-000000000015",
       { scroll: false },
     );
-    await userEvent.click(screen.getByRole("button", { name: "Nowy bieg" }));
+    await nowyBieg();
     expect(push).toHaveBeenLastCalledWith(
       expect.stringMatching(
         /^\/sport\?miesiac=2026-11&nowy=bieg&data=2026-11-17&godzina=\d\d:(00|15|30|45)$/,
@@ -237,7 +241,7 @@ describe("SportView", () => {
   it("?nowy=silownia tworzy pusty trening raz i przechodzi do niego", async () => {
     createGymSession.mockResolvedValue({ ok: true, id: "z-kalendarza" });
     const dane = daneSportu();
-    const { rerender } = render(
+    const { rerender } = renderuj(
       <SportView
         data={dane}
         selectedKey={null}
@@ -265,7 +269,7 @@ describe("SportView", () => {
     createGymSession.mockResolvedValue({ ok: true, id: "z-kalendarza" });
     const dane = daneSportu();
     const nowy = { date: "2026-11-20", start: "18:30" };
-    const { rerender } = render(
+    const { rerender } = renderuj(
       <SportView data={dane} selectedKey={null} newGym={nowy} />,
     );
     await waitFor(() => expect(createGymSession).toHaveBeenCalledTimes(1));
@@ -276,7 +280,7 @@ describe("SportView", () => {
 
   it("nowe dane z innym miesiącem zamykają dymek", async () => {
     const dane = daneSportu();
-    const { rerender } = render(
+    const { rerender } = renderuj(
       <SportView data={dane} selectedKey={null} newGym={null} />,
     );
     await userEvent.click(
@@ -300,7 +304,7 @@ describe("SportView", () => {
   it("nowe dane z tym samym `wybrany` otwierają dymek ponownie", async () => {
     const dane = daneSportu();
     const klucz = "s:a1000000-0000-4000-8000-000000000015";
-    const { rerender } = render(
+    const { rerender } = renderuj(
       <SportView data={dane} selectedKey={klucz} newGym={null} />,
     );
     await userEvent.click(screen.getByRole("button", { name: "Zamknij" }));
@@ -316,7 +320,7 @@ describe("SportView", () => {
   });
 
   it("zamknięcie dymka usuwa nieaktualny `?wybrany=` z adresu", async () => {
-    render(
+    renderuj(
       <SportView
         data={daneSportu()}
         selectedKey="s:a1000000-0000-4000-8000-000000000015"
@@ -333,7 +337,7 @@ describe("SportView", () => {
   });
 
   it("Anuluj w potwierdzeniu usunięcia zostawia dymek, Esc zamyka tylko potwierdzenie", async () => {
-    render(
+    renderuj(
       <SportView
         data={daneSportu()}
         selectedKey={`s:${SESJA_PUSH}`}
@@ -358,7 +362,7 @@ describe("SportView", () => {
   });
 
   it("?nowy=bieg otwiera okno nowego biegu z datą i godziną; zamknięcie czyści adres", async () => {
-    render(
+    renderuj(
       <SportView
         data={daneSportu()}
         selectedKey={null}
@@ -383,7 +387,7 @@ describe("SportView", () => {
   });
 
   it("?bieg={id} otwiera okno edycji tego biegu", () => {
-    render(
+    renderuj(
       <SportView
         data={daneSportu()}
         selectedKey={null}
@@ -400,7 +404,7 @@ describe("SportView", () => {
       distanceKm: 5,
       durationS: 1500,
     });
-    render(
+    renderuj(
       <SportView
         data={daneSportu()}
         selectedKey={null}
@@ -413,8 +417,8 @@ describe("SportView", () => {
   });
 
   it("„Nowy bieg” w nagłówku przechodzi na adres okna biegu", async () => {
-    render(<SportView data={daneSportu()} selectedKey={null} newGym={null} />);
-    await userEvent.click(screen.getByRole("button", { name: "Nowy bieg" }));
+    renderuj(<SportView data={daneSportu()} selectedKey={null} newGym={null} />);
+    await nowyBieg();
     expect(push).toHaveBeenCalledWith(
       expect.stringMatching(
         /^\/sport\?miesiac=2026-11&nowy=bieg&data=2026-11-17&godzina=\d\d:\d\d$/,
@@ -424,7 +428,7 @@ describe("SportView", () => {
   });
 
   it("zamknięcie okna `?bieg=` czyści bieg z adresu i zostawia miesiąc", async () => {
-    render(
+    renderuj(
       <SportView
         data={daneSportu()}
         selectedKey={null}

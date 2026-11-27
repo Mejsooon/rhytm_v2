@@ -212,6 +212,35 @@ export async function loadActivities(
   return (data ?? []) as ActivityRow[];
 }
 
+// Wszystkie sesje użytkownika jako wpisy (przegląd: wykres roku i rekordy), czytane stronami
+export async function loadSportAll(
+  supabase: SupabaseClient<Database>,
+  userId: string,
+): Promise<SportItem[]> {
+  async function strony<T>(tabela: "sport_sessions" | "runs" | "activities", klucz: string): Promise<T[]> {
+    const wynik: T[] = [];
+    for (let od = 0; ; od += ROZMIAR_STRONY) {
+      const { data, error } = await supabase
+        .from(tabela)
+        .select("*")
+        .eq("user_id", userId)
+        .order(klucz, { ascending: true })
+        .range(od, od + ROZMIAR_STRONY - 1);
+      if (error) throw new Error(error.message);
+      wynik.push(...((data ?? []) as T[]));
+      if ((data ?? []).length < ROZMIAR_STRONY) return wynik;
+    }
+  }
+  const [sesje, biegi, aktywnosci, rodzaje] = await Promise.all([
+    strony<SessionRow>("sport_sessions", "id"),
+    strony<RunRow>("runs", "session_id"),
+    strony<ActivityRow>("activities", "session_id"),
+    supabase.from("activity_kinds").select("name, color, has_distance").eq("user_id", userId),
+  ]);
+  if (rodzaje.error) throw new Error(rodzaje.error.message);
+  return sessionItems(sesje, biegi, aktywnosci, (rodzaje.data ?? []) as ActivityKindRow[]);
+}
+
 // Strona /sport: miesiąc (siatka 6 tygodni) i 12 ostatnich tygodni (kafelki i wykres).
 // Sesje czytamy tylko z tych dwóch zakresów; serie — całą historię użytkownika (karta rekordu,
 // REKORD i dymki potrzebują wcześniejszych sesji, a przy tej skali to setki wierszy).

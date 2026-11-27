@@ -13,6 +13,7 @@ vi.mock("@/lib/supabase/server", () => ({
   }),
 }));
 vi.mock("@/features/sport/load-sport", () => ({
+  loadSportAll: async () => [],
   loadSportMonth,
   loadSportRun,
 }));

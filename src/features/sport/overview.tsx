@@ -1,0 +1,362 @@
+"use client";
+
+// Zakładka „Przegląd” Sportu (S2Sport): wykres okresu, aktywności tygodniami, „Ten tydzień” i „Rekordy”.
+import { useState } from "react";
+import { Activity, ChevronLeft, ChevronRight, Dumbbell, Footprints } from "lucide-react";
+
+import { Button, Card, Progress, Segment, StatusBadge } from "@/components/controls";
+import type { IsoDate } from "@/components/controls/calendar-math";
+import { addDays, isoWeekNumber, weekdayOf } from "@/features/calendar/view-range";
+import { cn } from "@/lib/utils";
+import type { SessionSets, SportProfile } from "./load-sport";
+import {
+  epley1rm,
+  formatDuration,
+  formatKm,
+  formatPace,
+  formatVolume,
+  sessionVolume,
+  type ExerciseRow,
+  type SportItem,
+} from "./model";
+import {
+  metric,
+  periodRange,
+  runRecords,
+  shiftPeriod,
+  stats,
+  weekStartOf,
+  wZakresie,
+  type Filtr,
+  type Okres,
+  type Rekord,
+} from "./overview-model";
+
+const DNI = ["", "pon", "wt", "śr", "czw", "pt", "sob", "nd"];
+const KOLOR = { run: "#c2410c", gym: "#404040", other: "#7c3aed" };
+const godzina = (m: number) => `${String(Math.floor(m / 60)).padStart(2, "0")}:${String(m % 60).padStart(2, "0")}`;
+const kiedy = (d: IsoDate) => `${DNI[weekdayOf(d)]} ${d.slice(8, 10)}.${d.slice(5, 7)}`;
+const liczba = (n: number) => n.toLocaleString("pl-PL", { maximumFractionDigits: 1 });
+const czas = (s: number) => `${Math.floor(s / 3600)} h ${String(Math.round((s % 3600) / 60)).padStart(2, "0")} min`;
+const kolorWpisu = (i: SportItem) => (i.kind === "other" ? (i.color ?? KOLOR.other) : KOLOR[i.kind]);
+
+function Ikona({ item }: { item: SportItem }) {
+  const Znak = item.kind === "run" ? Footprints : item.kind === "gym" ? Dumbbell : Activity;
+  const kolor = kolorWpisu(item);
+  return (
+    <span aria-hidden="true" className="grid size-8 flex-none place-items-center rounded-[10px]" style={{ background: `${kolor}14`, color: kolor }}>
+      <Znak size={16} />
+    </span>
+  );
+}
+
+export function SportOverview({
+  items,
+  filtr,
+  today,
+  initialDate,
+  profile,
+  exercises,
+  setsHistory,
+  onOpen,
+}: {
+  // Wszystkie sesje i zaplanowane wystąpienia szablonów
+  items: SportItem[];
+  filtr: Filtr;
+  today: IsoDate;
+  initialDate: IsoDate;
+  profile: SportProfile;
+  exercises: ExerciseRow[];
+  setsHistory: SessionSets[];
+  // Klik w aktywność (edycja, uzupełnienie albo rozpoczęcie treningu)
+  onOpen: (item: SportItem) => void;
+}) {
+  const [okres, setOkres] = useState<Okres>("miesiac");
+  const [kotwica, setKotwica] = useState(initialDate);
+  const zakres = periodRange(okres, kotwica, profile.weekStart);
+  const widoczne = filtr === "all" ? items : items.filter((i) => i.kind === filtr);
+  const wOkresie = wZakresie(widoczne, zakres.from, zakres.to);
+  const poprzedni = periodRange(okres, shiftPeriod(okres, kotwica, -1), profile.weekStart);
+
+  const wKm = filtr === "all" || filtr === "run";
+  const razem = metric(wOkresie, filtr);
+  const przedtem = metric(wZakresie(widoczne, poprzedni.from, poprzedni.to), filtr);
+  const zmiana = razem - przedtem;
+  const s = stats(wOkresie);
+
+  const slupki = zakres.bins.map((b) => {
+    const wpisy = wZakresie(widoczne, b.from, b.to);
+    return { label: b.label, done: metric(wpisy, filtr), plan: metric(wpisy.filter((i) => i.date >= today), filtr, true) };
+  });
+  // Linia celu km: w miesiącu cel tygodnia, w roku przeliczony na miesiąc
+  const cel = wKm && profile.kmGoalOn && okres !== "tydzien" ? (okres === "rok" ? (profile.weeklyKmGoal * 52) / 12 : profile.weeklyKmGoal) : null;
+  const max = Math.max(1, cel ?? 0, ...slupki.map((b) => b.done + b.plan));
+
+  // Lista: wykonane z okresu i plany od dziś, pogrupowane tygodniami od najnowszych
+  const lista = wOkresie
+    .filter((i) => !i.planned || i.date >= today)
+    .sort((a, b) => (a.date !== b.date ? (a.date > b.date ? -1 : 1) : b.startMin - a.startMin));
+  const tygodnie = new Map<IsoDate, SportItem[]>();
+  for (const i of lista) {
+    const t = weekStartOf(i.date, profile.weekStart);
+    tygodnie.set(t, [...(tygodnie.get(t) ?? []), i]);
+  }
+
+  const zMasaCiala = new Set(exercises.filter((e) => e.bodyweight).map((e) => e.id));
+  function opis(i: SportItem): { wynik: string; srodek: string } {
+    if (i.kind === "run") {
+      return {
+        wynik: i.distanceKm !== null ? `${formatKm(i.distanceKm)} km${i.planned ? " plan" : ""}` : "—",
+        srodek: !i.planned && i.distanceKm && i.durationS ? `${formatPace(i.durationS / i.distanceKm)} /km` : "",
+      };
+    }
+    if (i.kind === "other") {
+      return {
+        wynik: i.distanceKm !== null ? `${formatKm(i.distanceKm)} km${i.planned ? " plan" : ""}` : i.kcal !== null ? `≈ ${i.kcal} kcal` : "—",
+        srodek: "",
+      };
+    }
+    if (i.planned) return { wynik: i.templateId ? "z szablonu" : "—", srodek: "" };
+    const serie = setsHistory.find((x) => x.sessionId === i.sessionId)?.sets ?? [];
+    return { wynik: `${formatVolume(sessionVolume(serie, zMasaCiala, profile.weightKg))} kg`, srodek: `${serie.length} serii` };
+  }
+
+  // „Ten tydzień”: kółka dni, cel i najbliższy plan
+  const poczatek = weekStartOf(today, profile.weekStart);
+  const tydzien = wZakresie(items, poczatek, addDays(poczatek, 6));
+  const st = stats(tydzien);
+  const celKm = profile.kmGoalOn;
+  const zrobione = celKm ? st.km : st.runs + st.gym + st.other;
+  const celTygodnia = celKm ? profile.weeklyKmGoal : profile.workoutsGoalOn ? profile.weeklyWorkoutsGoal : null;
+  const nastepny = items
+    .filter((i) => i.planned && i.date >= today)
+    .sort((a, b) => (a.date !== b.date ? (a.date < b.date ? -1 : 1) : a.startMin - b.startMin))[0];
+
+  // Rekordy: biegi i trasy, potem dwa najwyższe szacowane 1RM
+  const silowe: (Rekord & { kg: number })[] = [];
+  for (const cw of exercises) {
+    let naj: (Rekord & { kg: number }) | null = null;
+    for (const sesja of setsHistory.filter((x) => x.completed)) {
+      for (const seria of sesja.sets) {
+        if (seria.exercise_id !== cw.id || !seria.done || !seria.weight_kg || !seria.reps) continue;
+        const kg = epley1rm(seria.weight_kg, seria.reps);
+        if (!naj || kg > naj.kg) {
+          naj = { key: cw.id, label: `${cw.name} · 1RM`, value: `${liczba(kg)} kg`, date: sesja.startLocal.slice(0, 10), kind: "gym", kg };
+        }
+      }
+    }
+    if (naj) silowe.push(naj);
+  }
+  const rekordy: Rekord[] = [...runRecords(items, formatDuration), ...silowe.sort((a, b) => b.kg - a.kg).slice(0, 2)];
+
+  const kafle =
+    filtr === "other"
+      ? [["Aktywności", String(s.other)], ["Czas", czas(s.totalS)]]
+      : [
+          ["Biegi", String(s.runs)],
+          ["Śr. tempo", s.paceS !== null ? `${formatPace(s.paceS)} /km` : "—"],
+          ["Czas", czas(s.totalS)],
+          ["Siłownia", String(s.gym)],
+        ];
+
+  return (
+    <div className="grid grid-cols-[minmax(0,3fr)_minmax(0,2fr)] items-start gap-4">
+      <div className="flex min-w-0 flex-col gap-4">
+        <Card className="p-6">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div className="flex items-center gap-2">
+              <Button variant="ghost" size="sm" icon aria-label="Poprzedni okres" onClick={() => setKotwica(shiftPeriod(okres, kotwica, -1))}>
+                <ChevronLeft size={16} aria-hidden="true" />
+              </Button>
+              <h2 className="m-0 text-base font-semibold">{zakres.title}</h2>
+              <Button variant="ghost" size="sm" icon aria-label="Następny okres" onClick={() => setKotwica(shiftPeriod(okres, kotwica, 1))}>
+                <ChevronRight size={16} aria-hidden="true" />
+              </Button>
+            </div>
+            <Segment
+              ariaLabel="Okres"
+              value={okres}
+              onChange={setOkres}
+              options={[
+                { value: "tydzien", label: "Tydzień" },
+                { value: "miesiac", label: "Miesiąc" },
+                { value: "rok", label: "Rok" },
+              ]}
+            />
+          </div>
+          <div className="mt-3 flex flex-wrap items-baseline gap-2.5">
+            <b data-testid="suma-okresu" className="text-[40px] leading-none font-semibold tabular-nums">
+              {liczba(razem)}
+            </b>
+            <span className="text-muted-foreground">{wKm ? "km biegu" : filtr === "gym" ? "treningów siłowych" : "innych aktywności"}</span>
+            <StatusBadge tone={zmiana > 0 ? "green" : "gray"} className="tabular-nums">
+              {`${zmiana > 0 ? "+" : ""}${liczba(zmiana)} vs poprzednio`}
+            </StatusBadge>
+          </div>
+          <div className="mt-4 grid grid-cols-4 gap-3">
+            {kafle.map(([k, v]) => (
+              <div key={k}>
+                <div className="text-xs text-muted-foreground">{k}</div>
+                <div className="text-lg font-semibold tabular-nums">{v}</div>
+              </div>
+            ))}
+          </div>
+          <div className="relative mt-5 flex h-[170px] items-end border-b border-border" role="img" aria-label={`Wykres: ${slupki.map((b) => `${b.label} ${liczba(b.done)}`).join(", ")}`}>
+            {cel !== null && (
+              <div className="absolute inset-x-0 border-t border-dashed border-[#15803d]" style={{ bottom: (cel / max) * 150 }}>
+                <span className="absolute right-0 bottom-1 text-[11px] font-medium text-[#15803d]">{`cel ${liczba(cel)} km`}</span>
+              </div>
+            )}
+            {slupki.map((b) => (
+              <div key={b.label} className="flex h-full min-w-0 flex-1 flex-col items-center justify-end px-1">
+                {b.plan > 0 && (
+                  <div className="w-full max-w-[56px] border border-b-0 border-dashed border-black/25" style={{ height: (b.plan / max) * 150 }} />
+                )}
+                <div className="w-full max-w-[56px] rounded-t-[6px] bg-black/[.12]" style={{ height: (b.done / max) * 150 }} />
+              </div>
+            ))}
+          </div>
+          <div className="mt-1.5 flex text-center text-[11px] text-muted-foreground">
+            {slupki.map((b) => (
+              <span key={b.label} className="min-w-0 flex-1 truncate">
+                {b.label}
+              </span>
+            ))}
+          </div>
+        </Card>
+
+        <Card className="overflow-hidden">
+          <section aria-label="Aktywności">
+            <div className="flex items-center justify-between px-6 py-4">
+              <h2 className="m-0 text-base font-semibold">Aktywności</h2>
+              <span className="text-xs text-muted-foreground tabular-nums">
+                {`${lista.filter((i) => !i.planned).length} wykonanych · ${lista.filter((i) => i.planned).length} w planie`}
+              </span>
+            </div>
+            {lista.length === 0 && <p className="m-0 border-t border-border px-6 py-4 text-muted-foreground">Brak aktywności w tym okresie.</p>}
+            {[...tygodnie].map(([od, wpisy]) => {
+              const w = stats(wpisy);
+              return (
+                <div key={od}>
+                  <div className="flex justify-between border-t border-border bg-panel px-6 py-2 text-xs font-medium text-muted-foreground tabular-nums">
+                    <span>{`Tydzień ${isoWeekNumber(addDays(od, 3))} · ${od.slice(8, 10)}.${od.slice(5, 7)}–${addDays(od, 6).slice(8, 10)}.${addDays(od, 6).slice(5, 7)}`}</span>
+                    <span>{`${w.km > 0 ? `${liczba(w.km)} km · ` : ""}${wpisy.filter((i) => !i.planned).length} tr.`}</span>
+                  </div>
+                  {wpisy.map((i) => {
+                    const o = opis(i);
+                    return (
+                      <button
+                        key={i.key}
+                        type="button"
+                        onClick={() => onOpen(i)}
+                        className="grid w-full cursor-pointer grid-cols-[32px_minmax(0,1fr)_110px_90px_70px_16px] items-center gap-3 border-0 border-t border-solid border-border bg-transparent px-6 py-2.5 text-left text-sm text-foreground outline-none hover:bg-black/[.02] focus-visible:shadow-focus-inset"
+                      >
+                        <Ikona item={i} />
+                        <span className="min-w-0">
+                          <span className="flex items-center gap-1.5">
+                            <span className="truncate font-medium">{i.title}</span>
+                            {i.planned && <StatusBadge tone="gray">zaplanowany</StatusBadge>}
+                          </span>
+                          <span className="block text-xs text-muted-foreground tabular-nums">
+                            {`${kiedy(i.date)} · ${godzina(i.startMin)}${i.difficulty !== null ? ` · trudność ${i.difficulty}/10` : ""}`}
+                          </span>
+                        </span>
+                        <span className="text-right font-medium tabular-nums">{o.wynik}</span>
+                        <span className="text-right text-muted-foreground tabular-nums">{o.srodek}</span>
+                        <span className="text-right text-muted-foreground tabular-nums">
+                          {!i.planned && (i.durationS !== null || i.kind === "gym") ? formatDuration(i.durationS ?? i.durationMin * 60) : ""}
+                        </span>
+                        <ChevronRight size={16} aria-hidden="true" className="text-muted-foreground" />
+                      </button>
+                    );
+                  })}
+                </div>
+              );
+            })}
+          </section>
+        </Card>
+      </div>
+
+      <div className="flex min-w-0 flex-col gap-4">
+        <Card className="p-6">
+          <section aria-label="Ten tydzień" className="flex flex-col gap-3">
+            <div className="flex items-baseline justify-between">
+              <h2 className="m-0 text-base font-semibold">Ten tydzień</h2>
+              <span className="text-xs text-muted-foreground tabular-nums">{`${poczatek.slice(8, 10)}.${poczatek.slice(5, 7)}–${addDays(poczatek, 6).slice(8, 10)}.${addDays(poczatek, 6).slice(5, 7)}`}</span>
+            </div>
+            <div className="grid grid-cols-7 text-center text-xs">
+              {Array.from({ length: 7 }, (_, n) => {
+                const d = addDays(poczatek, n);
+                const dnia = tydzien.filter((i) => i.date === d);
+                const wykonany = dnia.find((i) => !i.planned);
+                const plan = dnia.find((i) => i.planned);
+                return (
+                  <div key={d} className="flex flex-col items-center gap-1">
+                    <span className="font-medium text-muted-foreground">{DNI[weekdayOf(d)]}</span>
+                    <span
+                      className={cn("grid size-8 place-items-center rounded-full bg-black/[.04] font-semibold tabular-nums", d === today && "ring-2 ring-primary")}
+                      style={
+                        wykonany
+                          ? { background: kolorWpisu(wykonany), color: "#fff" }
+                          : plan
+                            ? { border: `1px dashed ${kolorWpisu(plan)}` }
+                            : undefined
+                      }
+                    >
+                      {Number(d.slice(8, 10))}
+                    </span>
+                  </div>
+                );
+              })}
+            </div>
+            {celTygodnia !== null && (
+              <div>
+                <div className="mb-1 flex justify-between text-sm">
+                  <span className="text-muted-foreground">Cel tygodnia</span>
+                  <span className="tabular-nums">
+                    <b>{liczba(zrobione)}</b> {`/ ${liczba(celTygodnia)} ${celKm ? "km" : "treningów"}`}
+                  </span>
+                </div>
+                <Progress value={Math.min(zrobione, celTygodnia)} max={celTygodnia} ariaLabel="Cel tygodnia" />
+              </div>
+            )}
+            {nastepny && (
+              <div className="flex items-center gap-3 rounded-lg border border-dashed border-black/20 p-3">
+                <Ikona item={nastepny} />
+                <span className="min-w-0 flex-1">
+                  <span className="block truncate font-medium">{nastepny.title}</span>
+                  <span className="text-xs text-muted-foreground">{`${nastepny.date === today ? "dziś" : kiedy(nastepny.date)} · ${godzina(nastepny.startMin)} · zaplanowany`}</span>
+                </span>
+                <Button size="sm" onClick={() => onOpen(nastepny)}>
+                  {nastepny.kind === "gym" ? "Rozpocznij" : "Uzupełnij"}
+                </Button>
+              </div>
+            )}
+          </section>
+        </Card>
+
+        <Card className="p-6">
+          <section aria-label="Rekordy">
+            <div className="flex items-baseline justify-between pb-1">
+              <h2 className="m-0 text-base font-semibold">Rekordy</h2>
+              <span className="text-xs text-muted-foreground">najlepsze wyniki</span>
+            </div>
+            {rekordy.length === 0 && <p className="m-0 py-2 text-muted-foreground">Rekordy pojawią się po pierwszych treningach.</p>}
+            {rekordy.map((r) => (
+              <div key={r.key} className="flex items-center gap-2.5 border-t border-border py-2.5 first-of-type:border-t-0">
+                <span aria-hidden="true" className="size-2 flex-none rounded-full" style={{ background: KOLOR[r.kind] }} />
+                <span className="min-w-0 flex-1 truncate">{r.label}</span>
+                {/* „nowy”: rekord z ostatnich 14 dni */}
+                {r.date > addDays(today, -14) && <StatusBadge tone="green">nowy</StatusBadge>}
+                <span className="text-right">
+                  <span className="block font-semibold tabular-nums">{r.value}</span>
+                  <span className="text-xs text-muted-foreground tabular-nums">{`${r.date.slice(8, 10)}.${r.date.slice(5, 7)}.${r.date.slice(0, 4)}`}</span>
+                </span>
+              </div>
+            ))}
+          </section>
+        </Card>
+      </div>
+    </div>
+  );
+}
