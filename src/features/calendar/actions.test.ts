@@ -222,6 +222,18 @@ describe("changeOccurrence", () => {
     });
   });
 
+  it("this + delete: gdy odwołanie padnie, zadania zostają", async () => {
+    tables.block_exceptions = fakeTable({ error: { message: "x" } });
+    const w = await changeOccurrence({
+      blockId: "b1000000-0000-4000-8000-000000000001",
+      date: "2026-11-10",
+      scope: "this",
+      delete: true,
+    });
+    expect(w.ok).toBe(false);
+    expect(tables.tasks.delete).not.toHaveBeenCalled();
+  });
+
   it("this + delete → zadania usunięte, potem wyjątek cancelled", async () => {
     const w = await changeOccurrence({
       blockId: "b1000000-0000-4000-8000-000000000001",

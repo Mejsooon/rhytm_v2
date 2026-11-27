@@ -314,6 +314,26 @@ export async function loadCalendar(
 // Odnowienia subskrypcji w zakresie: wszystkie pola Data odnowienia użytkownika (strony i bloki
 // nieusunięte, strona nie systemowa), ich tabele i wiersze. Wystąpienia liczone są dla wszystkich
 // źródeł, także ukrytych, więc przełączenie widoczności nie wymaga ponownego wczytania.
+// PostgREST oddaje najwyżej 1000 wierszy na zapytanie, więc czytamy stronami
+async function wszystkieWiersze(
+  supabase: SupabaseClient<Database>,
+  idBlokow: string[],
+) {
+  const data: { id: string; block_id: string; values: unknown }[] = [];
+  for (let od = 0; ; od += 1000) {
+    const strona = await supabase
+      .from("page_rows")
+      .select("id, block_id, values")
+      .in("block_id", idBlokow)
+      .is("deleted_at", null)
+      .order("id")
+      .range(od, od + 999);
+    if (strona.error) return { data: null, error: strona.error };
+    data.push(...(strona.data ?? []));
+    if ((strona.data?.length ?? 0) < 1000) return { data, error: null };
+  }
+}
+
 export async function loadRenewals(
   supabase: SupabaseClient<Database>,
   userId: string,
@@ -351,11 +371,7 @@ export async function loadRenewals(
       .from("page_fields")
       .select("id, block_id, name, type, config, position, is_title")
       .in("block_id", idBlokow),
-    supabase
-      .from("page_rows")
-      .select("id, block_id, values")
-      .in("block_id", idBlokow)
-      .is("deleted_at", null),
+    wszystkieWiersze(supabase, idBlokow),
   ]);
   if (wszystkiePolaRes.error) throw new Error(wszystkiePolaRes.error.message);
   if (wierszeRes.error) throw new Error(wierszeRes.error.message);
