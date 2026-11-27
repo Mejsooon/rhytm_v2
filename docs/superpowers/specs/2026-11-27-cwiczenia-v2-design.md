@@ -28,6 +28,8 @@ Lista i edytor zgadzają się już z makietą (z kodu); zmienia się opis pod ty
 - Przełącznik „Z masą ciała” jest ukryty dla czasu i dystansu (rodzaj zmienia się w edycji z dziennika).
 - Rozgrzewka (R) nie liczy się nigdzie; drop set (D) tylko do objętości.
 
+- „rekord” przy treningu w historii znaczy jak w dzienniku: nowy rekord ciężaru w chwili treningu (makieta zaznacza tylko obecne maksima). Koszt: zmiana warunku.
+
 ## Poza zakresem
 Telefon (`CMExerciseDetail`, `CMWorkoutTemplates`) — ekran telefonu zostaje, jak jest, i dla czasu/dystansu pokazuje „—”.
 

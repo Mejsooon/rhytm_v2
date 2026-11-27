@@ -74,7 +74,7 @@ describe("TemplatesList", () => {
     ).toHaveLength(2);
     expect(
       screen.getByText(
-        "Gotowa lista ćwiczeń i serii. „Rozpocznij” tworzy trening z wypełnionymi ciężarami z ostatniego razu.",
+        "Gotowa lista ćwiczeń i serii. „Rozpocznij” tworzy trening, a wyniki z ostatniego razu widać w kolumnie „Poprzednio”.",
       ),
     ).toBeInTheDocument();
     expect(webNowy()).toHaveAttribute("href", "/sport/szablony/nowy");

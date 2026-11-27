@@ -122,8 +122,8 @@ export function TemplatesList({
             Szablony treningów
           </h1>
           <p className="m-0 mt-1.5 text-sm text-muted-foreground max-[799px]:mt-0 max-[799px]:text-xs">
-            Gotowa lista ćwiczeń i serii. „Rozpocznij” tworzy trening z
-            wypełnionymi ciężarami z ostatniego razu.
+            Gotowa lista ćwiczeń i serii. „Rozpocznij” tworzy trening, a
+            wyniki z ostatniego razu widać w kolumnie „Poprzednio”.
           </p>
         </div>
 
