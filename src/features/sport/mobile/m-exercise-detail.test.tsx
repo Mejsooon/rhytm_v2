@@ -76,6 +76,8 @@ function dane(zmiany: Partial<ExerciseData> = {}): ExerciseData {
       ]),
     ],
     templateName: "Push",
+    repsText: "5–8",
+    next: null,
     ...zmiany,
   };
 }

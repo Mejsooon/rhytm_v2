@@ -93,6 +93,9 @@ export type ExerciseData = {
   exercise: ExerciseRow;
   history: SessionSets[]; // tylko serie tego ćwiczenia
   templateName: string | null; // szablon z tym ćwiczeniem (przy kilku — ostatnio używany); null, gdy żadnego
+  repsText: string | null; // zakres powtórzeń z tego szablonu (cel na następny trening)
+  // Najbliższy zaplanowany trening z tym ćwiczeniem (14 dni): sesja albo wystąpienie szablonu
+  next: SportItem | null;
 };
 
 const DOMYSLNY_CEL_TRENINGOW = 3;
@@ -638,21 +641,24 @@ export async function loadExercise(
   // Szablon z tym ćwiczeniem: przy kilku wygrywa ostatnio używany (bez użycia — najniżej), potem nazwa
   const { data: pozycje, error: bladPozycji } = await supabase
     .from("workout_template_items")
-    .select("template_id")
+    .select("template_id, reps_text")
     .eq("user_id", userId)
     .eq("exercise_id", id);
   if (bladPozycji) throw new Error(bladPozycji.message);
   let templateName: string | null = null;
+  let repsText: string | null = null;
+  let szablonyZCwiczeniem: TemplateRow[] = [];
   const idSzablonow = [...new Set((pozycje ?? []).map((p) => p.template_id))];
   if (idSzablonow.length > 0) {
     const { data: szablony, error: bladSzablonow } = await supabase
       .from("workout_templates")
-      .select("name, last_used_at")
+      .select("*")
       .eq("user_id", userId)
       .in("id", idSzablonow);
     if (bladSzablonow) throw new Error(bladSzablonow.message);
-    let najlepszy: { name: string; last_used_at: string | null } | null = null;
-    for (const t of szablony ?? []) {
+    szablonyZCwiczeniem = (szablony ?? []) as TemplateRow[];
+    let najlepszy: TemplateRow | null = null;
+    for (const t of szablonyZCwiczeniem) {
       const nowszy =
         najlepszy === null ||
         (t.last_used_at ?? "") > (najlepszy.last_used_at ?? "") ||
@@ -661,13 +667,50 @@ export async function loadExercise(
       if (nowszy) najlepszy = t;
     }
     templateName = najlepszy?.name ?? null;
+    repsText = (pozycje ?? []).find((p) => p.template_id === najlepszy?.id)?.reps_text ?? null;
   }
 
+  const today = todayIso(profile.timezone);
+  const history = await loadSetsHistory(supabase, userId, [id]);
+
+  // Następny trening: zaplanowana sesja z tym ćwiczeniem albo wystąpienie szablonu w ciągu 14 dni
+  const doDnia = addDays(today, 13);
+  const zaplanowane: SportItem[] = history
+    .filter((h) => !h.completed && h.startLocal.slice(0, 10) >= today && h.startLocal.slice(0, 10) <= doDnia)
+    .map((h) =>
+      sessionItems(
+        [{ id: h.sessionId, type: "gym", title: h.title, start_local: h.startLocal, end_local: null, completed: false } as SessionRow],
+        [],
+      )[0],
+    );
+  if (szablonyZCwiczeniem.length > 0) {
+    const ids = szablonyZCwiczeniem.map((t) => t.id);
+    const [pominiete, sesje] = await Promise.all([
+      supabase.from("template_skips").select("*").eq("user_id", userId).in("template_id", ids).gte("date", today),
+      supabase.from("sport_sessions").select("*").eq("user_id", userId).in("template_id", ids).gte("template_date", today),
+    ]);
+    if (pominiete.error) throw new Error(pominiete.error.message);
+    if (sesje.error) throw new Error(sesje.error.message);
+    zaplanowane.push(
+      ...templateOccurrences(
+        szablonyZCwiczeniem,
+        (pominiete.data ?? []) as SkipRow[],
+        (sesje.data ?? []) as SessionRow[],
+        today,
+        doDnia,
+        today,
+      ),
+    );
+  }
+  zaplanowane.sort((a, b) => (a.date !== b.date ? (a.date < b.date ? -1 : 1) : a.startMin - b.startMin));
+
   return {
-    today: todayIso(profile.timezone),
+    today,
     profile,
     exercise: cwiczenie as ExerciseRow,
-    history: await loadSetsHistory(supabase, userId, [id]),
+    history,
     templateName,
+    repsText,
+    next: zaplanowane[0] ?? null,
   };
 }

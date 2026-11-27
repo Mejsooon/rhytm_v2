@@ -395,17 +395,29 @@ describe("loadTemplate i loadExercise", () => {
     });
     tables.workout_templates = fakeTable({
       data: [
-        { name: "Stary", last_used_at: "2026-10-01T10:00:00Z" },
-        { name: "Nowy", last_used_at: "2026-11-10T10:00:00Z" },
-        { name: "Nieużywany", last_used_at: null },
+        { id: "a", name: "Stary", weekdays: [], start_time: "17:00:00", last_used_at: "2026-10-01T10:00:00Z" },
+        { id: "b", name: "Nowy", weekdays: [], start_time: "17:00:00", last_used_at: "2026-11-10T10:00:00Z" },
+        { id: "c", name: "Nieużywany", weekdays: [], start_time: "17:00:00", last_used_at: null },
       ],
     });
+    tables.template_skips = fakeTable({ data: [] });
     const d = await loadExercise(klient(tables), "u1", PRZYSIAD);
     expect(d?.templateName).toBe("Nowy");
 
     tables.workout_template_items = fakeTable({ data: [] });
     const bez = await loadExercise(klient(tables), "u1", PRZYSIAD);
     expect(bez?.templateName).toBeNull();
+  });
+
+  it("loadExercise: następny trening to najbliższe wystąpienie szablonu, z zakresem powtórzeń", async () => {
+    tables.workout_template_items = fakeTable({ data: [{ template_id: SZABLON, reps_text: "5–8" }] });
+    tables.workout_templates = fakeTable({
+      data: [{ id: SZABLON, name: "Push", weekdays: [1, 2, 3, 4, 5, 6, 7], start_time: "18:00:00", last_used_at: null }],
+    });
+    tables.template_skips = fakeTable({ data: [] });
+    const d = await loadExercise(klient(tables), "u1", PRZYSIAD);
+    expect(d?.repsText).toBe("5–8");
+    expect(d?.next).toMatchObject({ templateId: SZABLON, title: "Push", date: d?.today, startMin: 1080, sessionId: null });
   });
 
   it("loadExercise: nie-uuid → null", async () => {

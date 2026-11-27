@@ -2,16 +2,18 @@ import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { refresh, renameExercise, setExerciseBodyweight, toastError } =
+const { refresh, push, createGymSession, renameExercise, setExerciseBodyweight, toastError } =
   vi.hoisted(() => ({
+    push: vi.fn(),
+    createGymSession: vi.fn(),
     refresh: vi.fn(),
     renameExercise: vi.fn(),
     setExerciseBodyweight: vi.fn(),
     toastError: vi.fn(),
   }));
-const router = { refresh };
+const router = { refresh, push };
 vi.mock("next/navigation", () => ({ useRouter: () => router }));
-vi.mock("./actions", () => ({ renameExercise, setExerciseBodyweight }));
+vi.mock("./actions", () => ({ createGymSession, renameExercise, setExerciseBodyweight }));
 vi.mock("sonner", () => ({ toast: { error: toastError } }));
 // Drzewo telefonu (w DOM obok webu) ma własne testy (mobile/m-exercise-detail.test.tsx); tu sprawdzamy web
 vi.mock("./mobile/m-exercise-detail", () => ({ MExerciseDetail: () => null }));
@@ -78,12 +80,15 @@ function dane(zmiany: Partial<ExerciseData> = {}): ExerciseData {
       ]),
     ],
     templateName: "Push",
+    repsText: "5–8",
+    next: null,
     ...zmiany,
   };
 }
 
-const kafelek = (etykieta: string) =>
-  screen.getAllByText(etykieta)[0].closest("div") as HTMLElement;
+const liczba = (k: string) => screen.getByTestId(`liczba-${k}`);
+const sekcja = (nazwa: string) => screen.getByRole("region", { name: nazwa });
+const wierszeHistorii = () => within(sekcja("Historia")).getAllByRole("button", { expanded: false });
 
 beforeEach(() => {
   vi.clearAllMocks();
@@ -92,252 +97,117 @@ beforeEach(() => {
 });
 
 describe("ExerciseDetail", () => {
-  it("„Zmień nazwę” ma ikonę ołówka", () => {
+  it("ścieżka, nagłówek i podtytuł z partią, liczbą treningów i szablonem", () => {
     render(<ExerciseDetail data={dane()} />);
-    const przycisk = screen.getByRole("button", { name: "Zmień nazwę" });
-    expect(przycisk.querySelector("svg")).not.toBeNull();
+    expect(screen.getByRole("link", { name: "Sport" })).toHaveAttribute("href", "/sport");
+    expect(screen.getByRole("heading", { level: 1, name: "Wyciskanie na ławce" })).toBeInTheDocument();
+    expect(screen.getByText("Klatka · Sztanga · 4 treningi od 10.09.2026 · w szablonie „Push”")).toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Zmień nazwę" }).querySelector("svg")).not.toBeNull();
   });
 
-  it("ścieżka, nagłówek i podtytuł z liczbą treningów", () => {
+  it("cztery liczby z zakresu 8 tygodni, „Wszystko” liczy od początku", async () => {
     render(<ExerciseDetail data={dane()} />);
-    expect(screen.getByRole("link", { name: "Sport" })).toHaveAttribute(
-      "href",
-      "/sport",
-    );
-    expect(
-      screen.getByRole("heading", { level: 1, name: "Wyciskanie na ławce" }),
-    ).toBeInTheDocument();
-    // Podtytuł to odznaki (.bdg lg z makiety): szara, szara, z ramką
-    expect(screen.getByText("4 treningi")).toHaveClass("bg-muted", "h-[22px]");
-    expect(screen.getByText("od 10.09.2026")).toHaveClass(
-      "bg-muted",
-      "tabular-nums",
-    );
-    expect(screen.getByText("w szablonie „Push”")).toHaveClass(
-      "border-input",
-      "bg-white",
-    );
+    // 8 tyg.: B 81,5 → D 84,0
+    expect(liczba("Szac. 1RM")).toHaveTextContent("84,0 kg+2,5 kg w 8 tyg.");
+    expect(liczba("Treningi")).toHaveTextContent("3");
+    expect(liczba("Serie robocze")).toHaveTextContent("4");
+    await userEvent.click(screen.getByRole("radio", { name: "Wszystko" }));
+    expect(liczba("Treningi")).toHaveTextContent("4od 10.09.2026");
+    expect(liczba("Szac. 1RM")).toHaveTextContent("+4,0 kg od początku");
   });
 
-  it("kafelki i karty jak w makiecie: Card z cieniem, etykieta .lbl, liczba 26 px", () => {
+  it("wykres: przełącznik miary i dymek po najechaniu", async () => {
     render(<ExerciseDetail data={dane()} />);
-    const k = kafelek("Szac. 1RM");
-    expect(k).toHaveClass("rounded-xl", "shadow-card", "bg-white");
-    expect(screen.getAllByText("Szac. 1RM")[0]).toHaveClass(
-      "text-xs",
-      "font-medium",
-      "text-muted-foreground",
-    );
-    expect(k.querySelector(".text-\\[26px\\]")).toHaveClass(
-      "font-semibold",
-      "tabular-nums",
-    );
-    // zielony przyrost z tokenu, nie z hexa w style
-    expect(kafelek("8 tygodni").querySelector(".text-success")).not.toBeNull();
-    for (const nazwa of ["Szacowany 1RM", "Historia"]) {
-      const sekcja = screen
-        .getByRole("heading", { name: nazwa })
-        .closest("[role=region]");
-      expect(sekcja).toHaveClass("rounded-xl", "shadow-card");
-    }
+    expect(screen.getAllByTestId("punkt-wykresu")).toHaveLength(3);
+    expect(screen.getByTestId("liczba-wykresu")).toHaveTextContent("84,0 kg");
+    await userEvent.hover(screen.getByRole("button", { name: "czw 05.11.2026: 84,5 kg, najlepsza seria 72,5 × 5" }));
+    expect(screen.getByRole("tooltip")).toHaveTextContent("czw 05.11.202684,5 kgnajlepsza seria 72,5 × 5");
+    await userEvent.click(screen.getByRole("radio", { name: "Najcięższa seria" }));
+    expect(screen.getByTestId("liczba-wykresu")).toHaveTextContent("70 kg");
+    await userEvent.click(screen.getByRole("radio", { name: "Objętość" }));
+    expect(screen.getByTestId("liczba-wykresu")).toHaveTextContent("420 kg");
   });
 
-  it("wykres: siatka kreskowana, obszar pod linią, punkty białe z obwódką, rekord zielony", () => {
-    const { container } = render(<ExerciseDetail data={dane()} />);
-    const svg = screen.getByRole("img", { name: /Szacowany 1RM/ });
-    expect(svg.querySelectorAll("line[stroke-dasharray='4 4']")).toHaveLength(
-      2,
-    );
-    expect(svg.querySelector("polygon")).toHaveAttribute(
-      "fill",
-      "rgba(38,38,38,.04)",
-    );
-    expect(svg.querySelector("polyline")).toHaveAttribute("stroke", "#262626");
-    const kropki = screen.getAllByTestId("punkt-wykresu");
-    // Wykres 8 tygodni: rekord (r=5) jest zielony z białą obwódką, pozostałe punkty (r=3.5) są białe z ciemną obwódką
-    const rekord = kropki.find((c) => c.getAttribute("r") === "5");
-    expect(rekord).toHaveAttribute("fill", "#15803d");
-    expect(rekord).toHaveAttribute("stroke", "#fff");
-    const zwykly = kropki.find((c) => c.getAttribute("r") === "3.5");
-    expect(zwykly).toHaveAttribute("fill", "#fff");
-    expect(zwykly).toHaveAttribute("stroke", "#262626");
-    expect(container.querySelector("text")).toHaveAttribute(
-      "font-family",
-      "Inter, sans-serif",
-    );
-  });
-
-  it("wykres z jednym pomiarem nie ma NaN w points", () => {
-    const d = dane({
-      history: [
-        sesja("sa", "2026-11-12", [
-          seriaTreningu("a1", "sa", WYCISKANIE, 1, 1, 70, 5, true),
-        ]),
-      ],
-    });
-    render(<ExerciseDetail data={d} />);
-    const svg = screen.getByRole("img", { name: /Szacowany 1RM/ });
-    expect(svg.querySelector("polyline")?.getAttribute("points")).not.toMatch(
-      /NaN/,
-    );
-    expect(
-      svg.querySelector("polygon")?.getAttribute("points") ?? "",
-    ).not.toMatch(/NaN/);
-    expect(svg.innerHTML).not.toMatch(/NaN/);
-    expect(screen.getAllByTestId("punkt-wykresu")).toHaveLength(1);
-  });
-
-  it("historia: tabela z nagłówkami 40 px, wierszami 44 px i odznaką REKORD", () => {
-    render(<ExerciseDetail data={dane()} />);
-    const tabela = screen.getByRole("table");
-    expect(tabela).toHaveClass("text-sm");
-    expect(screen.getByRole("columnheader", { name: "Data" })).toHaveClass(
-      "h-10",
-      "pl-6",
-      "text-muted-foreground",
-    );
-    const wiersze = within(tabela).getAllByRole("row");
-    expect(within(wiersze[2]).getAllByRole("cell")[0]).toHaveClass(
-      "h-11",
-      "tabular-nums",
-      "text-soft-foreground",
-    );
-    expect(within(wiersze[2]).getByText("REKORD")).toHaveClass(
-      "bg-success-soft",
-      "text-success",
-    );
-  });
-
-  it("przyszły / niedokończony trening nie liczy się do historii, wykresu, kafelków ani REKORDU", () => {
-    const d = dane();
-    const punktyPrzed = (() => {
-      const { unmount } = render(<ExerciseDetail data={d} />);
-      const n = screen.getAllByTestId("punkt-wykresu").length;
-      unmount();
-      return n;
-    })();
-    render(
-      <ExerciseDetail
-        data={{
-          ...d,
-          history: [
-            ...d.history,
-            {
-              ...sesja("sz", "2026-11-26", [
-                seriaTreningu("z1", "sz", WYCISKANIE, 1, 1, 100, 5, true),
-              ]),
-              completed: false,
-            },
-          ],
-        }}
-      />,
-    );
-    expect(screen.getByText("4 treningi")).toBeInTheDocument();
-    expect(kafelek("Szac. 1RM")).toHaveTextContent("84,5 kg");
-    expect(kafelek("8 tygodni")).toHaveTextContent("+4,5 kg");
-    expect(screen.getAllByTestId("punkt-wykresu")).toHaveLength(punktyPrzed);
-    expect(screen.queryByText(/26\.11/)).not.toBeInTheDocument();
-  });
-
-  it("podtytuł bez szablonu nie ma fragmentu „w szablonie”", () => {
-    render(<ExerciseDetail data={dane({ templateName: null })} />);
-    expect(screen.getByText("od 10.09.2026")).toBeInTheDocument();
-    expect(screen.queryByText(/w szablonie/)).not.toBeInTheDocument();
-  });
-
-  it("sesja tylko z masą ciała: „mc × n”, bez 1RM, punktu wykresu i REKORDU", () => {
-    const d = dane({
-      history: [
-        sesja("sa", "2026-11-05", [
-          seriaTreningu("a1", "sa", WYCISKANIE, 1, 1, 70, 5, true),
-        ]),
-        sesja("sb", "2026-11-12", [
-          seriaTreningu("b1", "sb", WYCISKANIE, 1, 1, null, 12, true),
-        ]),
-      ],
-    });
-    render(<ExerciseDetail data={d} />);
-    const wiersze = within(screen.getByRole("table")).getAllByRole("row");
-    expect(wiersze[1]).toHaveTextContent("czw 12.11");
-    expect(wiersze[1]).toHaveTextContent("mc × 12");
-    expect(wiersze[1]).toHaveTextContent("—");
-    expect(wiersze[1]).not.toHaveTextContent("REKORD");
-    expect(screen.getAllByTestId("punkt-wykresu")).toHaveLength(1);
-  });
-
-  it("kafelki: szac. 1RM, najcięższa seria, najwięcej powt., zmiana 8 tyg.", () => {
-    render(<ExerciseDetail data={dane()} />);
-    expect(kafelek("Szac. 1RM")).toHaveTextContent("84,5 kg");
-    expect(kafelek("Najcięższa seria")).toHaveTextContent("72,5 × 5");
-    expect(kafelek("Najwięcej powt.")).toHaveTextContent("60 × 12");
-    // 84,5 (ostatnie 8 tyg.) − 80 (8 tyg. wcześniej)
-    expect(kafelek("8 tygodni")).toHaveTextContent("+4,5 kg");
-  });
-
-  it("kafelki bez danych pokazują „—”", () => {
+  it("jeden pomiar nie daje NaN, brak danych ma komunikat", () => {
+    const { container, unmount } = render(<ExerciseDetail data={dane({ history: dane().history.slice(3) })} />);
+    expect(container.innerHTML).not.toMatch(/NaN/);
+    unmount();
     render(<ExerciseDetail data={dane({ history: [] })} />);
-    for (const e of [
-      "Szac. 1RM",
-      "Najcięższa seria",
-      "Najwięcej powt.",
-      "8 tygodni",
-    ]) {
-      expect(kafelek(e)).toHaveTextContent("—");
-    }
     expect(screen.getByText("Brak danych w tym okresie.")).toBeInTheDocument();
+    expect(screen.getByText("Brak zrobionych serii tego ćwiczenia.")).toBeInTheDocument();
+    expect(liczba("Szac. 1RM")).toHaveTextContent("—");
   });
 
-  it("zmiana 8 tyg. to „—”, gdy poprzednie 8 tygodni jest puste", () => {
+  it("historia malejąco, rekordy zaznaczone, wiersz rozwija się do tabeli serii z linkiem", async () => {
+    render(<ExerciseDetail data={dane()} />);
+    const wiersze = wierszeHistorii();
+    expect(wiersze).toHaveLength(4);
+    expect(wiersze[0]).toHaveTextContent("czw 12.11");
+    expect(wiersze[0]).not.toHaveTextContent("rekord");
+    expect(wiersze[1]).toHaveTextContent("rekord");
+    expect(wiersze[3]).toHaveTextContent("czw 10.09");
+    await userEvent.click(wiersze[1]);
+    const tabela = screen.getByRole("table");
+    expect(within(tabela).getByText("72,5 kg")).toBeInTheDocument();
+    expect(screen.getByRole("link", { name: "Otwórz trening" })).toHaveAttribute("href", "/sport/trening/sc");
+    await userEvent.click(wiersze[1]);
+    expect(screen.queryByRole("table")).not.toBeInTheDocument();
+  });
+
+  it("więcej niż 5 treningów: „Pokaż wszystkie” i „Pokaż mniej”", async () => {
+    const history = [1, 2, 3, 4, 5, 6].map((n) => sesja(`s${n}`, `2026-10-0${n}`, [seriaTreningu(`x${n}`, `s${n}`, WYCISKANIE, 1, 1, 60, 5, true)]));
+    render(<ExerciseDetail data={dane({ history })} />);
+    expect(wierszeHistorii().filter((w) => w.textContent?.includes("60 × 5"))).toHaveLength(5);
+    await userEvent.click(screen.getByRole("button", { name: "Pokaż wszystkie (6)" }));
+    expect(wierszeHistorii().filter((w) => w.textContent?.includes("60 × 5"))).toHaveLength(6);
+    expect(screen.getByRole("button", { name: "Pokaż mniej" })).toBeInTheDocument();
+  });
+
+  it("rekordy z datami", () => {
+    render(<ExerciseDetail data={dane()} />);
+    const r = sekcja("Rekordy");
+    expect(r).toHaveTextContent("Szacowany 1RM84,5 kg05.11.2026");
+    expect(r).toHaveTextContent("Najcięższa seria72,5 × 505.11.2026");
+    expect(r).toHaveTextContent("Najwięcej powtórzeń60 × 1205.11.2026");
+  });
+
+  it("następny trening: cel z zakresem i start wystąpienia szablonu", async () => {
+    createGymSession.mockResolvedValue({ ok: true, id: "nowy" });
+    const next = {
+      date: "2026-11-26",
+      startMin: 900,
+      title: "Push",
+      sessionId: null,
+      templateId: "t1",
+    } as ExerciseData["next"];
+    render(<ExerciseDetail data={dane({ next })} />);
+    // Ostatnio 70 × 6 w zakresie 5–8 → +1 powtórzenie
+    expect(screen.getByTestId("cel")).toHaveTextContent("70 × 7ostatnio 70 × 6+1 powtórzenie");
+    await userEvent.click(screen.getByRole("button", { name: "Rozpocznij trening" }));
+    expect(createGymSession).toHaveBeenCalledWith({ date: "2026-11-26", start: "15:00", templateId: "t1" });
+    expect(push).toHaveBeenCalledWith("/sport/trening/nowy");
+  });
+
+  it("bez zaplanowanego treningu nie ma karty", () => {
+    render(<ExerciseDetail data={dane()} />);
+    expect(screen.queryByRole("region", { name: "Następny trening" })).not.toBeInTheDocument();
+  });
+
+  it("ćwiczenie na czas: własne liczby, bez przełącznika masy ciała i celu", () => {
     const d = dane();
-    render(<ExerciseDetail data={dane({ history: d.history.slice(1) })} />);
-    expect(kafelek("8 tygodni")).toHaveTextContent("—");
+    const history = [sesja("sa", "2026-11-12", [{ ...seriaTreningu("a1", "sa", WYCISKANIE, 1, 1, null, null, true), duration_s: 75 }])];
+    render(<ExerciseDetail data={{ ...d, history, exercise: { ...d.exercise, kind: "dur" } }} />);
+    expect(liczba("Najdłuższa seria")).toHaveTextContent("01:15");
+    expect(liczba("Łączny czas")).toHaveTextContent("01:15");
+    expect(screen.queryByRole("switch")).not.toBeInTheDocument();
   });
 
-  it("spadek 1RM jest ze znakiem minus", () => {
-    const d = dane({
-      history: [
-        sesja("sa", "2026-09-10", [
-          seriaTreningu("a1", "sa", WYCISKANIE, 1, 1, 80, 5, true),
-        ]),
-        sesja("sb", "2026-11-12", [
-          seriaTreningu("b1", "sb", WYCISKANIE, 1, 1, 70, 5, true),
-        ]),
-      ],
-    });
-    render(<ExerciseDetail data={d} />);
-    // 81,5 − 93,5
-    expect(kafelek("8 tygodni")).toHaveTextContent("−12 kg");
-  });
-
-  it("przełącznik 3 mies. / 8 tyg. zmienia punkty wykresu", async () => {
-    const user = userEvent.setup();
-    render(<ExerciseDetail data={dane()} />);
-    expect(screen.getByRole("radio", { name: "8 tyg." })).toBeChecked();
-    expect(screen.getAllByTestId("punkt-wykresu")).toHaveLength(3);
-
-    await user.click(screen.getByRole("radio", { name: "3 mies." }));
-    expect(screen.getAllByTestId("punkt-wykresu")).toHaveLength(4);
-
-    await user.click(screen.getByRole("radio", { name: "8 tyg." }));
-    expect(screen.getAllByTestId("punkt-wykresu")).toHaveLength(3);
-  });
-
-  it("historia malejąco z plakietką REKORD wg reguły (pierwsza sesja nie jest rekordem)", () => {
-    render(<ExerciseDetail data={dane()} />);
-    const wiersze = within(screen.getByRole("table")).getAllByRole("row");
-    // nagłówek + 4 sesje, najnowsza na górze
-    expect(wiersze).toHaveLength(5);
-    expect(wiersze[1]).toHaveTextContent("czw 12.11");
-    expect(wiersze[1]).toHaveTextContent("70 × 6");
-    expect(wiersze[1]).toHaveTextContent("84,0 kg");
-    expect(wiersze[1]).not.toHaveTextContent("REKORD");
-    expect(wiersze[2]).toHaveTextContent("czw 05.11");
-    expect(wiersze[2]).toHaveTextContent("72,5 × 5");
-    expect(wiersze[2]).toHaveTextContent("REKORD");
-    expect(wiersze[3]).toHaveTextContent("czw 15.10");
-    expect(wiersze[3]).toHaveTextContent("REKORD");
-    expect(wiersze[4]).toHaveTextContent("czw 10.09");
-    expect(wiersze[4]).not.toHaveTextContent("REKORD");
+  it("niedokończony trening nie liczy się nigdzie", () => {
+    const d = dane();
+    const history = [...d.history, { ...sesja("sz", "2026-11-19", [seriaTreningu("z1", "sz", WYCISKANIE, 1, 1, 100, 5, true)]), completed: false }];
+    render(<ExerciseDetail data={{ ...d, history }} />);
+    expect(wierszeHistorii().some((w) => w.textContent?.includes("19.11"))).toBe(false);
+    expect(sekcja("Rekordy")).not.toHaveTextContent("100");
   });
 
   it("„Zmień nazwę” zapisuje nową nazwę i odświeża stronę", async () => {
@@ -445,27 +315,19 @@ describe("ExerciseDetail — „Z masą ciała”", () => {
     ).toHaveAttribute("aria-checked", "false");
   });
 
-  it("kafelki i historia liczą wagę z profilu + dociążenie", () => {
+  it("liczby i rekordy liczą wagę z profilu + dociążenie", () => {
     render(<ExerciseDetail data={zMasaCiala()} />);
-    expect(
-      screen.getByRole("switch", { name: "Z masą ciała" }),
-    ).toHaveAttribute("aria-checked", "true");
-    expect(kafelek("Szac. 1RM")).toHaveTextContent("102,5 kg");
-    expect(kafelek("Najcięższa seria")).toHaveTextContent("mc + 5 × 10");
-    expect(kafelek("Najwięcej powt.")).toHaveTextContent("mc × 12");
-    const tabela = screen.getByRole("table");
-    expect(within(tabela).getByText("mc + 5 × 10")).toBeInTheDocument();
-    expect(within(tabela).getByText("101,0 kg")).toBeInTheDocument();
-    expect(within(tabela).getAllByText("REKORD")).toHaveLength(1);
+    expect(screen.getByRole("switch", { name: "Z masą ciała" })).toHaveAttribute("aria-checked", "true");
+    expect(screen.getByText("z masą ciała")).toBeInTheDocument();
+    expect(sekcja("Rekordy")).toHaveTextContent("Szacowany 1RMnowy102,5 kg");
+    expect(sekcja("Rekordy")).toHaveTextContent("mc + 5 × 10");
+    expect(sekcja("Rekordy")).toHaveTextContent("mc × 12");
   });
 
-  it("bez wagi w profilu: brak 1RM i REKORDU, serie jako „mc”", () => {
+  it("bez wagi w profilu nie ma 1RM", () => {
     render(<ExerciseDetail data={zMasaCiala(null)} />);
-    expect(kafelek("Szac. 1RM")).toHaveTextContent("—");
-    expect(screen.queryByText("REKORD")).not.toBeInTheDocument();
-    expect(
-      within(screen.getByRole("table")).getByText("mc + 5 × 10"),
-    ).toBeInTheDocument();
+    expect(liczba("Szac. 1RM")).toHaveTextContent("—");
+    expect(sekcja("Rekordy")).not.toHaveTextContent("Szacowany 1RM");
   });
 
   it("włączenie zmienia się od razu i zapisuje flagę", async () => {
