@@ -116,7 +116,7 @@ class Component extends DCLogic {
       cur, nw, rep,
       onCur: (e) => this.setState({ cur: e.target.value, pwDone: false }), onNw: (e) => this.setState({ nw: e.target.value, pwDone: false }), onRep: (e) => this.setState({ rep: e.target.value, pwDone: false }),
       bars: [0, 1, 2, 3].map((i) => ({ s: 'height:4px;border-radius:2px;background:' + (i < score ? col : 'rgba(0,0,0,.08)') })),
-      strength: nw ? ['Za krótkie', 'Słabe', 'Średnie', 'Dobre', 'Mocne'][score] + ' hasło' : '10+ znaków, wielka litera, cyfra, znak',
+      strength: nw ? ['Za krótkie', 'Słabe', 'Średnie', 'Dobre', 'Mocne'][score] + ' hasło' : '10+ znaków, litery i cyfry',
       repTxt: !rep ? ' ' : match ? 'Hasła są takie same ✓' : 'Hasła się różnią', repC: !rep ? 'hint' : match ? 'ok' : 'err', repInv: rep && !match ? 'true' : 'false',
       pwDis: ok ? 'false' : 'true',
       pwSave: () => { if (ok) this.setState({ cur: '', nw: '', rep: '', pwDone: true, out: { ip: true, mac: true } }); },

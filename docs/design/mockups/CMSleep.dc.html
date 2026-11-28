@@ -81,7 +81,7 @@ class Component extends DCLogic {
     const Q = ['Źle', 'Słabo', 'OK', 'Dobrze', 'Super'];
     return {
       a: hm(a), b: hm(b), dur: Math.floor(d / 60) + ':' + String(d % 60).padStart(2, '0'),
-      verdict: d >= 450 ? 'Powyżej celu 7:30' : 'Brakuje ' + (450 - d) + ' min do celu 7:30',
+      verdict: d >= 480 ? 'Powyżej celu 8:00' : 'Brakuje ' + (480 - d) + ' min do celu 8:00',
       aM: () => this.setState({ a: a - 15 }), aP: () => this.setState({ a: a + 15 }), bM: () => this.setState({ b: b - 15 }), bP: () => this.setState({ b: b + 15 }),
       q: Q.map((t, i) => ({ n: i + 1, t, label: 'Jakość ' + (i + 1) + ' — ' + t, p: q === i + 1 ? 'true' : 'false', pick: () => this.setState({ q: i + 1 }) })),
       tags: ['Kawa po 16', 'Ekran w łóżku', 'Trening', 'Alkohol', 'Stres'].map((t) => { const on = tags.indexOf(t) >= 0; return { t, p: on ? 'true' : 'false', pick: () => this.setState({ tags: on ? tags.filter((x) => x !== t) : tags.concat([t]) }) }; })
