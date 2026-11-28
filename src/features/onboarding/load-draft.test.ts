@@ -47,136 +47,46 @@ const pusty: ProfileRow = {
 
 describe("loadDraft", () => {
   it("profil z nullami → domyślne z makiety", () => {
-    const draft = loadDraft(pusty, null);
-    expect(draft).toEqual({
+    expect(loadDraft(pusty, null)).toEqual({
       name: "",
       avatarPath: null,
       timezone: "Europe/Warsaw",
       weekStart: "mon",
       clock: "24",
-      roles: [],
-      studyField: "",
-      workoutsOn: true,
-      kmOn: true,
+      uses: [],
       weeklyWorkouts: 3,
       weeklyKm: 25,
       sleepGoalMin: 480,
+      blocks: [],
       source: null,
-      sourceOther: "",
-      pages: null,
-      notify: {
-        perm: false,
-        before: true,
-        renew: true,
-        weekly: true,
-        habits: false,
-      },
+      notify: { perm: false, before: true, renew: true, habits: false },
     });
   });
 
-  it("przełączniki celów i obie liczby z profilu", () => {
-    const km = loadDraft(
-      {
-        ...pusty,
-        workouts_goal_on: false,
-        km_goal_on: true,
-        weekly_km_goal: 40,
-        weekly_workouts_goal: 5,
-      },
-      null,
-    );
-    expect(km).toMatchObject({
-      workoutsOn: false,
-      kmOn: true,
-      weeklyKm: 40,
-      weeklyWorkouts: 5,
-    });
-    const oba = loadDraft({ ...pusty, weekly_workouts_goal: 4 }, null);
-    expect(oba).toMatchObject({
-      workoutsOn: true,
-      kmOn: true,
-      weeklyWorkouts: 4,
-      weeklyKm: 25,
-    });
-  });
-
-  it("brak strefy w profilu → wykryta strefa", () => {
-    expect(loadDraft(pusty, null, "Asia/Kolkata").timezone).toBe(
-      "Asia/Kolkata",
-    );
-  });
-
-  it("strefa z profilu ma pierwszeństwo przed wykrytą", () => {
-    expect(
-      loadDraft({ ...pusty, timezone: "Europe/Berlin" }, null, "Asia/Kolkata")
-        .timezone,
-    ).toBe("Europe/Berlin");
-  });
-
-  it("pending_pages: [] zostaje [] (nie null)", () => {
-    expect(loadDraft({ ...pusty, pending_pages: [] }, null).pages).toEqual([]);
-  });
-
-  it("stare goals w profilu są ignorowane (szkic nie ma pola goals)", () => {
-    const draft = loadDraft({ ...pusty, goals: ["subs", "pass"] }, null);
-    expect(draft).not.toHaveProperty("goals");
-  });
-
-  it("stare pending_pages z Passwords i Subscriptions odpadają, znane zostają w kolejności szablonów", () => {
-    expect(
-      loadDraft(
-        {
-          ...pusty,
-          pending_pages: ["Passwords", "Websites", "Subscriptions", "Books"],
-        },
-        null,
-      ).pages,
-    ).toEqual(["Books", "Websites"]);
-    expect(
-      loadDraft({ ...pusty, pending_pages: ["Passwords"] }, null).pages,
-    ).toEqual([]);
-  });
-
-  it("zapisane wartości profilu i ustawień powiadomień", () => {
+  it("zapisane wartości; klucze i źródła ze starego kreatora odpadają", () => {
+    const blok = { title: "A", start: "08:00", end: "09:00", category: "Dom" as const, saved: true };
     const draft = loadDraft(
       {
         ...pusty,
         display_name: "Ala",
-        roles: ["student"],
+        roles: ["student", "run", "sport"],
         weekly_km_goal: 40,
-        sleep_goal_min: 450,
-        referral_source: "other",
-        referral_other: "blog",
+        referral_source: "reddit",
         week_start: "sun",
         clock: "12",
-        pending_pages: ["Books"],
       },
-      {
-        user_id: "u1",
-        push_enabled: true,
-        before_block_min: null,
-        renewals_enabled: false,
-        weekly_summary: true,
-        habits_enabled: true,
-      } as never,
+      { push_enabled: true, before_block_min: null, renewals_enabled: false, habits_enabled: true } as never,
+      [blok],
     );
     expect(draft).toMatchObject({
       name: "Ala",
-      roles: ["student"],
+      uses: ["run"],
       weeklyKm: 40,
-      sleepGoalMin: 450,
-      source: "other",
-      sourceOther: "blog",
+      source: null,
       weekStart: "sun",
       clock: "12",
-      pages: ["Books"],
-      notify: {
-        perm: true,
-        before: false,
-        renew: false,
-        weekly: true,
-        habits: true,
-      },
+      blocks: [blok],
+      notify: { perm: true, before: false, renew: false, habits: true },
     });
   });
 });

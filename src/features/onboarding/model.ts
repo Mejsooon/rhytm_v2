@@ -1,90 +1,66 @@
-// Model onboardingu: stałe z makiet i czysta logika kroków (bez Reacta i bazy).
+// Model onboardingu w 4 krokach (S2OnboardingFlow, CMOnboarding bez kroku kalendarza): stałe i czysta logika.
 
-export type RoleKey = "student" | "work" | "free" | "sport" | "other";
-export type PageKey = "Projects" | "Books" | "Websites";
-export type SourceKey =
-  | "friend"
-  | "uni"
-  | "tiktok"
-  | "insta"
-  | "yt"
-  | "x"
-  | "reddit"
-  | "search"
-  | "ai"
-  | "other";
-export type ReminderKey = "before" | "renew" | "weekly" | "habits";
-// Rodzaj celu treningowego: liczba treningów albo kilometrów w tygodniu
-export type GoalType = "workouts" | "km";
+export const STEP_NAMES = ["Profil", "Do czego", "Pierwszy dzień", "Przypomnienia"] as const;
 
-// OnboardingRole
-export const ROLES: { key: RoleKey; title: string; desc: string }[] = [
-  { key: "student", title: "Student", desc: "Zajęcia, kolokwia, projekty" },
-  { key: "work", title: "Pracuję", desc: "Godziny pracy i spotkania" },
+export type Step = 1 | 2 | 3 | 4;
+
+export const USE_GROUPS = [
   {
-    key: "free",
-    title: "Freelancer lub firma",
-    desc: "Klienci, zlecenia, terminy",
-  },
-  { key: "sport", title: "Trenuję regularnie", desc: "Biegi, siłownia, plan" },
-  { key: "other", title: "Coś innego", desc: "Kategorie ułożysz sam" },
-];
-
-// OnboardingPages (kolejność = kolejność w sidebarze)
-export const PAGE_TEMPLATES: {
-  key: PageKey;
-  name: string;
-  desc: string;
-  fields: string;
-}[] = [
-  {
-    key: "Projects",
-    name: "Projects",
-    desc: "Statusy, terminy i linki do repo",
-    fields: "Status · Data · URL",
+    title: "Plan dnia",
+    items: [
+      ["studia", "Studia"],
+      ["praca", "Praca"],
+      ["firma", "Klienci i zlecenia"],
+      ["dom", "Dom i sprawy"],
+    ],
   },
   {
-    key: "Books",
-    name: "Books",
-    desc: "Przeczytane, w trakcie i na później",
-    fields: "Status · Ocena · Autor",
+    title: "Ruch",
+    items: [
+      ["run", "Bieganie"],
+      ["gym", "Siłownia"],
+      ["oth", "Inne sporty"],
+    ],
   },
   {
-    key: "Websites",
-    name: "Websites",
-    desc: "Zakładki z kategoriami",
-    fields: "URL · Select · Checkbox",
+    title: "Reszta",
+    items: [
+      ["habits", "Nawyki"],
+      ["sleep", "Sen"],
+      ["pass", "Hasła"],
+      ["subs", "Subskrypcje"],
+      ["proj", "Projekty"],
+      ["books", "Książki"],
+    ],
   },
-];
+] as const;
 
-// OnboardingSource
-export const SOURCES: { key: SourceKey; label: string }[] = [
-  { key: "friend", label: "Od znajomego" },
-  { key: "uni", label: "Na uczelni" },
-  { key: "tiktok", label: "TikTok" },
-  { key: "insta", label: "Instagram" },
-  { key: "yt", label: "YouTube" },
-  { key: "x", label: "X" },
-  { key: "reddit", label: "Reddit" },
-  { key: "search", label: "Wyszukiwarka" },
-  { key: "ai", label: "ChatGPT lub inne AI" },
-  { key: "other", label: "Inne" },
-];
+export type UseKey = (typeof USE_GROUPS)[number]["items"][number][0];
 
-// OnboardingNotify
+export const USE_KEYS = USE_GROUPS.flatMap((g) => g.items.map(([k]) => k as UseKey));
+
+// Nazwy w profiles.pending_pages (PENDING_TO_TEMPLATE w features/pages/templates.ts)
+export type PageKey = "Subscriptions" | "Projects" | "Books";
+
+export const SOURCES = [
+  ["friend", "Od znajomego"],
+  ["uni", "Uczelnia"],
+  ["tiktok", "TikTok"],
+  ["insta", "Instagram"],
+  ["yt", "YouTube"],
+  ["search", "Wyszukiwarka"],
+  ["ai", "ChatGPT / AI"],
+  ["other", "Inne"],
+] as const;
+
+export type SourceKey = (typeof SOURCES)[number][0];
+
+export type ReminderKey = "before" | "renew" | "habits";
+
 export const REMINDERS: { key: ReminderKey; title: string; when: string }[] = [
   { key: "before", title: "Przed blokiem", when: "5 min wcześniej" },
-  {
-    key: "renew",
-    title: "Odnowienie subskrypcji",
-    when: "Dzień wcześniej, o 9:00",
-  },
-  // „weekly” zostaje w szkicu i w zapisie, ale bez wiersza: wysyłka podsumowania tygodnia nie istnieje (decyzja C15)
-  {
-    key: "habits",
-    title: "Nawyki",
-    when: "O godzinie ustawionej przy nawyku",
-  },
+  { key: "renew", title: "Odnowienie subskrypcji", when: "Dzień wcześniej, o 9:00" },
+  { key: "habits", title: "Nawyki", when: "O godzinie ustawionej przy nawyku" },
 ];
 
 export const CATEGORY_COLORS = {
@@ -95,165 +71,107 @@ export const CATEGORY_COLORS = {
   Dom: "#a16207",
 } as const;
 
+export type CategoryName = keyof typeof CATEGORY_COLORS;
+
+export type DraftBlock = {
+  title: string;
+  // „HH:MM” z pola (może być w trakcie pisania)
+  start: string;
+  end: string;
+  category: CategoryName;
+  // Już zapisany w kalendarzu: nie edytujemy i nie powielamy
+  saved?: boolean;
+};
+
 export type OnboardingDraft = {
   name: string;
   avatarPath: string | null;
   timezone: string;
   weekStart: "mon" | "sun";
   clock: "24" | "12";
-  roles: RoleKey[];
-  studyField: string;
-  // Dwa niezależne cele treningowe (co najmniej jeden włączony); liczby zostają w szkicu po wyłączeniu
-  workoutsOn: boolean;
-  kmOn: boolean;
+  uses: UseKey[];
   weeklyWorkouts: number;
   weeklyKm: number;
   sleepGoalMin: number;
+  blocks: DraftBlock[];
   source: SourceKey | null;
-  sourceOther: string;
-  // Strony wybrane w kroku 5 (na starcie nic nie jest zaznaczone)
-  pages: PageKey[] | null;
   notify: { perm: boolean } & Record<ReminderKey, boolean>;
 };
 
-// Kategorie kalendarza z ról. "Dom" gdy wybrano "other" albo żadna rola nie daje kategorii.
-export function categoriesForRoles(
-  roles: RoleKey[],
-): { name: string; color: string; is_system: boolean }[] {
-  const nazwy: (keyof typeof CATEGORY_COLORS)[] = [];
-  if (roles.includes("student")) nazwy.push("Studia");
-  if (roles.includes("work")) nazwy.push("Praca");
-  if (roles.includes("free")) nazwy.push("Projekty");
-  if (roles.includes("sport")) nazwy.push("Sport");
-  if (roles.includes("other") || nazwy.length === 0) nazwy.push("Dom");
+const ma = (uses: UseKey[], ...klucze: UseKey[]) => klucze.some((k) => uses.includes(k));
 
-  return nazwy.map((name) => ({
-    name,
-    color: CATEGORY_COLORS[name],
-    is_system: name === "Sport",
-  }));
+export function categoriesForUses(
+  uses: UseKey[],
+): { name: CategoryName; color: string; is_system: boolean }[] {
+  const nazwy: CategoryName[] = [];
+  if (ma(uses, "studia")) nazwy.push("Studia");
+  if (ma(uses, "praca")) nazwy.push("Praca");
+  if (ma(uses, "firma")) nazwy.push("Projekty");
+  if (ma(uses, "dom")) nazwy.push("Dom");
+  if (ma(uses, "run", "gym", "oth")) nazwy.push("Sport");
+  if (nazwy.length === 0) nazwy.push("Dom");
+  return nazwy.map((name) => ({ name, color: CATEGORY_COLORS[name], is_system: name === "Sport" }));
 }
 
-// Strony wybrane w kroku 5; bez wyboru (null) nie dodajemy żadnej
-export function effectivePages(draft: OnboardingDraft): PageKey[] {
-  return draft.pages ?? [];
+export function pagesForUses(uses: UseKey[]): PageKey[] {
+  const strony: PageKey[] = [];
+  if (ma(uses, "subs")) strony.push("Subscriptions");
+  if (ma(uses, "proj", "firma")) strony.push("Projects");
+  if (ma(uses, "books")) strony.push("Books");
+  return strony;
 }
 
-// Licznik kilometrów: co 5, zakres 5–150 (nieliczba z pola web wraca do 25).
-// Liczbę z pola web (np. 42 albo 200) najpierw wyrównujemy do siatki co 5: 42 + → 45, 200 − → 150.
-export function stepKm(km: number, dir: -1 | 1): number {
-  if (!Number.isFinite(km)) return 25;
-  return Math.min(150, Math.max(5, Math.round(km / 5) * 5 + dir * 5));
+const PODPOWIEDZI: [UseKey, DraftBlock][] = [
+  ["studia", { start: "08:00", end: "09:30", title: "Zajęcia", category: "Studia" }],
+  ["studia", { start: "18:30", end: "20:00", title: "Nauka do kolokwium", category: "Studia" }],
+  ["praca", { start: "09:00", end: "17:00", title: "Praca", category: "Praca" }],
+  ["firma", { start: "14:00", end: "16:00", title: "Projekt klienta", category: "Projekty" }],
+  ["dom", { start: "20:00", end: "20:30", title: "Zakupy i pranie", category: "Dom" }],
+  ["run", { start: "17:00", end: "18:00", title: "Bieg 8 km", category: "Sport" }],
+  ["gym", { start: "16:00", end: "17:30", title: "Siłownia — Push", category: "Sport" }],
+  ["oth", { start: "19:00", end: "20:00", title: "Tenis", category: "Sport" }],
+];
+
+// Podpowiedzi z wyborów, bez tych, które już są na liście
+export function suggestions(uses: UseKey[], blocks: DraftBlock[]): DraftBlock[] {
+  return PODPOWIEDZI.filter(([k, b]) => uses.includes(k) && !blocks.some((x) => x.title === b.title)).map(
+    ([, b]) => b,
+  );
 }
 
-// Licznik treningów: co 1, zakres 1–14 (nieliczba z pola web wraca do 3)
-export function stepWorkouts(n: number, dir: -1 | 1): number {
-  if (!Number.isFinite(n)) return 3;
-  return Math.min(14, Math.max(1, n + dir));
+// „08:30” → 510; zły zapis → null
+export function toMinutes(hhmm: string): number | null {
+  const m = /^(\d{1,2}):(\d{2})$/.exec(hhmm.trim());
+  if (!m) return null;
+  const [h, min] = [Number(m[1]), Number(m[2])];
+  return h < 24 && min < 60 ? h * 60 + min : null;
 }
 
-// Poprawny cel: treningi całe 1–14, kilometry 1–300 (też ułamki; jak w schemacie kroku 3)
-export function goalInRange(type: GoalType, value: number): boolean {
-  if (type === "workouts")
-    return Number.isInteger(value) && value >= 1 && value <= 14;
-  return Number.isFinite(value) && value >= 1 && value <= 300;
-}
+export const blockValid = (b: DraftBlock) => {
+  const [od, doo] = [toMinutes(b.start), toMinutes(b.end)];
+  return od !== null && doo !== null && doo > od;
+};
 
-// Kilometry z polskim przecinkiem: 22.5 -> "22,5"
-export function formatKm(km: number): string {
-  return String(km).replace(".", ",");
-}
+// Cele: bieg 1–300 km (też ułamki), siłownia 1–14, sen 5–11 h co kwadrans
+export const kmOk = (v: number) => Number.isFinite(v) && v >= 1 && v <= 300;
+export const workoutsOk = (v: number) => Number.isInteger(v) && v >= 1 && v <= 14;
+export const sleepOk = (min: number) => Number.isInteger(min) && min >= 300 && min <= 660 && min % 15 === 0;
 
-// 1 -> "1 trening / tydz.", 3 -> "3 treningi / tydz.", 5 -> "5 treningów / tydz.", 25 km -> "25 km / tydz."
-export function formatWeeklyGoal(type: GoalType, value: number): string {
-  if (type === "km") return `${formatKm(value)} km / tydz.`;
-  const jednosci = value % 10;
-  const dziesiatki = value % 100;
-  let slowo = "treningów";
-  if (value === 1) slowo = "trening";
-  else if (
-    jednosci >= 2 &&
-    jednosci <= 4 &&
-    (dziesiatki < 12 || dziesiatki > 14)
-  )
-    slowo = "treningi";
-  return `${value} ${slowo} / tydz.`;
-}
-
-// Cel snu w minutach: co 15, zakres 300–660
-export function stepSleep(min: number, dir: -1 | 1): number {
-  return Math.min(660, Math.max(300, min + dir * 15));
-}
-
-// 495 -> "8:15"
-export function formatSleep(min: number): string {
-  const m = min % 60;
-  return `${Math.floor(min / 60)}:${String(m).padStart(2, "0")}`;
-}
-
-export function canContinue(step: number, draft: OnboardingDraft): boolean {
+export function canContinue(step: Step, draft: OnboardingDraft): boolean {
   if (step === 1) return draft.name.trim() !== "";
-  // Krok 3: co najmniej jeden cel treningowy, a każdy włączony ma poprawną liczbę
-  if (step === 3) {
-    if (!draft.workoutsOn && !draft.kmOn) return false;
-    if (draft.workoutsOn && !goalInRange("workouts", draft.weeklyWorkouts))
-      return false;
-    if (draft.kmOn && !goalInRange("km", draft.weeklyKm)) return false;
-    return true;
+  if (step === 2) {
+    return (
+      (!draft.uses.includes("run") || kmOk(draft.weeklyKm)) &&
+      (!draft.uses.includes("gym") || workoutsOk(draft.weeklyWorkouts)) &&
+      (!draft.uses.includes("sleep") || sleepOk(draft.sleepGoalMin))
+    );
   }
+  if (step === 3) return draft.blocks.every((b) => b.saved || blockValid(b));
   return true;
 }
 
-// Podsumowanie na ostatnim ekranie; step = krok do którego prowadzi wiersz
-export function buildSummary(
-  draft: OnboardingDraft,
-  variant: "web" | "mobile",
-  tzCity: string,
-): {
-  key: "Profil" | "Kategorie" | "Cele treningowe" | "Strony" | "Przypomnienia";
-  value: string;
-  step: 1 | 2 | 3 | 5 | 6;
-}[] {
-  const nazwa = draft.name.trim() || "Ty";
-  const kategorie = categoriesForRoles(draft.roles)
-    .map((c) => c.name)
-    .join(", ");
-  const strony = effectivePages(draft).join(", ") || "brak";
-  const wlaczone = REMINDERS.filter((r) => draft.notify[r.key]).length;
-
-  let profil: string;
-  let przypomnienia: string;
-  if (variant === "web") {
-    profil = `${nazwa} · ${draft.timezone}`;
-    przypomnienia = `${wlaczone} włączone`;
-  } else {
-    const tydzien = draft.weekStart === "mon" ? "pn" : "nd";
-    profil = `${nazwa} · ${tzCity} · tydzień od ${tydzien}`;
-    przypomnienia =
-      `${wlaczone} z ${REMINDERS.length} włączone` +
-      (draft.notify.perm ? "" : " · bez zgody na push");
-  }
-
-  const wiersze: ReturnType<typeof buildSummary> = [
-    { key: "Profil", value: profil, step: 1 },
-    { key: "Kategorie", value: kategorie, step: 2 },
-  ];
-  // Cele treningowe: włączone, np. „3 treningi / tydz. · 25 km / tydz.”
-  const cele: string[] = [];
-  if (draft.workoutsOn)
-    cele.push(formatWeeklyGoal("workouts", draft.weeklyWorkouts));
-  if (draft.kmOn) cele.push(formatWeeklyGoal("km", draft.weeklyKm));
-  wiersze.push({ key: "Cele treningowe", value: cele.join(" · "), step: 3 });
-  wiersze.push({ key: "Strony", value: strony, step: 5 });
-  wiersze.push({ key: "Przypomnienia", value: przypomnienia, step: 6 });
-  return wiersze;
-}
-
-// Szkic -> payload kroku w kluczach schematów z src/features/profile/schemas.ts (kroki 1–6)
-export function stepPayload(
-  step: 1 | 2 | 3 | 4 | 5 | 6,
-  draft: OnboardingDraft,
-) {
+// Szkic → payload kroku w kluczach schematów z src/features/profile/schemas.ts
+export function stepPayload(step: Step, draft: OnboardingDraft) {
   switch (step) {
     case 1:
       return {
@@ -264,31 +182,30 @@ export function stepPayload(
         avatar_path: draft.avatarPath,
       };
     case 2:
-      return { roles: draft.roles, study_field: draft.studyField };
-    case 3:
-      // Zapisujemy oba przełączniki i obie liczby; zła liczba wyłączonego celu wraca do wartości domyślnej
       return {
-        workouts_goal_on: draft.workoutsOn,
-        km_goal_on: draft.kmOn,
-        weekly_workouts_goal: goalInRange("workouts", draft.weeklyWorkouts)
-          ? draft.weeklyWorkouts
-          : 3,
-        weekly_km_goal: goalInRange("km", draft.weeklyKm) ? draft.weeklyKm : 25,
-        sleep_goal_min: draft.sleepGoalMin,
+        uses: draft.uses,
+        // Niewybrany cel może mieć w polu cokolwiek, więc wysyłamy wartość domyślną (akcja jej nie zapisze)
+        weekly_km_goal: kmOk(draft.weeklyKm) ? draft.weeklyKm : 25,
+        weekly_workouts_goal: workoutsOk(draft.weeklyWorkouts) ? draft.weeklyWorkouts : 3,
+        sleep_goal_min: sleepOk(draft.sleepGoalMin) ? draft.sleepGoalMin : 480,
+      };
+    case 3:
+      return {
+        blocks: draft.blocks
+          .filter((b) => !b.saved)
+          .map((b) => ({
+            title: b.title,
+            category: b.category,
+            start_min: toMinutes(b.start) ?? 0,
+            end_min: toMinutes(b.end) ?? 0,
+          })),
       };
     case 4:
       return {
         referral_source: draft.source,
-        referral_other: draft.sourceOther,
-      };
-    case 5:
-      return { pending_pages: effectivePages(draft) };
-    case 6:
-      return {
         push_enabled: draft.notify.perm,
         before: draft.notify.before,
         renew: draft.notify.renew,
-        weekly: draft.notify.weekly,
         habits: draft.notify.habits,
       };
   }

@@ -21,23 +21,13 @@ const draft: OnboardingDraft = {
   timezone: "Europe/Warsaw",
   weekStart: "mon",
   clock: "24",
-  roles: [],
-  studyField: "",
-  workoutsOn: true,
-  kmOn: false,
+  uses: [],
   weeklyWorkouts: 3,
   weeklyKm: 25,
   sleepGoalMin: 480,
+  blocks: [],
   source: null,
-  sourceOther: "",
-  pages: null,
-  notify: {
-    perm: false,
-    before: true,
-    renew: true,
-    weekly: true,
-    habits: false,
-  },
+  notify: { perm: false, before: true, renew: true, habits: false },
 };
 
 const NOW = new Date("2026-11-17T09:00:00Z");
@@ -77,9 +67,11 @@ describe("StepProfile", () => {
     expect(onChange).toHaveBeenLastCalledWith({ ...draft, name: "M" });
   });
 
-  it("wybór „Niedzieli” ustawia weekStart: sun", async () => {
+  it("„Zmień” pokazuje ustawienia; „Niedziela” ustawia weekStart: sun", async () => {
     pokaz();
-    await userEvent.click(screen.getByRole("radio", { name: "Niedzieli" }));
+    expect(screen.queryByRole("radio", { name: "Niedziela" })).toBeNull();
+    await userEvent.click(screen.getByRole("button", { name: "Zmień" }));
+    await userEvent.click(screen.getByRole("radio", { name: "Niedziela" }));
     expect(onChange).toHaveBeenCalledWith({ ...draft, weekStart: "sun" });
   });
 
@@ -138,29 +130,11 @@ describe("StepProfile", () => {
     expect(onChange).not.toHaveBeenCalled();
   });
 
-  it("zapisana strefa spoza listy jest w opcjach i wybrana (bez duplikatów z wykrytą)", async () => {
-    vi.spyOn(Intl.DateTimeFormat.prototype, "resolvedOptions").mockReturnValue({
-      timeZone: "America/Chicago",
-    } as Intl.ResolvedDateTimeFormatOptions);
+  it("podsumowanie wykrytych ustawień i strefa spoza listy w opcjach", async () => {
     pokaz({ ...draft, timezone: "America/Chicago" });
-    const [webowy] = screen.getAllByRole("button", { name: "Strefa czasowa" });
-    expect(webowy).toHaveTextContent("America/Chicago");
-    await userEvent.click(webowy);
-    expect(
-      screen.getAllByRole("option", { name: /America\/Chicago/ }),
-    ).toHaveLength(1);
-    vi.restoreAllMocks();
-  });
-
-  it("„Wykryta z przeglądarki” gdy strefa = wykryta", () => {
-    vi.spyOn(Intl.DateTimeFormat.prototype, "resolvedOptions").mockReturnValue({
-      timeZone: "Europe/Warsaw",
-    } as Intl.ResolvedDateTimeFormatOptions);
-    pokaz();
-    expect(
-      screen.getAllByText("Wykryta z przeglądarki").length,
-    ).toBeGreaterThan(0);
-    vi.restoreAllMocks();
+    expect(screen.getByText(/Chicago .* tydzień od poniedziałku · zegar 24 h/)).toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Zmień" }));
+    expect(screen.getByRole("button", { name: "Strefa czasowa" })).toHaveTextContent("America/Chicago");
   });
 
   it("pierwsza wizyta: wykryta strefa trafia do szkicu", () => {
@@ -179,30 +153,5 @@ describe("StepProfile", () => {
     pokaz(draft, false);
     expect(onChange).not.toHaveBeenCalled();
     vi.restoreAllMocks();
-  });
-
-  // Wygląd wg COnboarding
-  it("wygląd: wiersz zdjęcia z ikoną w przycisku, strefa jako Dropdown select z hintem UTC", () => {
-    pokaz();
-    const wgraj = screen.getByRole("button", { name: "Wgraj" });
-    expect(wgraj.querySelector("svg")).not.toBeNull();
-    const [webowy] = screen.getAllByRole("button", { name: "Strefa czasowa" });
-    expect(webowy).toHaveTextContent("Europe/Warsaw (UTC+01:00)");
-    expect(webowy.querySelector("svg.lucide-chevrons-up-down")).not.toBeNull();
-    expect(screen.getByText("(UTC+01:00)")).toHaveClass("tabular-nums");
-  });
-
-  it("wygląd: segmenty tygodnia i godziny wypełniają szerokość kolumny", () => {
-    pokaz();
-    for (const nazwa of ["Początek tygodnia", "Format godziny"]) {
-      const grupa = screen.getByRole("radiogroup", { name: nazwa });
-      expect(grupa).toHaveClass("w-full");
-      expect(grupa).toHaveClass("flex");
-    }
-  });
-
-  it("bez font-mono", () => {
-    const { container } = pokaz();
-    expect(container.innerHTML).not.toContain("font-mono");
   });
 });

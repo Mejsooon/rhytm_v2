@@ -531,6 +531,7 @@ export function templateViews(key: TemplateKey | "passwords", fields: PageField[
 
 // Nazwy z profiles.pending_pages (onboarding) -> szablon
 export const PENDING_TO_TEMPLATE: Record<string, TemplateKey> = {
+  Subscriptions: "subscriptions",
   Books: "books",
   Projects: "projects",
   Websites: "websites",

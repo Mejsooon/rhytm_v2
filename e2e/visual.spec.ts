@@ -231,20 +231,19 @@ test.describe("ekrany z sesją", () => {
     }
   });
 
-  test("zrzuty /onboarding/1–7 (makiety COnboarding… / CMOnboarding)", async ({
+  test("zrzuty /onboarding/1–4 (makiety S2OnboardingFlow / CMOnboarding)", async ({
     page,
   }, info) => {
     const email = uniqueEmail(info.project.name);
     const haslo = randomPassword();
     await createUserAtOnboardingEnd(email, haslo);
     await logInViaForm(page, email, haslo);
-    await expect(page).toHaveURL(/\/onboarding\/7$/);
-    // Makiety: COnboarding (1), COnboardingRole (2), COnboardingGoals (3), COnboardingSource (4), COnboardingPages (5), COnboardingNotify (6), COnboardingDone (7)
-    for (const krok of [1, 2, 3, 4, 5, 6, 7]) {
+    await expect(page).toHaveURL(/\/onboarding\/4$/);
+    for (const krok of [1, 2, 3, 4]) {
       await page.goto(`/onboarding/${krok}`);
       await expect(
-        page.getByRole("progressbar", { name: "Postęp onboardingu" }),
-      ).toHaveAttribute("aria-valuenow", String(krok));
+        page.getByRole("button", { name: /^(Dalej|Zacznij korzystać)$/ }).locator("visible=true"),
+      ).toBeVisible();
       await zrzut(page, `onboarding-${krok}`, info.project.name);
     }
   });

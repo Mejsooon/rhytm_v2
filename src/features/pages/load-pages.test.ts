@@ -63,7 +63,7 @@ describe("loadPages", () => {
     );
     await loadPages();
     expect(rpc).toHaveBeenCalledWith("claim_pending_pages", {
-      p_available: ["Books", "Projects", "Websites"],
+      p_available: ["Subscriptions", "Books", "Projects", "Websites"],
     });
     const utworzenia = rpc.mock.calls.filter((c) => c[0] === "create_page");
     expect(utworzenia).toHaveLength(1);
@@ -73,19 +73,18 @@ describe("loadPages", () => {
     });
   });
 
-  it("Passwords i Subscriptions w pending_pages nie są pobierane (moduł i osobny projekt)", async () => {
+  it("Passwords w pending_pages nie jest pobierane (to moduł)", async () => {
     rpc.mockResolvedValue({ data: [], error: null });
     await loadPages();
     const claim = rpc.mock.calls.find((c) => c[0] === "claim_pending_pages");
     expect(claim?.[1].p_available).not.toContain("Passwords");
-    expect(claim?.[1].p_available).not.toContain("Subscriptions");
   });
 
-  it("claim zwraca ['Passwords','Subscriptions','Books'] → dokładnie jedno create_page z szablonem books, bez błędu", async () => {
+  it("claim zwraca ['Passwords','Books'] → dokładnie jedno create_page z szablonem books, bez błędu", async () => {
     const blad = vi.spyOn(console, "error").mockImplementation(() => {});
     rpc.mockImplementation(async (nazwa: string) =>
       nazwa === "claim_pending_pages"
-        ? { data: ["Passwords", "Subscriptions", "Books"], error: null }
+        ? { data: ["Passwords", "Books"], error: null }
         : { data: STRONA, error: null },
     );
     await loadPages();

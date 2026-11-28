@@ -239,3 +239,9 @@ Final review: Important #1 phone delete dialog leak → fix; #2 heat-2 → Do de
 - `notifications` nie wchodzi do eksportu danych.
 - Lista ma limit 100 wpisów z ostatnich 30 dni; licznik na dzwonku liczy tylko z nich.
 - Odświeża się przy wejściu, otwarciu panelu i powrocie do karty, nie na żywo.
+
+## Onboarding w 4 krokach (2026-11-28)
+- Podgląd nie ma etykiet godzin w pustych wierszach ani kropek modułów z makiety; wygląd telefonu nie porównany z `CMOnboarding`.
+- Bloki zapisane w kroku 3 edytuje się tylko w kalendarzu.
+- Konto w połowie starego kreatora traci stare wybory ról (zaczyna z pustymi).
+- Kolumny `study_field`, `referral_other` i `weekly_summary` nie są już zapisywane przez kreator.

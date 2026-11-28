@@ -1,228 +1,79 @@
 import { expect, test, type Locator, type Page } from "@playwright/test";
 
-import {
-  createConfirmedUser,
-  logInViaForm,
-  randomPassword,
-  uniqueEmail,
-} from "./helpers/konto";
+import { adminClient, createConfirmedUser, logInViaForm, randomPassword, uniqueEmail } from "./helpers/konto";
 
-// Web i telefon są razem w DOM (przełączane CSS), więc wybieramy wariant po nazwie projektu
-// Next trzyma poprzednie kroki w DOM (ukryte), więc lokalizatory po label/testid/tekście zawężamy do widocznych
+// Next trzyma poprzednie kroki w DOM (ukryte), więc lokalizatory po label/tekście zawężamy do widocznych
 const widoczny = (l: Locator) => l.locator("visible=true");
-const dalej = (page: Page) =>
-  page.getByRole("button", { name: "Dalej", exact: true });
+const dalej = (page: Page) => page.getByRole("button", { name: "Dalej", exact: true });
+const guzik = (page: Page, nazwa: string) => widoczny(page.getByRole("button", { name: nazwa, exact: true }));
 
 async function zalozKonto(page: Page, projekt: string) {
   const email = uniqueEmail(projekt);
   const haslo = randomPassword();
-  await createConfirmedUser(email, haslo, false);
+  const userId = await createConfirmedUser(email, haslo, false);
   await logInViaForm(page, email, haslo);
   await expect(page).toHaveURL(/\/onboarding\/1$/);
+  return userId;
 }
 
 test.describe("onboarding", () => {
   test.skip(!process.env.E2E_SUPABASE, "wymaga lokalnego Supabase");
 
-  test("kreator 1→7 z wznawianiem, podsumowaniem i zmianą", async ({
-    page,
-    context,
-  }, info) => {
-    const mobile = info.project.name === "mobile";
-    await context.grantPermissions(["notifications"]);
-    await zalozKonto(page, info.project.name);
+  test("4 kroki: wznawianie, bloki na dziś, strony i przejście na Dziś", async ({ page }, info) => {
+    const userId = await zalozKonto(page, info.project.name);
 
-    // Krok 1: „Dalej” nieaktywne bez imienia
-    // Konto z API ma w profilu nazwę z metadanych, więc najpierw ją czyścimy
-    await widoczny(page.getByLabel("Imię lub pseudonim")).fill("");
+    // Krok 1: „Dalej” nieaktywne bez imienia; ustawienia wykryte pod „Zmień”
+    const imie = widoczny(page.getByLabel("Imię lub pseudonim"));
+    await imie.fill("");
     await expect(dalej(page)).toBeDisabled();
-    await widoczny(page.getByLabel("Imię lub pseudonim")).fill("Mejson");
-    await expect(dalej(page)).toBeEnabled();
-    await page.getByRole("radio", { name: "Niedzieli" }).click();
-    await page.getByRole("radio", { name: "12 h · 2:30 PM" }).click();
-    await expect(
-      page.getByRole("radio", { name: "Niedzieli" }),
-    ).toHaveAttribute("aria-checked", "true");
+    await imie.fill("Mejson");
+    await guzik(page, "Zmień").click();
+    await page.getByRole("radio", { name: "Niedziela" }).click();
     await dalej(page).click();
 
-    // Krok 2: role (web: karty, telefon: checkboxy)
+    // Krok 2: wybory i cel biegania
     await expect(page).toHaveURL(/\/onboarding\/2$/);
-    const rola = (nazwa: RegExp) =>
-      page.getByRole(mobile ? "checkbox" : "button", { name: nazwa });
-    await rola(/^Student/).click();
-    await rola(/^Trenuję regularnie/).click();
-    await widoczny(page.getByLabel(/Kierunek studiów/)).fill("Informatyka");
-    if (!mobile) {
-      // Podgląd na żywo (tylko web) pokazuje kategorię z zaznaczonej roli
-      await expect(widoczny(page.getByTestId("pv-cats"))).toContainText(
-        "Studia",
-      );
-    } else {
-      await expect(widoczny(page.getByTestId("pv-cats"))).toHaveCount(0);
-    }
+    for (const nazwa of ["Studia", "Bieganie", "Subskrypcje"]) await guzik(page, nazwa).click();
+    await widoczny(page.locator('input[aria-label="Bieganie"]')).fill("30");
     await dalej(page).click();
 
-    // Krok 3: cele; nowe konto ma oba cele treningowe włączone (3 treningi i 25 km / tydz.)
+    // Wznawianie i brak przeskakiwania kroków
     await expect(page).toHaveURL(/\/onboarding\/3$/);
-    await expect(
-      page.getByRole("heading", { name: "Twoje cele" }),
-    ).toBeVisible();
-    await expect(
-      page.getByRole("checkbox", { name: "Treningi w tygodniu" }),
-    ).toHaveAttribute("aria-checked", "true");
-    await expect(
-      page.getByRole("checkbox", { name: "Kilometry biegu w tygodniu" }),
-    ).toHaveAttribute("aria-checked", "true");
-    // Wyłączamy km, żeby w podsumowaniu zostały same treningi
-    await page
-      .getByRole("checkbox", { name: "Kilometry biegu w tygodniu" })
-      .click();
-    // Telefon: licznik −/+; web: pole liczby
-    const licznik = page.getByRole("group", { name: "Treningi w tygodniu" });
-    const pole = widoczny(
-      page.getByLabel("Treningi w tygodniu", { exact: true }),
-    );
-    if (mobile) {
-      await expect(licznik.getByText("3", { exact: true })).toBeVisible();
-      await page
-        .getByRole("button", { name: "Zmniejsz Treningi w tygodniu" })
-        .click();
-      await page
-        .getByRole("button", { name: "Zwiększ Treningi w tygodniu" })
-        .click();
-      await page
-        .getByRole("button", { name: "Zwiększ Treningi w tygodniu" })
-        .click();
-      await expect(licznik.getByText("4", { exact: true })).toBeVisible();
-    } else {
-      await expect(pole).toHaveValue("3");
-      await pole.fill("15");
-      await expect(
-        widoczny(page.getByText("Podaj liczbę 1–14.")),
-      ).toBeVisible();
-      await expect(dalej(page)).toBeDisabled();
-      await pole.fill("4");
-      await expect(dalej(page)).toBeEnabled();
-    }
+    await page.goto("/onboarding/4");
+    await expect(page).toHaveURL(/\/onboarding\/3$/);
+    await page.goto("/onboarding");
+    await expect(page).toHaveURL(/\/onboarding\/3$/);
+
+    // Krok 3: podpowiedź i własny blok
+    await widoczny(page.getByRole("button", { name: /^Zajęcia · / })).click();
+    await widoczny(page.getByLabel("Własny blok")).fill("Angielski");
+    await guzik(page, "Dodaj").click();
     await dalej(page).click();
 
-    // Wznawianie: po odświeżeniu i wejściu na /onboarding wracamy na zapisany krok 4, wybory zostają
-    await expect(page).toHaveURL(/\/onboarding\/4$/);
-    await page.reload();
-    await page.goto("/onboarding");
-    await expect(page).toHaveURL(/\/onboarding\/4$/);
-    // Review Focus 1: nie wolno przeskoczyć niezapisanych kroków
-    await page.goto("/onboarding/7");
+    // Krok 4; powrót do 3 pokazuje bloki jako zapisane
     await expect(page).toHaveURL(/\/onboarding\/4$/);
     await page.goto("/onboarding/3");
-    // Wybory z kroku 3 zostały zapisane: treningi włączone, kilometry wyłączone
-    await expect(
-      page.getByRole("checkbox", { name: "Treningi w tygodniu" }),
-    ).toHaveAttribute("aria-checked", "true");
-    await expect(
-      page.getByRole("checkbox", { name: "Kilometry biegu w tygodniu" }),
-    ).toHaveAttribute("aria-checked", "false");
-    if (mobile) {
-      await expect(licznik.getByText("4", { exact: true })).toBeVisible();
-    } else {
-      await expect(pole).toHaveValue("4");
-    }
+    await expect(widoczny(page.getByText("w kalendarzu"))).toHaveCount(2);
     await dalej(page).click();
     await expect(page).toHaveURL(/\/onboarding\/4$/);
+    await guzik(page, "Uczelnia").click();
+    await guzik(page, "Zacznij korzystać").click();
 
-    // Wstecz 4 → 3 → 2 i z powrotem (bez przeładowania): Next zachowuje trasy, a przyciski mają zostać aktywne
-    await page.getByRole("button", { name: "Wstecz" }).click();
-    await expect(page).toHaveURL(/\/onboarding\/3$/);
-    await expect(dalej(page)).toBeEnabled();
-    await page.getByRole("button", { name: "Wstecz" }).click();
-    await expect(page).toHaveURL(/\/onboarding\/2$/);
-    await expect(dalej(page)).toBeEnabled();
-    await dalej(page).click();
-    await expect(page).toHaveURL(/\/onboarding\/3$/);
-    await expect(dalej(page)).toBeEnabled();
-    await dalej(page).click();
-    await expect(page).toHaveURL(/\/onboarding\/4$/);
-
-    // Krok 4: źródło „Inne” z opisem
-    const zrodla = widoczny(
-      page.getByTestId(mobile ? "source-phone" : "source-web"),
-    );
-    await zrodla.getByRole("button", { name: "Inne", exact: true }).click();
-    await widoczny(page.getByLabel("Gdzie dokładnie?")).fill("podcast");
-    await dalej(page).click();
-
-    // Krok 5: nic nie jest zaznaczone na start; wybieramy Projects
-    await expect(page).toHaveURL(/\/onboarding\/5$/);
-    if (mobile) {
-      const strony = widoczny(page.getByTestId("pages-phone"));
-      await expect(strony.getByRole("checkbox", { checked: true })).toHaveCount(
-        0,
-      );
-      await strony.getByRole("checkbox", { name: /^Projects/ }).click();
-      await expect(
-        strony.getByRole("checkbox", { name: /^Projects/ }),
-      ).toBeChecked();
-    } else {
-      const strony = widoczny(page.getByTestId("pages-web"));
-      await expect(strony.locator('[aria-pressed="true"]')).toHaveCount(0);
-      await strony.getByRole("button", { name: /^Projects/ }).click();
-      await expect(
-        strony.getByRole("button", { name: /^Projects/ }),
-      ).toHaveAttribute("aria-pressed", "true");
-    }
-    await dalej(page).click();
-
-    // Krok 6: przypomnienia i zgoda na powiadomienia
-    await expect(page).toHaveURL(/\/onboarding\/6$/);
-    const nawyki = page.getByRole("switch", { name: "Nawyki", exact: true });
-    await expect(nawyki).toHaveAttribute("aria-checked", "false");
-    await nawyki.click();
-    await expect(nawyki).toHaveAttribute("aria-checked", "true");
-    await page.getByRole("button", { name: "Zezwól" }).click();
-    await expect(
-      page.getByText("Włączone", { exact: true }).locator("visible=true"),
-    ).toBeVisible();
-    await expect(page.getByRole("button", { name: "Anuluj" })).toBeVisible();
-    await dalej(page).click();
-
-    // Krok 7: podsumowanie
-    await expect(page).toHaveURL(/\/onboarding\/7$/);
-    await expect(
-      page.getByRole("heading", { name: "Gotowe, Mejson" }),
-    ).toBeVisible();
-    const podsumowanie = widoczny(
-      page.getByTestId(mobile ? "done-phone" : "done-web"),
-    );
-    await expect(podsumowanie).toContainText("Studia, Sport");
-    await expect(podsumowanie).toContainText("Projects");
-    await expect(podsumowanie).toContainText("4 treningi / tydz.");
-
-    // „Zmień” przy Profilu → krok 1 z wpisanym imieniem, potem „Dalej” aż do 7
-    await page.getByRole("button", { name: "Zmień: Profil" }).click();
-    await expect(page).toHaveURL(/\/onboarding\/1$/);
-    await expect(widoczny(page.getByLabel("Imię lub pseudonim"))).toHaveValue(
-      "Mejson",
-    );
-    for (const krok of [2, 3, 4, 5, 6, 7]) {
-      await dalej(page).click();
-      await expect(page).toHaveURL(new RegExp(`/onboarding/${krok}$`));
-    }
-
-    // „Zmień: Strony” → krok 5, „Dalej” → krok 6, w którym „Dalej” ma być aktywne (trasa 6 była już odwiedzona)
-    await page.getByRole("button", { name: "Zmień: Strony" }).click();
-    await expect(page).toHaveURL(/\/onboarding\/5$/);
-    await dalej(page).click();
-    await expect(page).toHaveURL(/\/onboarding\/6$/);
-    await expect(dalej(page)).toBeEnabled();
-    await dalej(page).click();
-    await expect(page).toHaveURL(/\/onboarding\/7$/);
-
-    await page.getByRole("button", { name: "Przejdź do Dziś" }).click();
     await expect(page).toHaveURL(/\/dzis$/);
-    // Dziś bez stanu pustego: od razu pełny układ (web i telefon mają „Plan dnia”)
-    await expect(
-      widoczny(page.getByRole("heading", { name: "Plan dnia" })),
-    ).toBeVisible();
+    await expect(widoczny(page.getByText("Angielski")).first()).toBeVisible();
+
+    // W bazie: dokładnie dwa bloki, kategorie z wyborów i cel w km
+    const admin = adminClient();
+    const { data: bloki } = await admin.from("blocks").select("title").eq("user_id", userId);
+    expect(bloki?.map((b) => b.title).sort()).toEqual(["Angielski", "Zajęcia"]);
+    const { data: kategorie } = await admin.from("categories").select("name").eq("user_id", userId);
+    expect(kategorie?.map((k) => k.name).sort()).toEqual(["Sport", "Studia"]);
+    const { data: profil } = await admin
+      .from("profiles")
+      .select("km_goal_on, workouts_goal_on, weekly_km_goal, week_start")
+      .eq("user_id", userId)
+      .single();
+    expect(profil).toMatchObject({ km_goal_on: true, workouts_goal_on: false, weekly_km_goal: 30, week_start: "sun" });
 
     // Po ukończeniu kreator nie jest już dostępny
     await page.goto("/onboarding/2");
