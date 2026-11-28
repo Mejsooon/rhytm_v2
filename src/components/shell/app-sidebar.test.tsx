@@ -33,6 +33,10 @@ vi.mock("@/features/auth/actions", () => ({
   signOut: vi.fn(async () => undefined),
 }));
 
+vi.mock("@/features/notifications/inbox-actions", () => ({
+  markRead: vi.fn(),
+}));
+
 import { AppSidebar } from "./app-sidebar";
 import { SidebarStateProvider } from "./sidebar-state";
 import type { PageSummary } from "@/features/pages/load-pages";
@@ -478,7 +482,8 @@ describe("AppSidebar", () => {
     expect(strony[0].querySelector("[data-page-icon]")).toHaveAttribute("data-page-icon", "book-open");
     expect(within(szyna).getByRole("link", { name: "Ustawienia" })).toHaveAttribute("href", "/ustawienia/ogolne");
     expect(within(szyna).getByRole("button", { name: "Konto Mejson" })).toBeInTheDocument();
-    // Bez dzwonka (centrum powiadomień to część B2)
+    // Dzwonek i pomoc także na szynie
+    expect(within(szyna).getByRole("button", { name: "Powiadomienia" })).toBeInTheDocument();
     expect(within(szyna).getByRole("button", { name: "Pomoc i opinie" })).toBeInTheDocument();
 
     await user.click(pokaz);

@@ -470,6 +470,27 @@ export type Database = {
         };
         Relationships: [];
       };
+      notifications: {
+        Row: {
+          body: string;
+          created_at: string;
+          for_date: string;
+          id: string;
+          kind: string;
+          read_at: string | null;
+          ref: string;
+          title: string;
+          url: string;
+          user_id: string;
+        };
+        Insert: {
+          read_at?: string | null;
+        };
+        Update: {
+          read_at?: string | null;
+        };
+        Relationships: [];
+      };
       notification_settings: {
         Row: {
           before_block_min: number | null;
@@ -1220,7 +1241,7 @@ export type Database = {
         Returns: string[];
       };
       claim_due_notifications: {
-        Args: { p_now: string };
+        Args: { p_now: string; p_push?: boolean };
         Returns: {
           auth: string;
           body: string;

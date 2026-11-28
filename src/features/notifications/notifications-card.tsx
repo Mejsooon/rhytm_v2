@@ -39,8 +39,6 @@ export type NotificationSettings = {
 // Wiersz .nrow: 14 px w pionie, linia rgba(0,0,0,.06) między wierszami, bez linii pod ostatnim
 const WIERSZ =
   "flex flex-wrap items-center justify-between gap-3 border-b border-black/[.06] py-3.5 leading-[1.21] last:border-b-0 max-[799px]:min-h-[60px] max-[799px]:flex-nowrap max-[799px]:border-border max-[799px]:px-4 max-[799px]:py-2.5 max-[799px]:[&>:first-child]:min-w-0 max-[799px]:[&>:first-child]:flex-1";
-// Wiersz wyszarzony jak w makiecie (opacity .55); przełącznik w nim bez własnego przygaszenia
-const WYSZARZONY = "opacity-55 [&_[role=switch]]:opacity-100";
 
 // Rodzic-klient: jeden hook push, z którego korzystają trzy karty
 export function NotificationsTab({
@@ -67,9 +65,6 @@ export function NotificationsTab({
     deviceLabels[d.endpoint] = d.label;
   }
   const activeDevices = devices.filter((d) => d.enabled).length;
-  // Wyszarzenie (decyzja C13): push na tym urządzeniu nie jest włączony. Wyjątek: push nieskonfigurowany
-  // na serwerze (brak VAPID) — wtedy ustawienia i godziny nawyków da się przygotować zawczasu.
-  const wyszarz = push.stan !== "wlaczony" && push.stan !== "nieskonfigurowany";
 
   return (
     <>
@@ -90,7 +85,7 @@ export function NotificationsTab({
       />
       <HabitRemindersCard
         habits={habits}
-        disabled={wyszarz || !nawykiWlaczone}
+        disabled={!nawykiWlaczone}
       />
     </>
   );
@@ -153,7 +148,6 @@ export function NotificationsCard({
   const [wysylam, setWysylam] = React.useState(false);
 
   const wlaczony = push.stan === "wlaczony";
-  const wyszarz = !wlaczony && push.stan !== "nieskonfigurowany";
   const mozeTest = wlaczony && activeDevices > 0;
 
   // Zapis pola (albo pary godzin): od razu na ekranie, przy błędzie powrót do zapisanej wartości
@@ -184,7 +178,6 @@ export function NotificationsCard({
   }
 
   function przelaczRodzaj(klucz: "habits" | "block" | "renewals", v: boolean) {
-    if (wyszarz) return;
     setKomunikat(null);
     if (klucz === "habits") void zapisz({ habits: v }, { habits_enabled: v });
     else if (klucz === "block")
@@ -302,17 +295,16 @@ export function NotificationsCard({
           />
         </div>
 
+        {/* Rodzaje działają także bez pusha: sterują też listą w centrum powiadomień */}
         {RODZAJE.map((r) => (
-          <div key={r.klucz} className={cn(WIERSZ, wyszarz && WYSZARZONY)}>
+          <div key={r.klucz} className={WIERSZ}>
             <div>
               <div className="font-medium">{r.tytul}</div>
               <div className="text-[13px] text-muted-foreground">{r.opis}</div>
             </div>
             <Switch
-              // Przy wyszarzeniu pokazany jako wyłączony; zapisana wartość zostaje (C13)
-              checked={wartosci[r.klucz] && !wyszarz}
+              checked={wartosci[r.klucz]}
               ariaLabel={r.tytul}
-              disabled={wyszarz}
               onChange={(v) => przelaczRodzaj(r.klucz, v)}
             />
           </div>
