@@ -11,6 +11,7 @@ import type { PageSummary } from "@/features/pages/load-pages";
 import { PageIcon } from "@/features/pages/page-icon";
 import { PageMenu } from "@/features/pages/page-menu";
 import { HelpMenu } from "@/features/help/help-menu";
+import { NotificationBell } from "@/features/notifications/inbox";
 import { openSearch } from "@/features/search/open-search";
 import { usePagesStore } from "@/features/pages/use-pages-store";
 import { cn } from "@/lib/utils";
@@ -147,6 +148,7 @@ export function AppSidebar({
           <RhytmLogo size={22} />
         </span>
         <SidebarToggle placement="rail" />
+        <NotificationBell compact />
         <button
           type="button"
           onClick={openSearch}
@@ -215,6 +217,7 @@ export function AppSidebar({
       <div className="flex h-10 items-center gap-2 px-2">
         <RhytmLogo size={22} />
         <span className="flex-1 text-[15px] font-semibold tracking-[-0.03em]">rhytm</span>
+        <NotificationBell />
         <SidebarToggle placement="sidebar" />
       </div>
 

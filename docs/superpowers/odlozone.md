@@ -234,3 +234,8 @@ Final review: Important #1 phone delete dialog leak → fix; #2 heat-2 → Do de
 - Szablon z ⌘K otwiera stronę szablonu (makieta od razu zaczyna trening).
 - Okno ⌘K: bez kolorów ikon biegów i aktywności z makiety (litera tytułu na szarym tle).
 - Po błędzie logowania nie ma licznika prób (decyzja Mejsona).
+
+## Centrum powiadomień (2026-11-28)
+- `notifications` nie wchodzi do eksportu danych.
+- Lista ma limit 100 wpisów z ostatnich 30 dni; licznik na dzwonku liczy tylko z nich.
+- Odświeża się przy wejściu, otwarciu panelu i powrocie do karty, nie na żywo.

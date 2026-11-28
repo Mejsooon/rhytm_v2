@@ -165,6 +165,28 @@ test.describe("szukaj", () => {
     await expect(page.getByRole("dialog", { name: "Dzięki, dostaliśmy to" })).toBeVisible();
   });
 
+  test("web: dzwonek pokazuje wpis z bazy i oznacza go jako przeczytany", async ({ page }, info) => {
+    test.skip(info.project.name === "mobile", "dzwonek jest tylko w web");
+    const userId = await zalozKontoStron(page, info.project.name);
+    const { error } = await adminClient().from("notifications").insert({
+      user_id: userId,
+      kind: "habit",
+      ref: userId,
+      for_date: dzisWarszawa(),
+      title: "Pora na: Czytanie",
+      body: "Przypomnienie nawyku",
+      url: "/nawyki",
+    });
+    if (error) throw new Error(`Nie udało się zasiać powiadomienia: ${error.message}`);
+
+    await page.goto("/dzis");
+    await page.getByRole("button", { name: "Powiadomienia, 1 nieprzeczytane" }).click();
+    await page.getByRole("button", { name: /Pora na: Czytanie/ }).click();
+    await expect(page).toHaveURL(/\/nawyki$/);
+    await page.reload();
+    await expect(page.getByRole("button", { name: "Powiadomienia", exact: true })).toBeVisible();
+  });
+
   test("szybkie akcje otwierają okna w modułach", async ({ page }, info) => {
     await zalozKontoStron(page, info.project.name);
     await page.goto("/szukaj");

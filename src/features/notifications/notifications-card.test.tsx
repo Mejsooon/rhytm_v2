@@ -111,21 +111,13 @@ describe("NotificationsTab — karta główna", () => {
     expect(hook.wlacz).not.toHaveBeenCalled();
   });
 
-  it("push wyłączony → rodzaje wyszarzone, aria-disabled, pokazane jako wyłączone, bez zapisu", () => {
+  it("push wyłączony → rodzaje i tak działają (sterują listą w aplikacji)", async () => {
     hook.stan = "wylaczony";
     pokaz();
-    for (const nazwa of [
-      "Przypomnienia o nawykach",
-      "Start bloku w kalendarzu",
-      "Odnowienia subskrypcji",
-    ]) {
-      const sw = przelacznik(nazwa);
-      expect(sw).toHaveAttribute("aria-disabled", "true");
-      expect(sw).toHaveAttribute("aria-checked", "false");
-      expect(sw.closest("div.flex-wrap")).toHaveClass("opacity-55");
-      fireEvent.click(sw);
-    }
-    expect(saveNotificationSettings).not.toHaveBeenCalled();
+    const sw = przelacznik("Odnowienia subskrypcji");
+    expect(sw).not.toHaveAttribute("aria-disabled");
+    fireEvent.click(sw);
+    await waitFor(() => expect(saveNotificationSettings).toHaveBeenCalled());
   });
 
   it("push nieskonfigurowany (brak VAPID) → rodzaje działają i zapisują się", async () => {
@@ -293,12 +285,9 @@ describe("NotificationsTab — wyszarzenie przypomnień nawyków", () => {
     expect(nawyk).toHaveAttribute("aria-checked", "false");
   });
 
-  it("push wyłączony tutaj → karta nawyków wyszarzona", () => {
+  it("push wyłączony tutaj → godziny nawyków da się ustawić", () => {
     hook.stan = "wylaczony";
     pokaz({ habits: [NAWYK] });
-    expect(
-      screen.getByRole("switch", { name: "Przypomnienie: Woda 2 l" }),
-    ).toHaveAttribute("aria-disabled", "true");
-    expect(screen.getByText("wyłączone")).toBeInTheDocument();
+    expect(screen.getByRole("switch", { name: "Przypomnienie: Woda 2 l" })).not.toHaveAttribute("aria-disabled");
   });
 });

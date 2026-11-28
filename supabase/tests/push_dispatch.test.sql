@@ -153,14 +153,14 @@ update public.pages as p set deleted_at = now() where p.id = '63000000-0000-0000
 
 -- Schemat, uprawnienia, cron
 select has_table('public', 'push_log', 'istnieje push_log');
-select has_function('public', 'claim_due_notifications', array['timestamp with time zone'], 'istnieje claim_due_notifications(timestamptz)');
+select has_function('public', 'claim_due_notifications', array['timestamp with time zone', 'boolean'], 'istnieje claim_due_notifications');
 select has_function('public', 'dispatch_notifications', 'istnieje dispatch_notifications()');
 select has_function('public', 'remove_push_subscriptions', array['text', 'text[]'], 'istnieje remove_push_subscriptions(text, text[])');
-select ok(not has_function_privilege('authenticated', 'public.claim_due_notifications(timestamptz)', 'execute'),
+select ok(not has_function_privilege('authenticated', 'public.claim_due_notifications(timestamptz, boolean)', 'execute'),
   'authenticated nie wykonuje claim_due_notifications');
 select ok(not has_function_privilege('authenticated', 'public.dispatch_notifications()', 'execute'),
   'authenticated nie wykonuje dispatch_notifications');
-select ok(not has_function_privilege('anon', 'public.claim_due_notifications(timestamptz)', 'execute'),
+select ok(not has_function_privilege('anon', 'public.claim_due_notifications(timestamptz, boolean)', 'execute'),
   'anon nie wykonuje claim_due_notifications');
 select ok(has_function_privilege('anon', 'public.remove_push_subscriptions(text, text[])', 'execute'),
   'anon wykonuje remove_push_subscriptions (trasa crona, sekret sprawdza funkcja)');

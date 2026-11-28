@@ -35,7 +35,7 @@ export function HabitRemindersCard({
   disabled,
 }: {
   habits: HabitReminderItem[];
-  // Push tu nie jest włączony albo „Przypomnienia o nawykach” wyłączone: wiersze wyszarzone (C13)
+  // „Przypomnienia o nawykach” wyłączone: wiersze wyszarzone (C13)
   disabled: boolean;
 }) {
   // Godziny ustawione w tej wizycie (optymistycznie) i ostatnio zapisane (do cofnięcia przy błędzie)
