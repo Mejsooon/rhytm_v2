@@ -40,6 +40,8 @@ export function MonthCalendar({
   onOpenRun,
   onStartGym,
   onDelete,
+  onPlanGym,
+  onReschedule,
   suspended = false,
   onOpenActivity,
 }: {
@@ -53,6 +55,9 @@ export function MonthCalendar({
   onOpenRun: (req: RunRequest) => void;
   onStartGym: (input: GymSessionInput) => void;
   onDelete: (item: SportItem) => void;
+  // „Siłownia” i szablony w dymku dnia otwierają okno planowania
+  onPlanGym: (date: IsoDate, templateId: string | null) => void;
+  onReschedule: (item: SportItem) => void;
   // Okno potwierdzenia usunięcia jest otwarte: Esc i klik poza kalendarzem nie zamykają dymka
   suspended?: boolean;
   // Edycja innej aktywności; null = nowa w wybranym dniu
@@ -236,6 +241,7 @@ export function MonthCalendar({
                         onOpenRun={onOpenRun}
                         onStartGym={onStartGym}
                         onDelete={onDelete}
+                        onReschedule={onReschedule}
                         onOpenActivity={(w) => onOpenActivity?.(w, w.date)}
                       />
                     )}
@@ -294,9 +300,7 @@ export function MonthCalendar({
                         <button
                           type="button"
                           className={OPCJA}
-                          onClick={() =>
-                            onStartGym({ date, start: godzinaTeraz() })
-                          }
+                          onClick={() => onPlanGym(date, null)}
                         >
                           <span
                             aria-hidden="true"
@@ -307,7 +311,7 @@ export function MonthCalendar({
                           <span className="flex flex-col">
                             <span className="font-medium">Siłownia</span>
                             <span className="text-xs text-muted-foreground">
-                              pusty trening siłowy
+                              pusty albo z szablonu
                             </span>
                           </span>
                         </button>
@@ -328,13 +332,7 @@ export function MonthCalendar({
                               {data.templates.map((t) => (
                                 <Chip
                                   key={t.id}
-                                  onClick={() =>
-                                    onStartGym({
-                                      date,
-                                      start: t.start_time.slice(0, 5),
-                                      templateId: t.id,
-                                    })
-                                  }
+                                  onClick={() => onPlanGym(date, t.id)}
                                 >
                                   {t.name}
                                 </Chip>

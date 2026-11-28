@@ -56,9 +56,9 @@ export function TableToolbar({
 }) {
   const [otwarte, setOtwarte] = React.useState<"grupuj" | "sortuj" | "pola" | null>(null);
 
-  // Grupować można po polach wyboru, statusu i checkboxach (jak groupRows)
-  const doGrupowania = fields.filter((f) => f.type === "select" || f.type === "status" || f.type === "checkbox");
-  const poleGrupy = fields.find((f) => f.id === view.group_by && doGrupowania.includes(f));
+  // Grupować można po każdej widocznej kolumnie poza Sekretem (jak groupRows)
+  const doGrupowania = fields.filter((f) => f.type !== "secret" && !view.hidden_field_ids.includes(f.id));
+  const poleGrupy = fields.find((f) => f.id === view.group_by && f.type !== "secret");
 
   // Klucz sortu na przycisku: pierwszy poza polem grupowania (grupy i tak idą w kolejności opcji)
   const kluczSortu =

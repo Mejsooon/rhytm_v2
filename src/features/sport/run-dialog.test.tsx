@@ -101,7 +101,7 @@ describe("RunDialog", () => {
     );
     await userEvent.click(screen.getByRole("button", { name: "9" }));
     expect(screen.getByRole("button", { name: "9" })).toHaveClass(
-      "bg-destructive",
+      "bg-destructive-strong",
     );
     await userEvent.click(screen.getByRole("button", { name: "2" }));
     expect(screen.getByRole("button", { name: "2" })).toHaveClass("bg-success");

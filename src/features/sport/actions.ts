@@ -1,5 +1,6 @@
 "use server";
 
+import type { z } from "zod";
 import type { SupabaseClient } from "@supabase/supabase-js";
 import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
@@ -24,6 +25,7 @@ import {
   exerciseMetaSchema,
   exerciseNameSchema,
   finishSchema,
+  gymPlanSchema,
   gymSessionInputSchema,
   idSchema,
   isoDateSchema,
@@ -350,6 +352,51 @@ export async function skipTemplateOccurrence(
 
   revalidateSport();
   return { ok: true };
+}
+
+// Planowanie treningu siłowego i zmiana terminu. Nowy plan to zwykła sesja z przyszłym terminem i końcem.
+export async function planGymSession(input: z.input<typeof gymPlanSchema>): Promise<ActionResult> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) redirect("/logowanie");
+
+  const parsed = gymPlanSchema.safeParse(input);
+  if (!parsed.success) return { ok: false, message: parsed.error.issues[0]?.message ?? BLAD_ZAPISU };
+  const dane = parsed.data;
+
+  let id = dane.sessionId;
+  if (!id) {
+    // Sesja (z seriami szablonu) powstaje jak przy starcie; `originalDate` trzyma template_date wystąpienia
+    const nowa = await createGymSession({
+      date: dane.originalDate ?? dane.date,
+      start: dane.start,
+      templateId: dane.templateId,
+    });
+    if (!nowa.ok) return nowa;
+    id = nowa.id!;
+  }
+
+  const { data, error } = await supabase
+    .from("sport_sessions")
+    .update({
+      start_local: `${dane.date}T${dane.start}:00`,
+      end_local: `${dane.date}T${dane.end}:00`,
+      show_in_calendar: dane.showInCalendar,
+    })
+    .eq("id", id)
+    .eq("user_id", user.id)
+    .eq("type", "gym")
+    .eq("completed", false)
+    .is("started_at", null)
+    .select("id");
+  if (error) return { ok: false, message: BLAD_ZAPISU };
+  if (!data?.length) return { ok: false, message: "Tego treningu nie można już przenieść." };
+
+  revalidateSport();
+  revalidatePath("/dzis");
+  return { ok: true, id };
 }
 
 // Nowy trening siłowy: pusty albo z szablonu (wystąpienie szablonu w dniu `date`).

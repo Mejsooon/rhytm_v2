@@ -17,6 +17,33 @@ test.describe("sport (web)", () => {
     test.skip(info.project.name !== "web", "układ webowy");
   });
 
+  test("planowanie siłowni: okno z menu zapisuje trening na jutro, bez otwierania dziennika", async ({
+    page,
+  }, info) => {
+    const userId = await zalozKontoNawykow(page, info.project.name);
+    await page.goto("/sport");
+    const web = page.getByTestId("web-sport");
+
+    await web.getByRole("button", { name: "Dodaj aktywność" }).click();
+    await page.getByRole("button", { name: "Pusty", exact: true }).click();
+    const okno = page.getByRole("dialog", { name: "Zaplanuj trening siłowy" });
+    await okno.getByRole("radio", { name: "Jutro" }).click();
+    await okno.getByRole("button", { name: "90 min" }).click();
+    await okno.getByRole("button", { name: "Zaplanuj" }).click();
+    await expect(okno).toBeHidden();
+    await expect(page).toHaveURL(/\/sport/);
+
+    const { data } = await adminClient()
+      .from("sport_sessions")
+      .select("start_local, end_local, completed")
+      .eq("user_id", userId)
+      .eq("type", "gym");
+    expect(data).toHaveLength(1);
+    expect(data![0].start_local.slice(0, 10)).toBe(przesunDate(dzisWarszawa(), 1));
+    expect(Date.parse(data![0].end_local!) - Date.parse(data![0].start_local)).toBe(90 * 60_000);
+    expect(data![0].completed).toBe(false);
+  });
+
   test("„Nowy bieg” 10 km w 58:00 → tempo 5:48 → bieg w kalendarzu Sportu i głównym, plan dnia na Dziś", async ({
     page,
   }, info) => {

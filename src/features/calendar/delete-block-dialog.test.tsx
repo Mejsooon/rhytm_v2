@@ -80,7 +80,7 @@ describe("DeleteBlockDialog", () => {
     const okno = screen.getByRole("alertdialog", { name: "Usunąć blok?" });
     expect(okno).toHaveClass("min-[800px]:rounded-xl", "min-[800px]:border-border", "min-[800px]:shadow-pop");
     expect(screen.getByRole("button", { name: "Usuń" }).parentElement).toHaveClass("min-[800px]:bg-black/[.025]", "min-[800px]:border-t");
-    expect(screen.getByRole("button", { name: "Usuń" })).toHaveClass("h-8", "bg-destructive");
+    expect(screen.getByRole("button", { name: "Usuń" })).toHaveClass("h-8", "bg-destructive-strong");
     // CDeleteBlockDialog: nagłówek z dolnym odstępem 20 px, kosz przy „Usuń” (tylko web)
     expect(screen.getByRole("heading", { name: "Usunąć blok?" }).parentElement).toHaveClass("min-[800px]:pb-5");
     expect(screen.getByRole("button", { name: "Usuń" }).querySelector("svg")).toHaveClass("size-4", "max-[799px]:hidden");

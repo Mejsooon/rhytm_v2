@@ -277,7 +277,7 @@ export function RunDialog({
             let stan = "border-input bg-white text-soft-foreground shadow-xs";
             if (trudnosc === n) {
               stan = wysoka
-                ? "border-destructive bg-destructive text-white shadow-[inset_0_1px_0_rgba(255,255,255,.2)]"
+                ? "border-destructive-strong bg-destructive-strong text-white shadow-[inset_0_1px_0_rgba(255,255,255,.2)]"
                 : srednia
                   ? "border-warning bg-warning text-white shadow-[inset_0_1px_0_rgba(255,255,255,.2)]"
                   : "border-success bg-success text-white shadow-[inset_0_1px_0_rgba(255,255,255,.2)]";

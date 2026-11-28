@@ -54,7 +54,7 @@ describe("Button", () => {
 
   it("destructive ma kolor tokenu destructive", () => {
     render(<Button variant="destructive">Usuń konto</Button>);
-    expect(screen.getByRole("button")).toHaveClass("bg-destructive", "border-destructive");
+    expect(screen.getByRole("button")).toHaveClass("bg-destructive-strong", "border-destructive-strong");
   });
 
   it("destructive-outline ma czerwony tekst", () => {

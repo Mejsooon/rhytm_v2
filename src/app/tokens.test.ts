@@ -18,7 +18,7 @@ const tokeny: Record<string, string> = {
   "soft-foreground": "rgba(38,38,38,.8)",
   "muted-foreground": "#686868",
   meta: "#686868",
-  "faint-foreground": "rgba(104,104,104,.72)",
+  "faint-foreground": "#737373",
   muted: "rgba(0,0,0,.04)",
   accent: "rgba(0,0,0,.04)",
   secondary: "rgba(0,0,0,.04)",

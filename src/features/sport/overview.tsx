@@ -53,6 +53,7 @@ export function SportOverview({
   templates,
   onOpen,
   onDelete,
+  onReschedule,
   onResetFilter,
 }: {
   // Wszystkie sesje i zaplanowane wystąpienia szablonów
@@ -67,6 +68,8 @@ export function SportOverview({
   onOpen: (item: SportItem) => void;
   templates: TemplateWithItems[];
   onDelete: (item: SportItem) => void;
+  // „Zmień termin” zaplanowanej siłowni
+  onReschedule?: (item: SportItem) => void;
   // Klik w dzień „Tego tygodnia” wraca do filtra „Wszystko”, żeby aktywność była na liście
   onResetFilter: () => void;
 }) {
@@ -154,6 +157,11 @@ export function SportOverview({
           <Button variant="primary" size="sm" onClick={() => onOpen(i)}>
             {akcja}
           </Button>
+          {i.kind === "gym" && i.planned && onReschedule && (
+            <Button size="sm" onClick={() => onReschedule(i)}>
+              Zmień termin
+            </Button>
+          )}
           <Button variant="ghost" size="sm" className="text-destructive-foreground" onClick={() => onDelete(i)}>
             {i.planned && !i.sessionId ? "Pomiń" : "Usuń"}
           </Button>

@@ -40,14 +40,15 @@ describe("TableToolbar", () => {
     expect(w.onLayout).toHaveBeenCalledWith("board");
   });
 
-  it("„Grupuj: Status” i menu „Grupuj według” z „Bez grupowania” i polami wyboru", async () => {
+  it("„Grupuj: Status” i menu „Grupuj według” z „Bez grupowania” i kolumnami poza Sekretem", async () => {
     const user = userEvent.setup();
     const w = renderuj({ group_by: pole("Status").id });
     await user.click(screen.getByRole("button", { name: "Grupuj: Status" }));
     const menu = screen.getByRole("menu", { name: "Grupuj według" });
     const pozycje = within(menu).getAllByRole("menuitemradio");
-    expect(pozycje.map((p) => p.textContent)).toEqual(["Bez grupowania", "Status"]);
-    expect(pozycje[1]).toHaveAttribute("aria-checked", "true");
+    expect(pozycje.map((p) => p.textContent)).toContain("Status");
+    expect(pozycje.length).toBeGreaterThan(2);
+    expect(within(menu).getByRole("menuitemradio", { name: "Status" })).toHaveAttribute("aria-checked", "true");
     await user.click(pozycje[0]);
     expect(w.onGroupBy).toHaveBeenCalledWith(null);
   });

@@ -116,6 +116,20 @@ describe("groupRows", () => {
     }
   });
 
+  it("Ocena i Data malejąco, kwoty w przedziałach, tekst alfabetycznie; puste na końcu; Sekret nie grupuje", () => {
+    const pole = (id: string, type: PageField["type"]): PageField => ({ id, name: id, type, config: {}, position: 9, isTitle: false });
+    const nazwy = (type: PageField["type"], wartosci: unknown[]) =>
+      groupRows([pole("x", type)], wartosci.map((v, i) => w(i + 1, v === undefined ? {} : { x: v as never })), "x").map(
+        (g) => g.label,
+      );
+    expect(nazwy("rating", [2, undefined, 5])).toEqual(["★★★★★ 5", "★★ 2", "Bez oceny"]);
+    expect(nazwy("date", ["2026-01-03", "2026-11-20", undefined])).toEqual(["listopad 2026", "styczeń 2026", "Bez daty"]);
+    expect(nazwy("recurring", [60, 5, 30, undefined])).toEqual(["do 20 zł", "20–50 zł", "50 zł i więcej", "Bez kwoty"]);
+    expect(nazwy("number", [10, 2])).toEqual(["2", "10"]);
+    expect(nazwy("text", ["Żaba", "", "Ala", "Ala"])).toEqual(["Ala", "Żaba", "Puste"]);
+    expect(groupRows([pole("x", "secret")], [w(1, {})], "x")[0].key).toBe("*");
+  });
+
   it("checkbox grupuje na zaznaczone i niezaznaczone", () => {
     const cb: PageField = { id: "c", name: "Zrobione", type: "checkbox", config: {}, position: 3, isTitle: false };
     const g = groupRows([...pola, cb], [w(1, { c: true }), w(2, { c: false }), w(3, {})], "c");

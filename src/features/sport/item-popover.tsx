@@ -46,6 +46,7 @@ export function ItemPopover({
   onOpenRun,
   onStartGym,
   onDelete,
+  onReschedule,
   onOpenActivity,
 }: {
   item: SportItem;
@@ -61,6 +62,7 @@ export function ItemPopover({
   onOpenRun: (req: RunRequest) => void;
   onStartGym: (input: GymSessionInput) => void;
   onDelete: (item: SportItem) => void;
+  onReschedule?: (item: SportItem) => void;
   onOpenActivity?: (item: SportItem) => void;
 }) {
   const bieg = item.kind === "run";
@@ -326,6 +328,11 @@ export function ItemPopover({
             }
           >
             Rozpocznij
+          </Button>
+        )}
+        {item.kind === "gym" && item.planned && onReschedule && (
+          <Button size="sm" onClick={() => onReschedule(item)}>
+            Zmień termin
           </Button>
         )}
         <Button
