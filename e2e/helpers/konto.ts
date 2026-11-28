@@ -41,7 +41,7 @@ export async function createConfirmedUser(
   return createUser(email, password, onboarded, false);
 }
 
-// Konto przed zakończeniem onboardingu, ale z zapisanymi krokami 1–6 (onboarding_step = 7) — do zrzutów ekranów
+// Konto przed zakończeniem onboardingu, ale z zapisanymi krokami 1–3 (onboarding_step = 4) — do zrzutów ekranów
 export async function createUserAtOnboardingEnd(
   email: string,
   password: string,
@@ -86,13 +86,12 @@ async function createUser(
         timezone: "Europe/Warsaw",
         week_start: "mon",
         clock: "24",
-        roles: ["student", "sport"],
-        study_field: "Informatyka",
+        roles: ["studia", "run"],
         weekly_km_goal: 30,
         sleep_goal_min: 480,
         referral_source: "friend",
         pending_pages: [],
-        onboarding_step: 7,
+        onboarding_step: 4,
       })
       .eq("user_id", data.user.id);
     if (blad)

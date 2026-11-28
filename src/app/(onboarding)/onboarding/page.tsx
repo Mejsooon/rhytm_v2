@@ -19,7 +19,7 @@ async function PrzejdzDoKroku(): Promise<never> {
     .eq("user_id", user.id)
     .maybeSingle();
 
-  redirect(`/onboarding/${profil?.onboarding_step ?? 1}`);
+  redirect(`/onboarding/${Math.min(profil?.onboarding_step ?? 1, 4)}`);
 }
 
 export default function OnboardingPage() {

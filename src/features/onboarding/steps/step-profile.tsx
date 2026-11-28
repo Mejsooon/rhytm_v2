@@ -1,7 +1,6 @@
 "use client";
 
 import * as React from "react";
-import { UploadIcon } from "lucide-react";
 
 import { Button, Dropdown, Segment, TextField } from "@/components/controls";
 import { timezoneOptions } from "@/lib/time/timezones";
@@ -32,7 +31,7 @@ function wykryjStrefe(): string | undefined {
   }
 }
 
-// Krok 1: profil (COnboarding + CMOnboarding). Zdjęcie wgrywa się od razu po wyborze pliku.
+// Krok 1: profil (S2OnboardingFlow). Zdjęcie wgrywa się od razu po wyborze pliku.
 export function StepProfile({
   draft,
   onChange,
@@ -109,136 +108,105 @@ export function StepProfile({
     onAvatarFile(plik);
   }
 
+  const [otwarte, setOtwarte] = React.useState(false);
+  const wybrana = opcje.find((o) => o.value === draft.timezone);
+  const wykryteTekst = `${wybrana ? `${wybrana.city} (${wybrana.offset})` : draft.timezone} · tydzień od ${
+    draft.weekStart === "mon" ? "poniedziałku" : "niedzieli"
+  } · zegar ${draft.clock} h`;
+
   return (
     <>
-      <StepHeader
-        title="Uzupełnij profil"
-        subtitle="Te dane widzisz tylko Ty. Zmienisz je później w Ustawieniach"
-        phoneSubtitle="Te dane widzisz tylko Ty. Zmienisz je później w Ustawieniach."
-      />
+      <StepHeader title="Cześć! Jak mamy się do Ciebie zwracać?" subtitle="Imię zobaczysz na stronie Dziś. Resztę wykryliśmy sami." />
 
-      <div className="flex flex-col gap-1.5">
-        {/* Wiersz zdjęcia jak w Ustawieniach (AvatarRow): 56 px, podpis, przycisk z ikoną po prawej */}
-        <div className="flex items-center gap-4 max-[799px]:gap-3.5">
-          {avatarUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
-              src={avatarUrl}
-              alt=""
-              className="size-14 flex-none rounded-full object-cover"
-            />
-          ) : (
-            <span className="grid size-14 flex-none place-items-center rounded-full bg-primary text-lg font-medium text-primary-foreground">
-              {inicjaly(draft.name)}
-            </span>
-          )}
-          <div className="flex flex-col gap-1">
-            <span className="font-medium">Zdjęcie profilowe</span>
-            <span className="text-[13px] text-muted-foreground">
-              Bez zdjęcia pokażemy inicjały
-            </span>
-          </div>
-          <Button
-            className="ml-auto max-[799px]:px-3.5"
-            disabled={wgrywanie}
-            onClick={() => wejscie.current?.click()}
-          >
-            <UploadIcon
-              aria-hidden="true"
-              className="size-4 max-[799px]:hidden"
-            />
-            {wgrywanie ? "Wgrywanie…" : "Wgraj"}
-          </Button>
-          <input
-            ref={wejscie}
-            type="file"
-            accept="image/png,image/jpeg,image/webp"
-            aria-label="Wybierz zdjęcie profilowe"
-            className="hidden"
-            onChange={naWyborPliku}
+      <div className="flex items-end gap-4">
+        {avatarUrl ? (
+          // eslint-disable-next-line @next/next/no-img-element
+          <img src={avatarUrl} alt="" className="size-14 flex-none rounded-full object-cover" />
+        ) : (
+          <span className="grid size-14 flex-none place-items-center rounded-full bg-primary text-lg font-medium text-primary-foreground">
+            {inicjaly(draft.name)}
+          </span>
+        )}
+        <div className="min-w-0 flex-1">
+          <TextField
+            label="Imię lub pseudonim"
+            autoComplete="nickname"
+            maxLength={40}
+            value={draft.name}
+            onChange={(e) => onChange({ ...draft, name: e.target.value })}
           />
         </div>
+      </div>
+
+      <div className="flex flex-col items-start gap-1.5">
+        <Button variant="ghost" size="sm" disabled={wgrywanie} onClick={() => wejscie.current?.click()}>
+          {wgrywanie ? "Wgrywanie…" : "+ Dodaj zdjęcie (opcjonalnie)"}
+        </Button>
+        <input
+          ref={wejscie}
+          type="file"
+          accept="image/png,image/jpeg,image/webp"
+          aria-label="Wybierz zdjęcie profilowe"
+          className="hidden"
+          onChange={naWyborPliku}
+        />
         {blad && (
-          <p
-            role="alert"
-            className="m-0 text-[13px] text-destructive-foreground"
-          >
+          <p role="alert" className="m-0 text-[13px] text-destructive-foreground">
             {blad}
           </p>
         )}
       </div>
 
-      <TextField
-        label="Imię lub pseudonim"
-        autoComplete="nickname"
-        value={draft.name}
-        placeholder="Jak mamy się do Ciebie zwracać?"
-        webPlaceholder=" "
-        onChange={(e) => onChange({ ...draft, name: e.target.value })}
-      />
-
-      <div className="flex flex-col gap-2 text-[13px] font-medium">
-        <span>Strefa czasowa</span>
-        {/* Web: „Europe/Warsaw (UTC+01:00)” */}
-        <div className="max-[799px]:hidden">
-          <Dropdown
-            variant="select"
-            ariaLabel="Strefa czasowa"
-            value={draft.timezone}
-            onChange={(timezone) => onChange({ ...draft, timezone })}
-            options={opcje.map((o) => ({
-              value: o.value,
-              label: o.value,
-              hint: `(${o.offset})`,
-            }))}
-          />
-        </div>
-        {/* Telefon: miasto + dopisek z przesunięciem */}
-        <div className="min-[800px]:hidden">
-          <Dropdown
-            ariaLabel="Strefa czasowa"
-            value={draft.timezone}
-            onChange={(timezone) => onChange({ ...draft, timezone })}
-            options={opcje.map((o) => ({
-              value: o.value,
-              label: o.city,
-              hint: o.offset,
-            }))}
-          />
-        </div>
-        {wykryta === draft.timezone && (
-          <span className="text-xs font-normal text-muted-foreground">
-            Wykryta z przeglądarki
+      <div className="flex flex-col gap-4 rounded-xl border border-border p-4">
+        <div className="flex items-center gap-3">
+          <span className="flex min-w-0 flex-1 flex-col gap-0.5">
+            <span className="font-medium">Wykryte z przeglądarki</span>
+            <span className="text-xs text-muted-foreground tabular-nums">{wykryteTekst}</span>
           </span>
+          <Button size="sm" aria-expanded={otwarte} onClick={() => setOtwarte((o) => !o)}>
+            {otwarte ? "Gotowe" : "Zmień"}
+          </Button>
+        </div>
+        {otwarte && (
+          <>
+            <div className="flex flex-col gap-2 text-[13px] font-medium">
+              <span>Strefa czasowa</span>
+              <Dropdown
+                variant="select"
+                ariaLabel="Strefa czasowa"
+                value={draft.timezone}
+                onChange={(timezone) => onChange({ ...draft, timezone })}
+                options={opcje.map((o) => ({ value: o.value, label: o.value, hint: `(${o.offset})` }))}
+              />
+            </div>
+            <div className="flex flex-col gap-2 text-[13px] font-medium">
+              <span>Tydzień zaczyna się od</span>
+              <Segment
+                fill
+                ariaLabel="Początek tygodnia"
+                value={draft.weekStart}
+                onChange={(weekStart) => onChange({ ...draft, weekStart })}
+                options={[
+                  { value: "mon", label: "Poniedziałek" },
+                  { value: "sun", label: "Niedziela" },
+                ]}
+              />
+            </div>
+            <div className="flex flex-col gap-2 text-[13px] font-medium">
+              <span>Format godziny</span>
+              <Segment
+                fill
+                ariaLabel="Format godziny"
+                value={draft.clock}
+                onChange={(clock) => onChange({ ...draft, clock })}
+                options={[
+                  { value: "24", label: "24 h · 14:30" },
+                  { value: "12", label: "12 h · 2:30 PM" },
+                ]}
+              />
+            </div>
+          </>
         )}
-      </div>
-
-      <div className="flex flex-col gap-2 text-[13px] font-medium">
-        <span>Tydzień zaczyna się od</span>
-        <Segment
-          fill
-          ariaLabel="Początek tygodnia"
-          value={draft.weekStart}
-          onChange={(weekStart) => onChange({ ...draft, weekStart })}
-          options={[
-            { value: "mon", label: "Poniedziałku" },
-            { value: "sun", label: "Niedzieli" },
-          ]}
-        />
-      </div>
-
-      <div className="flex flex-col gap-2 text-[13px] font-medium">
-        <span>Format godziny</span>
-        <Segment
-          fill
-          ariaLabel="Format godziny"
-          value={draft.clock}
-          onChange={(clock) => onChange({ ...draft, clock })}
-          options={[
-            { value: "24", label: "24 h · 14:30" },
-            { value: "12", label: "12 h · 2:30 PM" },
-          ]}
-        />
       </div>
     </>
   );

@@ -214,6 +214,7 @@ describe("TEMPLATES i PENDING_TO_TEMPLATE", () => {
 
   it("mapuje nazwy z onboardingu", () => {
     expect(PENDING_TO_TEMPLATE).toEqual({
+      Subscriptions: "subscriptions",
       Books: "books",
       Projects: "projects",
       Websites: "websites",
@@ -296,10 +297,6 @@ describe("szablon Subscriptions", () => {
     const config = tabela.fields.find((f) => f.type === "renewal")!.config;
     expect(idy).toContain(config.cycle_field_id);
     expect(idy).toContain(config.active_field_id);
-  });
-
-  it("onboarding bez zmian: PENDING_TO_TEMPLATE nie zna Subscriptions", () => {
-    expect(PENDING_TO_TEMPLATE.Subscriptions).toBeUndefined();
   });
 });
 

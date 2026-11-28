@@ -1,255 +1,107 @@
-import { beforeEach, describe, expect, it, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-const { getUser, from, rpc } = vi.hoisted(() => ({
+import { fakeTable } from "@/test-utils/fake-supabase";
+
+const { getUser, from, rpc, createBlock } = vi.hoisted(() => ({
   getUser: vi.fn(),
   from: vi.fn(),
   rpc: vi.fn(),
+  createBlock: vi.fn(),
 }));
-
 vi.mock("@/lib/supabase/server", () => ({
   createClient: async () => ({ auth: { getUser }, from, rpc }),
 }));
+vi.mock("@/features/calendar/actions", () => ({ createBlock }));
 vi.mock("next/navigation", () => ({
   redirect: (url: string) => {
     throw new Error(`REDIRECT:${url}`);
   },
 }));
 
-import { completeOnboarding, saveOnboardingStep } from "./actions";
+import { saveOnboardingStep } from "./actions";
 
 const BLAD = "Nie udało się zapisać. Spróbuj ponownie.";
+let tables: Record<string, ReturnType<typeof fakeTable>>;
 
-const krok1 = {
-  display_name: "Ala",
-  timezone: "Europe/Warsaw",
-  week_start: "mon",
-  clock: "24",
-  avatar_path: null,
-};
+beforeEach(() => {
+  vi.clearAllMocks();
+  vi.useFakeTimers({ toFake: ["Date"] });
+  vi.setSystemTime(new Date("2026-11-28T10:00:00Z"));
+  getUser.mockResolvedValue({ data: { user: { id: "u1" } } });
+  createBlock.mockResolvedValue({ ok: true });
+  rpc.mockResolvedValue({ error: null });
+  tables = {
+    profiles: fakeTable({ single: { roles: ["studia"], timezone: "Europe/Warsaw" } }),
+    categories: fakeTable({ data: [{ id: "k1", name: "Studia", position: 0 }] }),
+    blocks: fakeTable({ data: [] }),
+    notification_settings: fakeTable(),
+  };
+  from.mockImplementation((nazwa: string) => tables[nazwa]);
+});
+afterEach(() => vi.useRealTimers());
+
+const krok2 = { uses: ["run", "subs"], weekly_km_goal: 40, weekly_workouts_goal: 3, sleep_goal_min: 480 };
+const blok = { title: "Zajęcia", category: "Studia", start_min: 480, end_min: 570 };
 
 describe("saveOnboardingStep", () => {
-  // update(...).eq(...) → dane; progress: update(...).eq(...).lt(...)
-  const update = vi.fn();
-  const eq = vi.fn();
-  const lt = vi.fn();
-  const upsert = vi.fn();
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-    getUser.mockResolvedValue({ data: { user: { id: "u1" } } });
-    from.mockReturnValue({ update, upsert });
-    update.mockReturnValue({ eq });
-    // eq zwraca obiekt, który jest jednocześnie obietnicą (zapis pól) i ma .lt (postęp)
-    eq.mockImplementation(() =>
-      Object.assign(Promise.resolve({ error: null }), { lt }),
-    );
-    lt.mockResolvedValue({ error: null });
-    upsert.mockResolvedValue({ error: null });
+  it("zły numer kroku albo dane → bez zapisu", async () => {
+    expect(await saveOnboardingStep(5 as 1, {})).toEqual({ ok: false, message: BLAD });
+    expect((await saveOnboardingStep(2, { ...krok2, uses: ["admin"] })).ok).toBe(false);
+    expect((await saveOnboardingStep(3, { blocks: [{ ...blok, end_min: 480 }] })).ok).toBe(false);
+    expect(from).not.toHaveBeenCalled();
   });
 
-  it("nieprawidłowy numer kroku → ok: false, bez zapisu", async () => {
-    for (const zly of [0, 7, 1.5, "2", null]) {
-      const wynik = await saveOnboardingStep(zly as unknown as 1, krok1);
-      expect(wynik).toEqual({ ok: false, message: BLAD });
-    }
-    expect(update).not.toHaveBeenCalled();
-    expect(upsert).not.toHaveBeenCalled();
-  });
-
-  it("krok 1 z pustą nazwą → ok: false, bez zapisu", async () => {
-    const wynik = await saveOnboardingStep(1, { ...krok1, display_name: "" });
-    expect(wynik.ok).toBe(false);
-    expect(update).not.toHaveBeenCalled();
-  });
-
-  it("krok 2 zapisuje przycięte pola dla zalogowanego i podnosi postęp", async () => {
-    const wynik = await saveOnboardingStep(2, {
-      roles: ["student"],
-      study_field: " Cyber ",
-    });
-    expect(wynik).toEqual({ ok: true });
-    expect(from).toHaveBeenCalledWith("profiles");
-    expect(update).toHaveBeenNthCalledWith(1, {
-      roles: ["student"],
-      study_field: "Cyber",
-    });
-    expect(eq).toHaveBeenNthCalledWith(1, "user_id", "u1");
-    // postęp: onboarding_step = 3, tylko gdy obecny < 3 (bez cofania)
-    expect(update).toHaveBeenNthCalledWith(2, { onboarding_step: 3 });
-    expect(lt).toHaveBeenCalledWith("onboarding_step", 3);
-  });
-
-  it("krok 3 zapisuje przełączniki celów i obie liczby", async () => {
-    const krok3 = {
-      workouts_goal_on: true,
+  it("krok 2: wybory, strony i tylko cele wybranych; postęp na 3", async () => {
+    expect(await saveOnboardingStep(2, krok2)).toEqual({ ok: true });
+    expect(tables.profiles.update).toHaveBeenNthCalledWith(1, {
+      roles: ["run", "subs"],
+      pending_pages: ["Subscriptions"],
       km_goal_on: true,
-      weekly_workouts_goal: 4,
-      weekly_km_goal: 25,
-      sleep_goal_min: 480,
-    };
-    const wynik = await saveOnboardingStep(3, krok3);
-    expect(wynik).toEqual({ ok: true });
-    expect(update).toHaveBeenNthCalledWith(1, krok3);
-    expect(update).toHaveBeenNthCalledWith(2, { onboarding_step: 4 });
-  });
-
-  it("krok 3 z 15 treningami → komunikat, bez zapisu", async () => {
-    const wynik = await saveOnboardingStep(3, {
-      workouts_goal_on: true,
-      km_goal_on: false,
-      weekly_workouts_goal: 15,
-      weekly_km_goal: 25,
-      sleep_goal_min: 480,
-    });
-    expect(wynik).toEqual({ ok: false, message: "Podaj liczbę 1–14." });
-    expect(update).not.toHaveBeenCalled();
-  });
-
-  it("krok 3 z oboma celami wyłączonymi → komunikat, bez zapisu", async () => {
-    const wynik = await saveOnboardingStep(3, {
       workouts_goal_on: false,
-      km_goal_on: false,
-      weekly_workouts_goal: 3,
-      weekly_km_goal: 25,
-      sleep_goal_min: 480,
+      weekly_km_goal: 40,
     });
-    expect(wynik).toEqual({
-      ok: false,
-      message: "Włącz co najmniej jeden cel.",
-    });
-    expect(update).not.toHaveBeenCalled();
+    expect(tables.profiles.update).toHaveBeenNthCalledWith(2, { onboarding_step: 3 });
   });
 
-  it("krok 1 z avatar_path z cudzego folderu → ok: false", async () => {
-    const wynik = await saveOnboardingStep(1, {
-      ...krok1,
-      avatar_path: "u2/avatar.png",
-    });
-    expect(wynik.ok).toBe(false);
-    expect(update).not.toHaveBeenCalled();
+  it("krok 2 bez biegania i siłowni nie rusza celów treningowych", async () => {
+    await saveOnboardingStep(2, { ...krok2, uses: ["books"] });
+    expect(tables.profiles.update).toHaveBeenNthCalledWith(1, { roles: ["books"], pending_pages: ["Books"] });
   });
 
-  it.each([
-    "u1/../u2/a.png",
-    "u1/x/avatar.png",
-    "u1/avatar.gif",
-    "u1/avatar.png/x",
-  ])("krok 1 z niedozwolonym avatar_path %s → ok: false", async (sciezka) => {
-    const wynik = await saveOnboardingStep(1, {
-      ...krok1,
-      avatar_path: sciezka,
-    });
-    expect(wynik.ok).toBe(false);
-    expect(update).not.toHaveBeenCalled();
-  });
-
-  it("krok 1 z własnym avatar_path → zapis", async () => {
-    const wynik = await saveOnboardingStep(1, {
-      ...krok1,
-      avatar_path: "u1/avatar.png",
-    });
-    expect(wynik).toEqual({ ok: true });
-    expect(update).toHaveBeenNthCalledWith(1, {
-      display_name: "Ala",
-      timezone: "Europe/Warsaw",
-      week_start: "mon",
-      clock: "24",
-      avatar_path: "u1/avatar.png",
+  it("krok 3: blok na dziś w kategorii z wyborów", async () => {
+    expect(await saveOnboardingStep(3, { blocks: [blok] })).toEqual({ ok: true });
+    expect(createBlock).toHaveBeenCalledWith({
+      title: "Zajęcia",
+      categoryId: "k1",
+      date: "2026-11-28",
+      startMin: 480,
+      durationMin: 90,
+      recurrence: null,
+      note: "",
+      remind: true,
     });
   });
 
-  it("krok 6 upsertuje notification_settings (before → 10, wyłączone → null)", async () => {
-    const ustawienia = {
-      push_enabled: true,
-      before: true,
-      renew: false,
-      weekly: true,
-      habits: false,
-    };
-    await expect(saveOnboardingStep(6, ustawienia)).resolves.toEqual({
-      ok: true,
-    });
-    expect(from).toHaveBeenCalledWith("notification_settings");
-    expect(upsert).toHaveBeenLastCalledWith(
-      {
-        user_id: "u1",
-        push_enabled: true,
-        before_block_min: 5,
-        renewals_enabled: false,
-        weekly_summary: true,
-        habits_enabled: false,
-      },
-      { onConflict: "user_id" },
-    );
-    expect(lt).toHaveBeenCalledWith("onboarding_step", 7);
+  it("krok 3: blok już zapisany (ponowienie) nie powstaje drugi raz; błąd zapisu zatrzymuje krok", async () => {
+    tables.blocks = fakeTable({ data: [{ title: "Zajęcia", start_local: "2026-11-28T08:00:00" }] });
+    await saveOnboardingStep(3, { blocks: [blok] });
+    expect(createBlock).not.toHaveBeenCalled();
 
-    await saveOnboardingStep(6, { ...ustawienia, before: false });
-    expect(upsert).toHaveBeenLastCalledWith(
-      expect.objectContaining({ before_block_min: null }),
-      { onConflict: "user_id" },
-    );
+    createBlock.mockResolvedValue({ ok: false, message: "x" });
+    expect(await saveOnboardingStep(3, { blocks: [{ ...blok, title: "Inny" }] })).toEqual({ ok: false, message: "x" });
   });
 
-  it("błąd zapisu → komunikat", async () => {
-    eq.mockImplementationOnce(() =>
-      Object.assign(Promise.resolve({ error: { message: "boom" } }), { lt }),
-    );
-    const wynik = await saveOnboardingStep(2, { roles: [], study_field: "" });
-    expect(wynik).toEqual({ ok: false, message: BLAD });
-  });
-
-  it("błąd zapisu postępu → komunikat", async () => {
-    lt.mockResolvedValue({ error: { message: "boom" } });
-    const wynik = await saveOnboardingStep(2, { roles: [], study_field: "" });
-    expect(wynik).toEqual({ ok: false, message: BLAD });
-  });
-
-  it("bez sesji → /logowanie, bez zapisu", async () => {
-    getUser.mockResolvedValue({ data: { user: null } });
+  it("krok 4: przypomnienia (5 min), źródło, koniec i przejście na Dziś", async () => {
     await expect(
-      saveOnboardingStep(2, { roles: [], study_field: "" }),
-    ).rejects.toThrow("REDIRECT:/logowanie");
-    expect(update).not.toHaveBeenCalled();
-  });
-});
-
-describe("completeOnboarding", () => {
-  const maybeSingle = vi.fn();
-
-  beforeEach(() => {
-    vi.clearAllMocks();
-    getUser.mockResolvedValue({ data: { user: { id: "u1" } } });
-    from.mockReturnValue({ select: () => ({ eq: () => ({ maybeSingle }) }) });
-    maybeSingle.mockResolvedValue({ data: { roles: ["sport"] }, error: null });
-    rpc.mockResolvedValue({ error: null });
-  });
-
-  it("woła rpc z kategoriami z ról i przechodzi na /dzis", async () => {
-    await expect(completeOnboarding()).rejects.toThrow("REDIRECT:/dzis");
+      saveOnboardingStep(4, { referral_source: "uni", push_enabled: false, before: true, renew: false, habits: true }),
+    ).rejects.toThrow("REDIRECT:/dzis");
+    expect(tables.notification_settings.upsert).toHaveBeenCalledWith(
+      { user_id: "u1", push_enabled: false, before_block_min: 5, renewals_enabled: false, habits_enabled: true },
+      { onConflict: "user_id" },
+    );
+    expect(tables.profiles.update).toHaveBeenCalledWith({ referral_source: "uni", referral_other: null });
     expect(rpc).toHaveBeenCalledWith("complete_onboarding", {
-      p_categories: [{ name: "Sport", color: "#c2410c", is_system: true }],
+      p_categories: [{ name: "Studia", color: "#0070f3", is_system: false }],
     });
-  });
-
-  it("błąd RPC → komunikat, bez przekierowania", async () => {
-    rpc.mockResolvedValue({ error: { message: "boom" } });
-    await expect(completeOnboarding()).resolves.toEqual({
-      ok: false,
-      message: BLAD,
-    });
-  });
-
-  it("błąd odczytu ról → komunikat, bez RPC", async () => {
-    maybeSingle.mockResolvedValue({ data: null, error: { message: "boom" } });
-    await expect(completeOnboarding()).resolves.toEqual({
-      ok: false,
-      message: BLAD,
-    });
-    expect(rpc).not.toHaveBeenCalled();
-  });
-
-  it("bez sesji → /logowanie", async () => {
-    getUser.mockResolvedValue({ data: { user: null } });
-    await expect(completeOnboarding()).rejects.toThrow("REDIRECT:/logowanie");
   });
 });

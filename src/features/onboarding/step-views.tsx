@@ -1,13 +1,10 @@
 import type { ReactNode } from "react";
 
-import type { OnboardingDraft } from "./model";
-import { StepDone } from "./steps/step-done";
-import { StepGoals } from "./steps/step-goals";
-import { StepNotify } from "./steps/step-notify";
-import { StepPages } from "./steps/step-pages";
+import type { OnboardingDraft, Step } from "./model";
+import { StepFirstDay } from "./steps/step-first-day";
 import { StepProfile } from "./steps/step-profile";
-import { StepRoles } from "./steps/step-roles";
-import { StepSource } from "./steps/step-source";
+import { StepReminders } from "./steps/step-reminders";
+import { StepUses } from "./steps/step-uses";
 
 export type StepViewProps = {
   draft: OnboardingDraft;
@@ -23,15 +20,9 @@ export type StepViewProps = {
 };
 
 // Rejestr widoków kroków: kreator renderuje <STEP_VIEWS[step] {...props} /> jako komponent (widoki mogą używać hooków)
-export const STEP_VIEWS: Record<
-  1 | 2 | 3 | 4 | 5 | 6 | 7,
-  (props: StepViewProps) => ReactNode
-> = {
+export const STEP_VIEWS: Record<Step, (props: StepViewProps) => ReactNode> = {
   1: StepProfile,
-  2: StepRoles,
-  3: StepGoals,
-  4: StepSource,
-  5: StepPages,
-  6: StepNotify,
-  7: StepDone,
+  2: StepUses,
+  3: StepFirstDay,
+  4: StepReminders,
 };

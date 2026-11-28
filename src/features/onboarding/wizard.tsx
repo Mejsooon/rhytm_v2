@@ -1,6 +1,6 @@
 "use client";
 
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import { Check, ChevronLeft, ChevronRight } from "lucide-react";
 import { useRouter } from "next/navigation";
 import * as React from "react";
 
@@ -8,14 +8,12 @@ import { RhytmLogo } from "@/components/brand/rhytm-logo";
 import { Button, StatusBadge } from "@/components/controls";
 import { signOut } from "@/features/auth/actions";
 import { cn } from "@/lib/utils";
-import { completeOnboarding, saveOnboardingStep } from "./actions";
+import { saveOnboardingStep } from "./actions";
 import { LivePreview } from "./live-preview";
-import { canContinue, stepPayload, type OnboardingDraft } from "./model";
+import { canContinue, STEP_NAMES, stepPayload, type OnboardingDraft, type Step } from "./model";
 import { STEP_VIEWS } from "./step-views";
 
-type Step = 1 | 2 | 3 | 4 | 5 | 6 | 7;
-
-const KROKI = [1, 2, 3, 4, 5, 6, 7] as const;
+const KROKI = [1, 2, 3, 4] as const;
 
 function Wyloguj({ className }: { className?: string }) {
   return (
@@ -37,6 +35,7 @@ function Wyloguj({ className }: { className?: string }) {
 // `now` przychodzi z serwera (strona), żeby data w podglądzie była taka sama przy renderze i hydratacji.
 export function OnboardingWizard({
   step,
+  reached,
   initialDraft,
   avatarUrl,
   now,
@@ -44,6 +43,8 @@ export function OnboardingWizard({
   firstVisit = false,
 }: {
   step: Step;
+  // Najdalszy zapisany krok: do niego można skakać z nagłówka
+  reached: Step;
   initialDraft: OnboardingDraft;
   avatarUrl: string | null;
   now: Date;
@@ -78,7 +79,7 @@ export function OnboardingWizard({
   const wToku = React.useRef(false);
 
   const pending = pendingStep === step;
-  const ostatni = step === 7;
+  const ostatni = step === 4;
   const blad = error?.step === step ? error.message : null;
 
   async function wykonaj(
@@ -133,30 +134,17 @@ export function OnboardingWizard({
     };
   }, []);
 
+  // Krok 4 zapisuje i kończy onboarding (akcja przekierowuje na Dziś)
   function dalej() {
-    if (ostatni) {
-      void wykonaj(async () => {
-        const wynik = await completeOnboarding();
-        return wynik;
-      }, null);
-      return;
-    }
     void wykonaj(
-      () =>
-        saveOnboardingStep(
-          step as 1 | 2 | 3 | 4 | 5 | 6,
-          stepPayload(step as 1 | 2 | 3 | 4 | 5 | 6, draft),
-        ),
-      `/onboarding/${step + 1}`,
+      () => saveOnboardingStep(step, stepPayload(step, draft)),
+      ostatni ? null : `/onboarding/${step + 1}`,
     );
   }
 
+  // „Pomiń” w kroku 3: nie zapisujemy żadnych bloków
   function pomin() {
-    void wykonaj(
-      () =>
-        saveOnboardingStep(4, { referral_source: null, referral_other: null }),
-      "/onboarding/5",
-    );
+    void wykonaj(() => saveOnboardingStep(3, { blocks: [] }), "/onboarding/4");
   }
 
   function wstecz() {
@@ -172,10 +160,29 @@ export function OnboardingWizard({
       <header className="flex h-16 flex-none items-center gap-2 px-6 max-[799px]:hidden">
         <RhytmLogo size={24} withWordmark className="gap-2" />
         {/* Szara odznaka kroku (.bdg.sec.lg z COnboarding), „Wyloguj” jak .btng.sm */}
-        <StatusBadge tone="gray" size="lg" className="ml-auto tabular-nums">
-          Krok {step} z 7
-        </StatusBadge>
-        <Wyloguj className="ml-2" />
+        <nav aria-label="Kroki" className="mx-auto flex items-center gap-5">
+          {KROKI.map((k) => (
+            <button
+              key={k}
+              type="button"
+              aria-current={k === step ? "step" : undefined}
+              disabled={k > reached || pending}
+              onClick={() => router.push(`/onboarding/${k}`)}
+              className="flex cursor-pointer items-center gap-2 border-0 bg-transparent p-0 text-[13px] text-muted-foreground outline-none focus-visible:shadow-focus disabled:cursor-default aria-[current=step]:font-medium aria-[current=step]:text-foreground"
+            >
+              <span
+                className={cn(
+                  "grid size-[22px] place-items-center rounded-full text-xs font-semibold",
+                  k === step ? "bg-primary text-primary-foreground" : k < step ? "bg-success text-white" : "bg-black/[.06]",
+                )}
+              >
+                {k < step ? <Check aria-hidden="true" className="size-3" strokeWidth={3} /> : k}
+              </span>
+              {STEP_NAMES[k - 1]}
+            </button>
+          ))}
+        </nav>
+        <Wyloguj />
       </header>
 
       {/* Nagłówek telefon (CMOnboarding): m-head bez ramki i tła; „Wstecz” od kroku 2, w kroku 1 logo w polu 44 px;
@@ -198,7 +205,7 @@ export function OnboardingWizard({
         )}
         <span className="flex-1 text-center">
           <StatusBadge tone="gray" className="tabular-nums">
-            Krok {step} z 7
+            Krok {step} z 4
           </StatusBadge>
         </span>
         {/* Cel dotykowy 44 px (nadpisuje max-[799px]:h-10 z Button sm) */}
@@ -207,23 +214,17 @@ export function OnboardingWizard({
 
       <div className="flex min-h-0 flex-1 items-center justify-center max-[799px]:items-stretch min-[800px]:px-6 min-[800px]:pb-10">
         <div className="flex h-full w-full max-w-[1120px] flex-col overflow-hidden max-[799px]:h-auto min-[800px]:h-[720px] min-[800px]:rounded-2xl min-[800px]:border min-[800px]:border-border min-[800px]:bg-white min-[800px]:bg-clip-padding min-[800px]:shadow-card">
-          {/* Pasek postępu (.steps z CMOnboarding): 7 segmentów po 4 px, pełne zaokrąglenie, wypełnienie jak w AuthShell */}
+          {/* Pasek postępu (telefon); web ma kroki w nagłówku */}
           <div
             role="progressbar"
             aria-label="Postęp onboardingu"
             aria-valuemin={1}
-            aria-valuemax={7}
+            aria-valuemax={4}
             aria-valuenow={step}
-            className="grid grid-cols-7 gap-1 px-4 pt-1 pb-2 min-[800px]:px-5 min-[800px]:pt-4 min-[800px]:pb-0"
+            className="grid grid-cols-4 gap-1 px-4 pt-1 pb-2 min-[800px]:hidden"
           >
             {KROKI.map((k) => (
-              <span
-                key={k}
-                className={cn(
-                  "h-1 rounded-full",
-                  k <= step ? "bg-primary" : "bg-border",
-                )}
-              />
+              <span key={k} className={cn("h-1 rounded-full", k <= step ? "bg-primary" : "bg-border")} />
             ))}
           </div>
 
@@ -261,7 +262,7 @@ export function OnboardingWizard({
                   Wstecz
                 </Button>
                 <span className="flex-1 max-[799px]:hidden" />
-                {step === 4 && (
+                {step === 3 && (
                   <Button
                     variant="ghost"
                     onClick={pomin}
@@ -277,11 +278,10 @@ export function OnboardingWizard({
                   disabled={!mozeDalej}
                   className="max-[799px]:order-1 max-[799px]:w-full"
                 >
-                  {ostatni ? "Przejdź do Dziś" : "Dalej"}
-                  {/* Strzałka na obu szerokościach (CMOnboarding); „Przejdź do Dziś” na telefonie bez niej */}
+                  {ostatni ? "Zacznij korzystać" : "Dalej"}
                   <ChevronRight
                     aria-hidden="true"
-                    className={cn("size-4", ostatni && "max-[799px]:hidden")}
+                    className={cn("size-4", ostatni && "hidden")}
                     strokeWidth={2}
                   />
                 </Button>
