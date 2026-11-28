@@ -23,7 +23,7 @@ const WARIANTY: Record<Variant, string> = {
   ghost:
     "bg-transparent text-foreground border-transparent hover:bg-accent hover:text-foreground aria-expanded:bg-accent",
   destructive:
-    "bg-destructive text-white border-destructive shadow-[inset_0_1px_0_rgba(255,255,255,.16),0_1px_2px_rgba(239,68,68,.24)] hover:bg-destructive-hover hover:text-white",
+    "bg-destructive-strong text-white border-destructive-strong shadow-[inset_0_1px_0_rgba(255,255,255,.16),0_1px_2px_rgba(239,68,68,.24)] hover:bg-destructive-foreground hover:text-white",
   "destructive-outline":
     "bg-white text-destructive-foreground border-input shadow-xs hover:border-destructive/[.32] hover:bg-destructive/[.04] hover:text-destructive-foreground",
 };

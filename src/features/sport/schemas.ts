@@ -65,6 +65,20 @@ export const gymSessionInputSchema = z.object({
   templateId: idSchema.optional(),
 });
 
+// Okno „Zaplanuj trening siłowy”: nowy plan albo nowy termin
+export const gymPlanSchema = z
+  .object({
+    sessionId: idSchema.optional(),
+    templateId: idSchema.optional(),
+    // Dzień wystąpienia szablonu, które przenosimy (nie ma jeszcze sesji)
+    originalDate: isoDateSchema.optional(),
+    date: isoDateSchema,
+    start: godzina,
+    end: godzina,
+    showInCalendar: z.boolean(),
+  })
+  .refine((v) => v.end > v.start, { message: "Koniec musi być po początku.", path: ["end"] });
+
 export const exerciseNameSchema = z
   .string()
   .trim()

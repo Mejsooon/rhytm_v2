@@ -386,12 +386,12 @@ describe("menu kolumny", () => {
     expect(screen.queryByRole("button", { name: "Filtruj · 1" })).toBeNull();
   });
 
-  it("„Grupuj po tym polu” (tylko Wybór i Status) grupuje bieżący widok po kolumnie", async () => {
+  it("„Grupuj po tym polu” (każde pole poza Sekretem) grupuje bieżący widok po kolumnie", async () => {
     const user = userEvent.setup();
     const b = stronaTestowa("books", "Books", BOOKS).blocks[0];
     render(<PageTable block={b} today={DZIS} />);
     const autor = await otworzMenu(user, "Autor");
-    expect(within(autor).queryByRole("menuitem", { name: "Grupuj po tym polu" })).toBeNull();
+    expect(within(autor).getByRole("menuitem", { name: "Grupuj po tym polu" })).toBeInTheDocument();
     await user.keyboard("{Escape}");
     const menu = await otworzMenu(user, "Status");
     await user.click(within(menu).getByRole("menuitem", { name: "Grupuj po tym polu" }));

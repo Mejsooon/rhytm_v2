@@ -206,21 +206,21 @@ describe("SportView", () => {
     expect(push).not.toHaveBeenCalled();
   });
 
-  it("„Dodaj aktywność”: Pusty trening, szablony i szablony jako przyciski", async () => {
+  it("„Dodaj aktywność” → szablon otwiera okno planowania; „Rozpocznij teraz” startuje trening", async () => {
     createGymSession.mockResolvedValue({ ok: true, id: "pusta" });
     renderuj(<SportView data={daneSportu()} selectedKey={null} newGym={null} />);
     await userEvent.click(screen.getByRole("button", { name: "Dodaj aktywność" }));
-    expect(screen.getByRole("button", { name: "Push" })).toBeInTheDocument();
-    await userEvent.click(
-      screen.getByRole("button", { name: "Pusty" }),
-    );
+    await userEvent.click(screen.getByRole("button", { name: "Pusty" }));
+    const okno = screen.getByRole("dialog", { name: "Zaplanuj trening siłowy" });
+    expect(createGymSession).not.toHaveBeenCalled();
+    expect(within(okno).getByRole("radio", { name: /Pusty/ })).toHaveAttribute("aria-checked", "true");
+    await userEvent.click(within(okno).getByRole("button", { name: "Rozpocznij teraz" }));
     expect(createGymSession).toHaveBeenCalledWith({
       date: "2026-11-17",
       start: expect.stringMatching(/^\d\d:(00|15|30|45)$/),
+      templateId: undefined,
     });
-    await waitFor(() =>
-      expect(push).toHaveBeenCalledWith("/sport/trening/pusta"),
-    );
+    await waitFor(() => expect(push).toHaveBeenCalledWith("/sport/trening/pusta"));
   });
 
   it("„Nowy bieg” i „Edytuj” ustawiają stan okna biegu w adresie", async () => {

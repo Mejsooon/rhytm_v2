@@ -89,7 +89,7 @@ export function ColumnMenu({
   onPickType: (type: FieldType) => void;
   onSort: (dir: "asc" | "desc") => void;
   onFilter: () => void;
-  // „Grupuj po tym polu” (S2Table, tylko Wybór i Status); bez niej pozycji nie ma
+  // „Grupuj po tym polu” (S2Table, każde pole poza Sekretem); bez niej pozycji nie ma
   onGroupBy?: () => void;
   onSummary: (kind: SummaryKind) => void;
   onToggleCalendar: () => void;
@@ -244,7 +244,7 @@ export function ColumnMenu({
             <span className="flex-1">Filtruj po tym polu</span>
           </button>
         )}
-        {jestWyborem && onGroupBy && (
+        {field.type !== "secret" && onGroupBy && (
           <button type="button" role="menuitem" onClick={() => wykonaj(onGroupBy)} className={POZYCJA}>
             <TextAlignStart aria-hidden="true" className={IKONA} />
             <span className="flex-1">Grupuj po tym polu</span>

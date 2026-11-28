@@ -18,6 +18,7 @@ import {
 import { MIESIACE, type IsoDate } from "@/components/controls/calendar-math";
 import { ModuleHeader } from "@/components/shell/module-header";
 import { minutesNow } from "@/features/calendar/load-calendar";
+import { GymPlanDialog } from "./gym-plan-dialog";
 import { createGymSession, type GymSessionInput } from "./actions";
 import { ActivityDialog } from "./activity-dialog";
 import { SportOverview } from "./overview";
@@ -176,6 +177,21 @@ export function SportView({
 
   // Trening siłowy (pusty albo z szablonu) → ekran treningu. Akcja jest idempotentna dla szablonu i dnia;
   // blokada chroni pusty trening przed podwójnym kliknięciem.
+  // Okno planowania siłowni (tylko web): nowy plan albo nowy termin zaplanowanego treningu
+  const [planSilowni, setPlanSilowni] = useState<{
+    date: IsoDate;
+    start: string;
+    templateId: string | null;
+    item: SportItem | null;
+  } | null>(null);
+  function planuj(date: IsoDate, templateId: string | null = null, item: SportItem | null = null) {
+    const szablon = data.templates.find((t) => t.id === templateId);
+    setMenuSilowni(false);
+    setWybrany(null);
+    setDodaj(null);
+    setPlanSilowni({ date, start: szablon ? szablon.start_time.slice(0, 5) : godzinaTeraz(), templateId, item });
+  }
+
   const tworzy = useRef(false);
   async function rozpocznijSilownie(input: GymSessionInput) {
     if (tworzy.current) return;
@@ -355,7 +371,7 @@ export function SportView({
                   {(
                     [
                       ["Bieg", "dystans, czas, tempo", "B", "bg-[rgba(245,158,11,.14)] text-[#b45309]", () => otworzBieg({ date: today, start: godzinaTeraz() })],
-                      ["Trening siłowy", "pusty albo z szablonu:", "S", "bg-black/[.06] text-soft-foreground", () => void rozpocznijSilownie({ date: today, start: godzinaTeraz() })],
+                      ["Trening siłowy", "pusty albo z szablonu:", "S", "bg-black/[.06] text-soft-foreground", () => planuj(today)],
                     ] as const
                   ).map(([nazwa, opis, znak, kolor, akcja]) => (
                     <button
@@ -382,12 +398,7 @@ export function SportView({
                       <button
                         key={t?.id ?? "pusty"}
                         type="button"
-                        onClick={() => {
-                          setMenuSilowni(false);
-                          void rozpocznijSilownie(
-                            t ? { date: today, start: t.start_time.slice(0, 5), templateId: t.id } : { date: today, start: godzinaTeraz() },
-                          );
-                        }}
+                        onClick={() => planuj(today, t?.id ?? null)}
                         className="h-7 cursor-pointer rounded-full border border-input bg-white px-2.5 text-xs font-medium outline-none hover:bg-accent focus-visible:shadow-focus"
                       >
                         {t?.name ?? "Pusty"}
@@ -478,6 +489,7 @@ export function SportView({
               setsHistory={data.setsHistory}
               templates={data.templates}
               onOpen={otworzZPrzegladu}
+              onReschedule={(i) => planuj(i.date, i.templateId, i)}
               onDelete={setDoUsuniecia}
               onResetFilter={() => setFiltr("all")}
             />
@@ -540,6 +552,8 @@ export function SportView({
             onAddDay={dodajWDniu}
             onOpenRun={otworzBieg}
             onStartGym={(input) => void rozpocznijSilownie(input)}
+            onPlanGym={(date, templateId) => planuj(date, templateId)}
+            onReschedule={(i) => planuj(i.date, i.templateId, i)}
             onDelete={setDoUsuniecia}
             suspended={doUsuniecia !== null}
           />
@@ -576,6 +590,21 @@ export function SportView({
         </div>
       </div>
 
+      {planSilowni && (
+        <GymPlanDialog
+          templates={data.templates}
+          today={today}
+          clock={profile.clock}
+          weekStart={profile.weekStart}
+          date={planSilowni.date}
+          start={planSilowni.start}
+          templateId={planSilowni.templateId}
+          item={planSilowni.item}
+          onClose={() => setPlanSilowni(null)}
+          onStartNow={(input) => void rozpocznijSilownie(input)}
+          onDelete={setDoUsuniecia}
+        />
+      )}
       {oknoBiegu && !biegNaTelefonie && (
         <RunDialog
           key={kluczBiegu}

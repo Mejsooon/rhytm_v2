@@ -245,3 +245,10 @@ Final review: Important #1 phone delete dialog leak → fix; #2 heat-2 → Do de
 - Bloki zapisane w kroku 3 edytuje się tylko w kalendarzu.
 - Konto w połowie starego kreatora traci stare wybory ról (zaczyna z pustymi).
 - Kolumny `study_field`, `referral_other` i `weekly_summary` nie są już zapisywane przez kreator.
+
+## Poprawki webu (2026-11-28)
+- Kolory kontrastu dobrane w kodzie; kanwa i `docs/design/mockups` ich nie mają.
+- Kopie makiet `S2Table`, `S2Sport`, `S2GymPlan` w repo nie zostały odświeżone z kanwy.
+- Okno planowania: z Dziś, ⌘K, szablonów i telefonu trening nadal startuje od razu.
+- Karta szablonu w oknie planowania bez szacowanego czasu („~55 min” w makiecie).
+- Kwoty w grupach tabeli w „zł”, jak reszta tabeli, nie w walucie profilu.

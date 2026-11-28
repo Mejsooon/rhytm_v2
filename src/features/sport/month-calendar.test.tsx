@@ -17,6 +17,8 @@ function wyrenderuj(zmiany: Partial<Parameters<typeof MonthCalendar>[0]> = {}) {
     onOpenRun: vi.fn(),
     onStartGym: vi.fn(),
     onDelete: vi.fn(),
+    onPlanGym: vi.fn(),
+    onReschedule: vi.fn(),
     ...zmiany,
   };
   render(<MonthCalendar {...wlasciwosci} />);
@@ -144,14 +146,10 @@ describe("MonthCalendar", () => {
         .getByRole("button", { name: /Siłownia/ })
         .querySelector("span[aria-hidden=true]"),
     ).toHaveClass("bg-muted");
-    expect(w.onStartGym).toHaveBeenLastCalledWith({
-      date: "2026-11-18",
-      start: expect.stringMatching(/^\d\d:(00|15|30|45)$/),
-    });
+    expect(w.onPlanGym).toHaveBeenLastCalledWith("2026-11-18", null);
     await userEvent.click(within(dymek).getByRole("button", { name: "Push" }));
-    expect(w.onStartGym).toHaveBeenLastCalledWith(
-      expect.objectContaining({ date: "2026-11-18", templateId: SZABLON_PUSH }),
-    );
+    expect(w.onPlanGym).toHaveBeenLastCalledWith("2026-11-18", SZABLON_PUSH);
+    expect(w.onStartGym).not.toHaveBeenCalled();
   });
 
   it("dni spoza miesiąca nie mają „+”", () => {
