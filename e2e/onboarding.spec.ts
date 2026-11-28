@@ -10,17 +10,17 @@ const guzik = (page: Page, nazwa: string) => widoczny(page.getByRole("button", {
 async function zalozKonto(page: Page, projekt: string) {
   const email = uniqueEmail(projekt);
   const haslo = randomPassword();
-  await createConfirmedUser(email, haslo, false);
+  const userId = await createConfirmedUser(email, haslo, false);
   await logInViaForm(page, email, haslo);
   await expect(page).toHaveURL(/\/onboarding\/1$/);
-  return email;
+  return userId;
 }
 
 test.describe("onboarding", () => {
   test.skip(!process.env.E2E_SUPABASE, "wymaga lokalnego Supabase");
 
   test("4 kroki: wznawianie, bloki na dziś, strony i przejście na Dziś", async ({ page }, info) => {
-    const email = await zalozKonto(page, info.project.name);
+    const userId = await zalozKonto(page, info.project.name);
 
     // Krok 1: „Dalej” nieaktywne bez imienia; ustawienia wykryte pod „Zmień”
     const imie = widoczny(page.getByLabel("Imię lub pseudonim"));
@@ -64,8 +64,6 @@ test.describe("onboarding", () => {
 
     // W bazie: dokładnie dwa bloki, kategorie z wyborów i cel w km
     const admin = adminClient();
-    const { data: konta } = await admin.auth.admin.listUsers({ perPage: 1000 });
-    const userId = konta.users.find((u) => u.email === email)!.id;
     const { data: bloki } = await admin.from("blocks").select("title").eq("user_id", userId);
     expect(bloki?.map((b) => b.title).sort()).toEqual(["Angielski", "Zajęcia"]);
     const { data: kategorie } = await admin.from("categories").select("name").eq("user_id", userId);
